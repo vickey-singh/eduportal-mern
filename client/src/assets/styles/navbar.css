@@ -1,0 +1,71 @@
+/* ============================
+   ✅ Navbar Styling
+============================ */
+
+.custom-navbar {
+    background-color: #222831 !important;
+    padding: 12px 0;
+    z-index: 999;
+}
+
+/* Navbar Links */
+.navbar .nav-link {
+    color: #fff !important;
+    font-weight: 500;
+    margin-left: 15px;
+    transition: color 0.3s ease;
+}
+
+/* Hover Effect */
+.navbar .nav-link:hover {
+    color: #00adb5 !important;
+}
+
+/* Collapse Animation */
+.collapse {
+    transition: max-height 0.4s ease;
+    overflow: hidden;
+}
+
+.collapse.show {
+    max-height: 500px;
+}
+
+/* Brand Text */
+.brand-text .edu {
+    color: #ffc107;
+    font-weight: bold;
+}
+
+.brand-text .portal {
+    color: #00adb5;
+    font-weight: bold;
+}
+
+/* Navbar Toggler */
+.navbar-toggler {
+    border-color: #fff !important;
+}
+
+/* Remove Bootstrap Focus Shadow */
+.navbar-toggler:focus {
+    box-shadow: none;
+}
+
+/* White Toggle Icon */
+.navbar-toggler-icon {
+    filter: invert(1);
+}
+.navbar-toggler {
+    border-color: white !important;
+}
+
+.nav-link.active-nav {
+    color: #00adb5 !important;
+
+    font-weight: 700 !important;
+
+    border-bottom: 2px solid #00adb5;
+
+    padding-bottom: 3px;
+}

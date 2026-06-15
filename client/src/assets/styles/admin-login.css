@@ -1,0 +1,71 @@
+.admin-login-page {
+    min-height: 100vh;
+
+    background: linear-gradient(
+        135deg,
+        #222831,
+        #393e46
+    );
+
+    display: flex;
+
+    justify-content: center;
+
+    align-items: center;
+
+    padding: 20px;
+}
+
+.admin-login-card {
+    width: 100%;
+
+    max-width: 420px;
+
+    background: #fff;
+
+    padding: 40px;
+
+    border-radius: 20px;
+
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+}
+
+.admin-brand {
+    font-size: 2.5rem;
+
+    font-weight: 700;
+}
+
+.admin-brand .edu {
+    color: #ffc107;
+}
+
+.admin-brand .portal {
+    color: #00adb5;
+}
+
+.admin-login-btn {
+    background-color: #00adb5 !important;
+
+    color: #fff !important;
+
+    font-weight: 600;
+
+    padding: 12px;
+
+    border: none;
+
+    border-radius: 10px;
+
+    transition: 0.3s ease;
+}
+
+.admin-login-btn:hover {
+    background-color: #01939a !important;
+}
+
+.admin-login-card .form-control {
+    height: 50px;
+
+    border-radius: 10px;
+}

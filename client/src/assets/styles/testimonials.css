@@ -1,0 +1,43 @@
+.testimonial-card {
+    transition: transform 0.3s ease,
+                box-shadow 0.3s ease;
+}
+
+.testimonial-card:hover {
+    transform: translateY(-5px);
+
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.15);
+}
+
+.testimonial-img {
+    width: 80px;
+    height: 80px;
+    object-fit: cover;
+}
+.feedback-form {
+    max-width: 100%;
+}
+
+.feedback-form .form-control {
+    border-radius: 8px;
+
+    padding: 12px;
+}
+
+.feedback-btn {
+    background-color: #00adb5 !important;
+
+    color: #fff !important;
+
+    border: none !important;
+
+    transition: 0.3s ease;
+}
+
+.feedback-btn:hover {
+    background-color: #008c94 !important;
+
+    color: #fff !important;
+
+    transform: translateY(-2px);
+}

@@ -1,0 +1,47 @@
+.messages-page {
+    padding: 10px;
+}
+
+.messages-header {
+    margin-bottom: 30px;
+}
+
+.messages-table-wrapper {
+    background: #fff;
+
+    padding: 25px;
+
+    border-radius: 20px;
+
+    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.08);
+}
+
+.messages-table th {
+    background-color: #f4f6f9;
+
+    padding: 15px;
+}
+
+.messages-table td {
+    vertical-align: middle;
+
+    padding: 15px;
+}
+
+.message-delete-btn {
+    background-color: #dc3545;
+
+    color: #fff;
+
+    border: none;
+
+    padding: 8px 14px;
+
+    border-radius: 8px;
+
+    transition: 0.3s ease;
+}
+
+.message-delete-btn:hover {
+    background-color: #bb2d3b;
+}

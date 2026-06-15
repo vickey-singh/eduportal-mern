@@ -1,0 +1,91 @@
+.applications-page {
+    padding: 10px;
+}
+
+.applications-page-header {
+    margin-bottom: 30px;
+}
+
+.applications-page-table {
+    background: #fff;
+
+    padding: 25px;
+
+    border-radius: 20px;
+
+    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.08);
+}
+
+.table th {
+    background-color: #f4f6f9;
+
+    padding: 15px;
+}
+
+.table td {
+    vertical-align: middle;
+
+    padding: 15px;
+}
+
+/* Status */
+.app-status {
+    padding: 6px 14px;
+
+    border-radius: 30px;
+
+    font-size: 0.9rem;
+
+    font-weight: 600;
+}
+
+.pending {
+    background-color: #fff3cd;
+
+    color: #856404;
+}
+
+.approved {
+    background-color: #d1e7dd;
+
+    color: #0f5132;
+}
+
+.rejected {
+    background-color: #f8d7da;
+
+    color: #842029;
+}
+
+/* Buttons */
+.app-btn {
+    border: none;
+
+    padding: 8px 14px;
+
+    border-radius: 8px;
+
+    color: #fff;
+
+    font-size: 0.9rem;
+
+    cursor: pointer;
+
+    transition: 0.3s ease;
+}
+
+.approve-btn {
+    background-color: #00adb5;
+}
+
+.view-btn {
+    background-color: #0d6efd;
+}
+
+.reject-btn {
+    background-color: #dc3545;
+}
+
+.app-btn:hover {
+    opacity: 0.9;
+}

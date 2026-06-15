@@ -1,0 +1,64 @@
+.apply-page {
+    padding: 120px 0 80px;
+
+    background-color: #f4f6f9;
+
+    min-height: 100vh;
+}
+
+.apply-header {
+    margin-bottom: 40px;
+}
+
+.apply-header h1 {
+    font-size: 3rem;
+
+    font-weight: 700;
+
+    color: #222831;
+}
+
+.apply-header p {
+    color: #555;
+}
+
+.apply-form-wrapper {
+    background: #fff;
+
+    padding: 40px;
+
+    border-radius: 20px;
+
+    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.08);
+}
+
+.apply-form-wrapper .form-control,
+.apply-form-wrapper .form-select {
+    height: 52px;
+
+    border-radius: 10px;
+}
+
+.apply-form-wrapper textarea.form-control {
+    height: auto;
+}
+
+.apply-btn {
+    background-color: #00adb5;
+
+    color: #fff;
+
+    border: none;
+
+    padding: 14px 30px;
+
+    border-radius: 10px;
+
+    font-weight: 600;
+
+    transition: 0.3s ease;
+}
+
+.apply-btn:hover {
+    background-color: #01939a;
+}

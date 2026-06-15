@@ -1,0 +1,331 @@
+.admin-dashboard {
+
+    display: flex;
+
+    width: 100%;
+
+    min-height: 100vh;
+
+    background-color: #f4f6f9;
+
+    overflow-x: hidden;
+
+}
+
+/* ====================================== */
+/* SIDEBAR */
+/* ====================================== */
+
+.admin-sidebar {
+
+    width: 260px;
+
+    flex-shrink: 0;
+
+    background-color: #222831;
+
+    color: #fff;
+
+    padding: 30px 20px;
+
+    transition: all 0.3s ease;
+
+}
+
+.admin-logo {
+
+    font-size: 2rem;
+
+    font-weight: 700;
+
+    margin-bottom: 40px;
+
+}
+
+.admin-logo .edu {
+
+    color: #ffc107;
+
+}
+
+.admin-logo .portal {
+
+    color: #00adb5;
+
+}
+
+.admin-menu {
+
+    list-style: none;
+
+    padding: 0;
+
+}
+
+.admin-menu li {
+
+    margin-bottom: 10px;
+
+}
+
+/* ====================================== */
+/* SIDEBAR LINKS */
+/* ====================================== */
+
+.admin-link {
+
+    display: flex;
+
+    align-items: center;
+
+    gap: 12px;
+
+    text-decoration: none;
+
+    color: #fff;
+
+    padding: 14px 15px;
+
+    border-radius: 10px;
+
+    transition: 0.3s ease;
+
+}
+
+.admin-link:hover {
+
+    background-color: #00adb5;
+
+    color: #fff;
+
+}
+
+.active-admin-link {
+
+    background-color: #00adb5;
+
+}
+
+/* ====================================== */
+/* MAIN CONTENT */
+/* ====================================== */
+
+.admin-main {
+
+    flex: 1;
+
+    width: 100%;
+
+    min-width: 0;
+
+    padding: 30px;
+
+    overflow-x: auto;
+
+}
+
+/* ====================================== */
+/* TOPBAR */
+/* ====================================== */
+
+.admin-topbar {
+
+    display: flex;
+
+    justify-content: space-between;
+
+    align-items: center;
+
+    margin-bottom: 40px;
+
+}
+
+.admin-profile {
+
+    background-color: #00adb5;
+
+    color: #fff;
+
+    padding: 10px 20px;
+
+    border-radius: 30px;
+
+    font-weight: 600;
+
+}
+
+/* ====================================== */
+/* MOBILE MENU BUTTON */
+/* ====================================== */
+
+.mobile-menu-btn {
+
+    display: none;
+
+    border: none;
+
+    background: transparent;
+
+    font-size: 24px;
+
+    cursor: pointer;
+
+    color: #222831;
+
+}
+
+/* ====================================== */
+/* LOGOUT BUTTON */
+/* ====================================== */
+
+.logout-btn {
+
+    background: transparent;
+
+    border: none;
+
+    outline: none;
+
+    width: 100%;
+
+    text-align: left;
+
+    cursor: pointer;
+
+}
+
+.logout-btn:focus {
+
+    outline: none;
+
+    box-shadow: none;
+
+}
+
+/* ====================================== */
+/* MOBILE RESPONSIVE */
+/* ====================================== */
+
+@media (max-width: 992px) {
+
+    .mobile-menu-btn {
+
+        display: block;
+
+    }
+
+    .admin-sidebar {
+
+        position: fixed;
+
+        top: 0;
+
+        left: -280px;
+
+        width: 260px;
+
+        height: 100vh;
+
+        z-index: 9999;
+
+        overflow-y: auto;
+
+    }
+
+    .admin-sidebar.active {
+
+        left: 0;
+
+    }
+
+    .admin-main {
+
+        width: 100%;
+
+        padding: 15px;
+
+    }
+
+    .admin-topbar {
+
+        gap: 15px;
+
+    }
+
+    .admin-topbar h3 {
+
+        font-size: 18px;
+
+        margin: 0;
+
+    }
+
+    .admin-profile {
+
+        padding: 8px 15px;
+
+        font-size: 14px;
+
+    }
+
+}
+
+/* ====================================== */
+/* SMALL MOBILE */
+/* ====================================== */
+
+@media (max-width: 576px) {
+
+    .admin-topbar h3 {
+
+        font-size: 16px;
+
+    }
+
+    .admin-profile {
+
+        display: none;
+
+    }
+
+}
+
+/* ====================================== */
+/* SIDEBAR CLOSE BUTTON */
+/* ====================================== */
+
+.sidebar-header {
+
+    display: none;
+
+}
+
+.close-sidebar-btn {
+
+    background: transparent;
+
+    border: none;
+
+    color: #fff;
+
+    font-size: 28px;
+
+    cursor: pointer;
+
+}
+
+/* Mobile Only */
+
+@media (max-width: 992px) {
+
+    .sidebar-header {
+
+        display: flex;
+
+        justify-content: flex-end;
+
+        margin-bottom: 15px;
+
+    }
+
+}

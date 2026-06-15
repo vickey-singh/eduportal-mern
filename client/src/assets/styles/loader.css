@@ -1,0 +1,41 @@
+.loader-wrapper {
+    position: fixed;
+
+    top: 0;
+    left: 0;
+
+    width: 100%;
+    height: 100vh;
+
+    background-color: #222831;
+
+    display: flex;
+
+    flex-direction: column;
+
+    justify-content: center;
+
+    align-items: center;
+
+    z-index: 99999;
+}
+
+.loader-animation {
+    width: 250px;
+}
+
+.loader-text {
+    font-size: 3rem;
+
+    font-weight: bold;
+
+    margin-top: -20px;
+}
+
+.loader-edu {
+    color: #ffc107;
+}
+
+.loader-portal {
+    color: #00adb5;
+}
