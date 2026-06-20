@@ -26,7 +26,7 @@ function Faculty() {
 
           const response =
             await axios.get(
-              'http://localhost:8000/api/faculty'
+              'https://eduportal-backend-m5t1.onrender.com/api/faculty'
             )
 
           setFacultyData(
@@ -94,7 +94,7 @@ function Faculty() {
 
                   {/* Faculty Image */}
                   <img
-                    src={`http://localhost:8000${item.image}`}
+                    src={`https://eduportal-backend-m5t1.onrender.com${item.image}`}
                     className="rounded-circle mx-auto mb-3 faculty-img"
                     alt={item.name}
                   />

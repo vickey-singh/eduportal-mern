@@ -77,7 +77,7 @@ function Students() {
 
           const response =
             await axios.get(
-              'http://localhost:8000/api/students'
+              'https://eduportal-backend-m5t1.onrender.com/api/students'
             )
 
           setStudentData(
@@ -192,7 +192,7 @@ function Students() {
           response =
             await axios.put(
 
-              `http://localhost:8000/api/students/${editId}`,
+              `https://eduportal-backend-m5t1.onrender.com/api/students/${editId}`,
 
               studentFormData,
 
@@ -234,7 +234,7 @@ function Students() {
           response =
             await axios.post(
 
-              'http://localhost:8000/api/students',
+              'https://eduportal-backend-m5t1.onrender.com/api/students',
 
               studentFormData,
 
@@ -311,7 +311,7 @@ function Students() {
       try {
 
         await axios.delete(
-          `http://localhost:8000/api/students/${id}`
+          `https://eduportal-backend-m5t1.onrender.com/api/students/${id}`
         )
 
         setStudentData(
@@ -346,7 +346,7 @@ function Students() {
         const response =
           await axios.put(
 
-            `http://localhost:8000/api/students/add-payment/${studentId}`,
+            `https://eduportal-backend-m5t1.onrender.com/api/students/add-payment/${studentId}`,
 
             paymentData
 
@@ -843,7 +843,7 @@ function Students() {
                 <td style={{ whiteSpace: 'nowrap' }}>
 
                   <img
-                    src={`http://localhost:8000${item.image}`}
+                    src={`https://eduportal-backend-m5t1.onrender.com${item.image}`}
                     alt={item.name}
                     width="60"
                     height="60"
@@ -985,7 +985,7 @@ function Students() {
             <div className="text-center mb-4">
 
               <img
-                src={`http://localhost:8000${selectedStudent.image}`}
+                src={`https://eduportal-backend-m5t1.onrender.com${selectedStudent.image}`}
                 alt={selectedStudent.name}
                 className="student-modal-image"
               />
@@ -1291,7 +1291,7 @@ function Students() {
           
                 window.open(
           
-                  `http://localhost:8000/api/receipt/${selectedStudent._id}/${lastPaymentIndex}`,
+                  `https://eduportal-backend-m5t1.onrender.com/api/receipt/${selectedStudent._id}/${lastPaymentIndex}`,
           
                   '_blank'
           

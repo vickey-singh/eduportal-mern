@@ -57,7 +57,7 @@ function Settings() {
 
         const response =
           await axios.get(
-            'http://localhost:8000/api/settings'
+            'https://eduportal-backend-m5t1.onrender.com/api/settings'
           )
 
         setFormData({
@@ -176,7 +176,7 @@ function Settings() {
 
         await axios.put(
 
-          'http://localhost:8000/api/settings',
+          'https://eduportal-backend-m5t1.onrender.com/api/settings',
 
           data
 
@@ -238,7 +238,7 @@ const handleAccountSubmit =
       const response =
         await axios.put(
 
-          'http://localhost:8000/api/account-settings',
+          'https://eduportal-backend-m5t1.onrender.com/api/account-settings',
 
           {
 

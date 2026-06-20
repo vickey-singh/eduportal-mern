@@ -28,7 +28,7 @@ function Messages() {
 
           const response =
             await axios.get(
-              'http://localhost:8000/api/messages'
+              'https://eduportal-backend-m5t1.onrender.com/api/messages'
             )
 
           setMessages(
@@ -57,7 +57,7 @@ function Messages() {
       try {
 
         await axios.delete(
-          `http://localhost:8000/api/messages/${id}`
+          `https://eduportal-backend-m5t1.onrender.com/api/messages/${id}`
         )
 
         setMessages(

@@ -47,7 +47,7 @@ function Contact() {
 
         const response =
           await axios.get(
-            'http://localhost:8000/api/settings'
+            'https://eduportal-backend-m5t1.onrender.com/api/settings'
           )
 
         setSettings(
@@ -95,7 +95,7 @@ function Contact() {
         const response =
           await axios.post(
 
-            'http://localhost:8000/api/messages',
+            'https://eduportal-backend-m5t1.onrender.com/api/messages',
 
             formData
 

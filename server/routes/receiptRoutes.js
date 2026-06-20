@@ -560,7 +560,7 @@ body {
         <div class="branding">
 
             <img
-                src="http://localhost:8000/uploads/logo.jpeg"
+                src="https://eduportal-backend-m5t1.onrender.com/uploads/logo.jpeg"
                 alt="Logo"
                 class="receipt-logo"
             />

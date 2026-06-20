@@ -80,7 +80,7 @@ function AdminDashboard() {
 
           const response =
             await axios.get(
-              'http://localhost:8000/api/dashboard'
+              'https://eduportal-backend-m5t1.onrender.com/api/dashboard'
             )
 
           setStats(

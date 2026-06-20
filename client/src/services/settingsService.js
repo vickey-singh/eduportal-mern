@@ -5,7 +5,7 @@ export const getSettings =
 
     const response =
       await axios.get(
-        'http://localhost:8000/api/settings'
+        'https://eduportal-backend-m5t1.onrender.com/api/settings'
       )
 
     return response.data

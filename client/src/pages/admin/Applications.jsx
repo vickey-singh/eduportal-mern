@@ -91,7 +91,7 @@ const totalPages =
 
           const response =
             await axios.get(
-              'http://localhost:8000/api/applications'
+              'https://eduportal-backend-m5t1.onrender.com/api/applications'
             )
 
           setApplications(
@@ -122,7 +122,7 @@ const totalPages =
         const response =
           await axios.put(
 
-            `http://localhost:8000/api/applications/${id}`,
+            `https://eduportal-backend-m5t1.onrender.com/api/applications/${id}`,
 
             {
               status: newStatus,
@@ -163,7 +163,7 @@ const totalPages =
       try {
 
         await axios.delete(
-          `http://localhost:8000/api/applications/${id}`
+          `https://eduportal-backend-m5t1.onrender.com/api/applications/${id}`
         )
 
         // Remove Deleted Data

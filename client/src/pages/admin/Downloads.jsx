@@ -42,7 +42,7 @@ function Downloads() {
 
         const response =
           await axios.get(
-            'http://localhost:8000/api/downloads'
+            'https://eduportal-backend-m5t1.onrender.com/api/downloads'
           )
 
         setDownloads(
@@ -109,7 +109,7 @@ function Downloads() {
 
           await axios.put(
 
-            `http://localhost:8000/api/downloads/${editId}`,
+            `https://eduportal-backend-m5t1.onrender.com/api/downloads/${editId}`,
 
             data
 
@@ -121,7 +121,7 @@ function Downloads() {
 
           await axios.post(
 
-            'http://localhost:8000/api/downloads',
+            'https://eduportal-backend-m5t1.onrender.com/api/downloads',
 
             data
 
@@ -163,7 +163,7 @@ function Downloads() {
 
         await axios.delete(
 
-          `http://localhost:8000/api/downloads/${id}`
+          `https://eduportal-backend-m5t1.onrender.com/api/downloads/${id}`
 
         )
 

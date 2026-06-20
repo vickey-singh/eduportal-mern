@@ -89,7 +89,7 @@ const importantNotice =
 
         const response =
           await axios.get(
-            'http://localhost:8000/api/notices'
+            'https://eduportal-backend-m5t1.onrender.com/api/notices'
           )
 
         setNotices(

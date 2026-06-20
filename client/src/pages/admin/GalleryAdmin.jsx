@@ -87,7 +87,7 @@ function GalleryAdmin() {
           response =
             await axios.put(
 
-              `http://localhost:8000/api/gallery/${editId}`,
+              `https://eduportal-backend-m5t1.onrender.com/api/gallery/${editId}`,
 
               galleryFormData,
 
@@ -130,7 +130,7 @@ function GalleryAdmin() {
           response =
             await axios.post(
 
-              'http://localhost:8000/api/gallery',
+              'https://eduportal-backend-m5t1.onrender.com/api/gallery',
 
               galleryFormData,
 
@@ -193,7 +193,7 @@ function GalleryAdmin() {
 
           const response =
             await axios.get(
-              'http://localhost:8000/api/gallery'
+              'https://eduportal-backend-m5t1.onrender.com/api/gallery'
             )
 
           setGalleryData(
@@ -222,7 +222,7 @@ function GalleryAdmin() {
       try {
 
         await axios.delete(
-          `http://localhost:8000/api/gallery/${id}`
+          `https://eduportal-backend-m5t1.onrender.com/api/gallery/${id}`
         )
 
         setGalleryData(
@@ -392,7 +392,7 @@ function GalleryAdmin() {
                 <td>
 
                   <img
-                    src={`http://localhost:8000${item.image}`}
+                    src={`https://eduportal-backend-m5t1.onrender.com${item.image}`}
                     alt={item.title}
                     width="80"
                     height="60"

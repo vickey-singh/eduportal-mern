@@ -53,7 +53,7 @@ function Apply() {
     try {
 
       const response = await axios.post(
-        'http://localhost:8000/api/apply',
+        'https://eduportal-backend-m5t1.onrender.com/api/apply',
         formData
       )
 

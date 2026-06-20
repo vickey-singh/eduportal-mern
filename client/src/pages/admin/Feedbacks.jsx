@@ -28,7 +28,7 @@ function Feedbacks() {
 
           const response =
             await axios.get(
-              'http://localhost:8000/api/feedback'
+              'https://eduportal-backend-m5t1.onrender.com/api/feedback'
             )
 
           setFeedbackData(
@@ -57,7 +57,7 @@ function Feedbacks() {
       try {
 
         await axios.put(
-          `http://localhost:8000/api/feedback/approve/${id}`
+          `https://eduportal-backend-m5t1.onrender.com/api/feedback/approve/${id}`
         )
 
         setFeedbackData(
@@ -99,7 +99,7 @@ function Feedbacks() {
       try {
 
         await axios.put(
-          `http://localhost:8000/api/feedback/reject/${id}`
+          `https://eduportal-backend-m5t1.onrender.com/api/feedback/reject/${id}`
         )
 
         setFeedbackData(
@@ -141,7 +141,7 @@ function Feedbacks() {
       try {
 
         await axios.delete(
-          `http://localhost:8000/api/feedback/${id}`
+          `https://eduportal-backend-m5t1.onrender.com/api/feedback/${id}`
         )
 
         setFeedbackData(

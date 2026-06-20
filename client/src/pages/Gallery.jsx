@@ -38,7 +38,7 @@ function Gallery() {
 
           const response =
             await axios.get(
-              'http://localhost:8000/api/gallery'
+              'https://eduportal-backend-m5t1.onrender.com/api/gallery'
             )
 
           setGalleryData(
@@ -65,7 +65,7 @@ function Gallery() {
     galleryData.map((item) => ({
 
       src:
-        `http://localhost:8000${item.image}`,
+        `https://eduportal-backend-m5t1.onrender.com${item.image}`,
 
     }))
 
@@ -133,7 +133,7 @@ function Gallery() {
               >
 
                 <img
-                  src={`http://localhost:8000${item.image}`}
+                  src={`https://eduportal-backend-m5t1.onrender.com${item.image}`}
                   className="img-fluid rounded shadow-sm gallery-img"
                   alt={item.title}
 

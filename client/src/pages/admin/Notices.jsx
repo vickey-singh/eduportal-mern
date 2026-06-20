@@ -52,7 +52,7 @@ function Notices() {
 
         const response =
           await axios.get(
-            'http://localhost:8000/api/notices'
+            'https://eduportal-backend-m5t1.onrender.com/api/notices'
           )
 
         setNoticeData(
@@ -149,7 +149,7 @@ function Notices() {
 
           await axios.put(
 
-            `http://localhost:8000/api/notices/${editId}`,
+            `https://eduportal-backend-m5t1.onrender.com/api/notices/${editId}`,
 
             noticeFormData
 
@@ -165,7 +165,7 @@ function Notices() {
 
           await axios.post(
 
-            'http://localhost:8000/api/notices',
+            'https://eduportal-backend-m5t1.onrender.com/api/notices',
 
             noticeFormData
 
@@ -214,7 +214,7 @@ function Notices() {
 
         await axios.delete(
 
-          `http://localhost:8000/api/notices/${id}`
+          `https://eduportal-backend-m5t1.onrender.com/api/notices/${id}`
 
         )
 
@@ -417,7 +417,7 @@ function Notices() {
                   {item.image && (
 
                     <img
-                      src={`http://localhost:8000${item.image}`}
+                      src={`https://eduportal-backend-m5t1.onrender.com${item.image}`}
                       alt=""
                       width="60"
                     />

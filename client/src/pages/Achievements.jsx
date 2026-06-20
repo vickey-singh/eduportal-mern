@@ -31,7 +31,7 @@ function Achievements() {
 
           const response =
             await axios.get(
-              'http://localhost:8000/api/achievements'
+              'https://eduportal-backend-m5t1.onrender.com/api/achievements'
             )
 
           setAchievementData(
@@ -149,7 +149,7 @@ function Achievements() {
 
                   {/* Achievement Image */}
                   <img
-                    src={`http://localhost:8000${item.image}`}
+                    src={`https://eduportal-backend-m5t1.onrender.com${item.image}`}
                     className="card-img-top"
                     alt={item.studentName}
                   />

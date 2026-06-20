@@ -115,7 +115,7 @@ function Achievements() {
           response =
             await axios.put(
 
-              `http://localhost:8000/api/achievements/${editId}`,
+              `https://eduportal-backend-m5t1.onrender.com/api/achievements/${editId}`,
 
               achievementFormData,
 
@@ -158,7 +158,7 @@ function Achievements() {
           response =
             await axios.post(
 
-              'http://localhost:8000/api/achievements',
+              'https://eduportal-backend-m5t1.onrender.com/api/achievements',
 
               achievementFormData,
 
@@ -229,7 +229,7 @@ function Achievements() {
 
           const response =
             await axios.get(
-              'http://localhost:8000/api/achievements'
+              'https://eduportal-backend-m5t1.onrender.com/api/achievements'
             )
 
           setAchievementData(
@@ -258,7 +258,7 @@ function Achievements() {
       try {
 
         await axios.delete(
-          `http://localhost:8000/api/achievements/${id}`
+          `https://eduportal-backend-m5t1.onrender.com/api/achievements/${id}`
         )
 
         setAchievementData(
@@ -518,7 +518,7 @@ function Achievements() {
                 <td>
 
                   <img
-                    src={`http://localhost:8000${item.image}`}
+                    src={`https://eduportal-backend-m5t1.onrender.com${item.image}`}
                     alt={item.studentName}
                     width="60"
                     height="60"

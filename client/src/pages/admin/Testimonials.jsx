@@ -101,7 +101,7 @@ function Testimonials() {
           response =
             await axios.put(
 
-              `http://localhost:8000/api/testimonials/${editId}`,
+              `https://eduportal-backend-m5t1.onrender.com/api/testimonials/${editId}`,
 
               testimonialFormData,
 
@@ -144,7 +144,7 @@ function Testimonials() {
           response =
             await axios.post(
 
-              'http://localhost:8000/api/testimonials',
+              'https://eduportal-backend-m5t1.onrender.com/api/testimonials',
 
               testimonialFormData,
 
@@ -211,7 +211,7 @@ function Testimonials() {
 
           const response =
             await axios.get(
-              'http://localhost:8000/api/testimonials'
+              'https://eduportal-backend-m5t1.onrender.com/api/testimonials'
             )
 
           setTestimonialData(
@@ -240,7 +240,7 @@ function Testimonials() {
       try {
 
         await axios.delete(
-          `http://localhost:8000/api/testimonials/${id}`
+          `https://eduportal-backend-m5t1.onrender.com/api/testimonials/${id}`
         )
 
         setTestimonialData(
@@ -456,7 +456,7 @@ function Testimonials() {
                 <td>
 
                   <img
-                    src={`http://localhost:8000${item.image}`}
+                    src={`https://eduportal-backend-m5t1.onrender.com${item.image}`}
                     alt={item.studentName}
                     width="60"
                     height="60"

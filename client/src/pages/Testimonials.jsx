@@ -48,7 +48,7 @@ function Testimonials() {
 
           const response =
             await axios.get(
-              'http://localhost:8000/api/testimonials'
+              'https://eduportal-backend-m5t1.onrender.com/api/testimonials'
             )
 
           setTestimonials(
@@ -80,7 +80,7 @@ function Testimonials() {
 
           const response =
             await axios.get(
-              'http://localhost:8000/api/feedback/approved'
+              'https://eduportal-backend-m5t1.onrender.com/api/feedback/approved'
             )
 
           setFeedbacks(
@@ -129,7 +129,7 @@ function Testimonials() {
 
         await axios.post(
 
-          'http://localhost:8000/api/feedback',
+          'https://eduportal-backend-m5t1.onrender.com/api/feedback',
 
           formData
 
@@ -215,7 +215,7 @@ function Testimonials() {
                   <div className="text-center mb-3">
 
                     <img
-                      src={`http://localhost:8000${item.image}`}
+                      src={`https://eduportal-backend-m5t1.onrender.com${item.image}`}
                       alt={item.studentName}
                       className="rounded-circle testimonial-img"
                     />

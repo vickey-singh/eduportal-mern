@@ -28,7 +28,7 @@ function Downloads() {
 
         const response =
           await axios.get(
-            'http://localhost:8000/api/downloads'
+            'https://eduportal-backend-m5t1.onrender.com/api/downloads'
           )
 
         setDownloads(
@@ -202,7 +202,7 @@ function Downloads() {
                       <div className="download-actions">
 
                         <a
-                          href={`http://localhost:8000${item.file}`}
+                          href={`https://eduportal-backend-m5t1.onrender.com${item.file}`}
                           target="_blank"
                           rel="noreferrer"
                           className="preview-btn"
@@ -211,7 +211,7 @@ function Downloads() {
                         </a>
 
                         <a
-                          href={`http://localhost:8000${item.file}`}
+                          href={`https://eduportal-backend-m5t1.onrender.com${item.file}`}
                           download
                           className="download-btn"
                         >

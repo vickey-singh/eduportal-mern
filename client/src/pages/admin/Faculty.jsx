@@ -114,7 +114,7 @@ function Faculty() {
           response =
             await axios.put(
 
-              `http://localhost:8000/api/faculty/${editId}`,
+              `https://eduportal-backend-m5t1.onrender.com/api/faculty/${editId}`,
 
               facultyFormData,
 
@@ -158,7 +158,7 @@ function Faculty() {
           response =
             await axios.post(
 
-              'http://localhost:8000/api/faculty',
+              'https://eduportal-backend-m5t1.onrender.com/api/faculty',
 
               facultyFormData,
 
@@ -229,7 +229,7 @@ function Faculty() {
 
           const response =
             await axios.get(
-              'http://localhost:8000/api/faculty'
+              'https://eduportal-backend-m5t1.onrender.com/api/faculty'
             )
 
           setFacultyData(
@@ -258,7 +258,7 @@ function Faculty() {
       try {
 
         await axios.delete(
-          `http://localhost:8000/api/faculty/${id}`
+          `https://eduportal-backend-m5t1.onrender.com/api/faculty/${id}`
         )
 
         // Remove From UI
@@ -512,7 +512,7 @@ function Faculty() {
                 <td>
 
                   <img
-                    src={`http://localhost:8000${item.image}`}
+                    src={`https://eduportal-backend-m5t1.onrender.com${item.image}`}
                     alt={item.name}
                     width="60"
                     height="60"
