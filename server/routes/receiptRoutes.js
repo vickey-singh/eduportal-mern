@@ -571,7 +571,7 @@ body {
 
                     <span class="edu">
                         Prerna
-                    </span>{' '}<span class="portal">
+                    </span><span class="portal">
                         Institute
                     </span>
 
