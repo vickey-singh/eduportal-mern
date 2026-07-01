@@ -6,6 +6,10 @@ import axios from 'axios'
 
 import CountUp from 'react-countup'
 
+import aboutImage from '../assets/images/about.jpeg'
+
+import principalImage from '../assets/images/principal.jpeg'
+
 // Import Home CSS
 import '../assets/styles/home.css'
 
@@ -215,7 +219,7 @@ const importantNotice =
     
                 )
     
-            : '📢 Welcome To EduPortal'
+            : '📢 Welcome To Prerna Institute'
     
         }
     
@@ -236,11 +240,11 @@ const importantNotice =
             Welcome to{' '}
 
             <span className="hero-edu">
-             Edu
-             </span>
+             Prerna
+             </span>{' '}
 
             <span className="hero-portal">
-             Portal
+             Institute
             </span>
          </h1>
 
@@ -301,7 +305,7 @@ const importantNotice =
       >
         <div className="content">
 
-          <h2>Welcome to EduPortal</h2>
+          <h2>Welcome to Prerna Institute</h2>
 
           <div className="animated-text">
 
@@ -321,6 +325,94 @@ const importantNotice =
 
         </div>
       </section>
+
+
+      {/* ====================================== */}
+{/* ABOUT US */}
+{/* ====================================== */}
+
+<section
+  className="py-5 bg-white"
+  data-aos="fade-up"
+>
+
+  <div className="container">
+
+    <div className="row align-items-center">
+
+      {/* Left Image */}
+
+      <div className="col-lg-5 mb-4 mb-lg-0">
+
+        <img
+          src={aboutImage}
+          alt="About Prerna Institute"
+          className="img-fluid rounded shadow"
+        />
+
+      </div>
+
+      {/* Right Content */}
+
+      <div className="col-lg-7">
+
+        
+
+        <h2 className="fw-bold mt-2 mb-4">
+          About Prerna Institute Institute
+        </h2>
+
+        <p>
+          Prerna Institute Institute is a trusted educational institution dedicated
+          to providing quality education and career-oriented learning for
+          students. Our mission is to empower learners with knowledge,
+          confidence, and practical skills that help them succeed in academics,
+          competitive examinations, and professional careers.
+        </p>
+
+        <p>
+          With experienced faculty members, modern teaching methodologies,
+          well-equipped classrooms, and a student-focused approach, we create
+          an environment where every learner can achieve excellence. We believe
+          education is not just about passing examinations—it is about building
+          character, confidence, leadership, and lifelong learning habits.
+        </p>
+
+        <p>
+          At Prerna Institute, we continuously strive to maintain the highest academic
+          standards through regular assessments, personalized mentoring, doubt
+          clearing sessions, digital learning resources, and career guidance.
+          Thousands of students have trusted us to shape their future, and we
+          remain committed to helping every learner reach their full potential.
+        </p>
+
+        <div className="row mt-4">
+
+          <div className="col-md-6">
+
+            <p>✔ Experienced Faculty Members</p>
+            <p>✔ Smart Digital Classrooms</p>
+            <p>✔ Regular Mock Tests</p>
+
+          </div>
+
+          <div className="col-md-6">
+
+            <p>✔ Career Guidance</p>
+            <p>✔ Personalized Mentorship</p>
+            <p>✔ Affordable Quality Education</p>
+
+          </div>
+
+        </div>
+
+      </div>
+
+    </div>
+
+  </div>
+
+</section>
 
       {/* ✅ Quick Stats */}
       <section className="py-5 bg-light text-center"
@@ -358,23 +450,68 @@ const importantNotice =
       </section>
 
       {/* ✅ Principal Message */}
-      <section className="py-5 text-center">
 
+      <section className="py-5 bg-light">
+      
         <div className="container">
-
-          <h2 className="mb-4">
-            Message from the Principal
-          </h2>
-
-          <p>
-            At EduPortal, we don't just teach — we inspire.
-            We ensure students grow emotionally, socially,
-            and academically, making them future-ready individuals.
-            Join us to be a part of an extraordinary learning journey.
-          </p>
-
+      
+          <div className="row align-items-center">
+      
+            {/* Left Image */}
+      
+            <div className="col-lg-4 text-center mb-4 mb-lg-0">
+      
+              <img
+                src={principalImage}
+                alt="Principal"
+                className="principal-image img-fluid shadow"
+              />
+      
+              <h4 className="mt-4 mb-1">
+                Dr. Rajesh Kumar
+              </h4>
+      
+              <p className="text-muted">
+                Principal
+              </p>
+      
+            </div>
+      
+            {/* Right Content */}
+      
+            <div className="col-lg-8">
+      
+              <h2 className="mb-4">
+                Principal's Message
+              </h2>
+      
+              <p>
+                At Prerna Institute, we don't just teach—we inspire. We believe that every
+                student has the potential to achieve excellence when guided with the
+                right knowledge, discipline, and encouragement.
+              </p>
+      
+              <p>
+                Our mission is to provide quality education through experienced
+                faculty members, innovative teaching methods, and continuous academic
+                support. We focus on building confident, responsible, and future-ready
+                individuals who can contribute positively to society.
+              </p>
+      
+              <blockquote className="principal-quote">
+      
+                "Education is the foundation of a successful future. Our responsibility
+                is not only to teach students but also to inspire them to become
+                confident, responsible, and lifelong learners."
+      
+              </blockquote>
+      
+            </div>
+      
+          </div>
+      
         </div>
-
+      
       </section>
 
       {/* ✅ Achievements Preview */}
@@ -387,8 +524,11 @@ const importantNotice =
           </h2>
 
           <p>
-            Our students consistently secure top ranks and represent
-            the school in various state and national events.
+            Our achievements reflect the dedication of our faculty,
+            the determination of our students, and the continuous
+            support of parents. Every success story motivates us to
+            deliver even higher standards of education.
+            
           </p>
 
           <Link
@@ -410,8 +550,16 @@ const importantNotice =
         <div className="container text-center">
 
           <h2 className="mb-4">
-            Why Choose EduPortal?
+            Why Choose Prerna Institute?
           </h2>
+          <p className="mb-5">
+           Prerna Institute Institute is committed to delivering quality
+           education through modern infrastructure, experienced
+           faculty, practical learning, and personalized guidance.
+           We ensure every student receives the attention and
+           support required to achieve academic excellence.
+           
+           </p>
 
           <div className="row">
 

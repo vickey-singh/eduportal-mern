@@ -149,7 +149,7 @@ function Contact() {
 
             settings?.instituteName ||
 
-            'EduPortal'
+            'Prerna Institute'
 
           }
 

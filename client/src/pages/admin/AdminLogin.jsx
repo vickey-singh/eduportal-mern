@@ -107,11 +107,11 @@ function AdminLogin() {
           <h1 className="admin-brand">
 
             <span className="edu">
-              Edu
-            </span>
+              Prerna
+            </span>{' '}
 
             <span className="portal">
-              Portal
+              Institute
             </span>
 
           </h1>

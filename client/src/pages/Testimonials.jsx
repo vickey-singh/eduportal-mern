@@ -282,7 +282,7 @@ function Testimonials() {
 
                   Our students consistently achieve
                   excellent results and recommend
-                  EduPortal for quality education,
+                  Prerna Institute for quality education,
                   guidance, and mentorship.
 
                 </p>

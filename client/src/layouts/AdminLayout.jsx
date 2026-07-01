@@ -88,11 +88,11 @@ function AdminLayout() {
         <h2 className="admin-logo">
 
           <span className="edu">
-            Edu
-          </span>
+            Prerna
+          </span>{' '}
 
           <span className="portal">
-            Portal
+            Institute
           </span>
 
         </h2>
@@ -395,7 +395,7 @@ function AdminLayout() {
 
           <h3>
 
-            EduPortal Admin Panel
+            Prerna Institute Admin Panel
 
           </h3>
 

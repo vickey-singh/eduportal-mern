@@ -73,11 +73,11 @@ const fetchSettings =
             <h2 className="footer-logo">
 
               <span className="footer-edu">
-                Edu
-              </span>
+                Prerna 
+              </span>{' '}
 
               <span className="footer-portal">
-                Portal
+                Institute
               </span>
 
             </h2>
@@ -196,12 +196,12 @@ const fetchSettings =
 
           </div>
 
-          {/* Why EduPortal */}
+          {/* Why Prerna Institute */}
 
           <div className="footer-column">
 
             <h4>
-              Why EduPortal?
+              Why Prerna Institute?
             </h4>
 
             <ul>
@@ -299,7 +299,7 @@ const fetchSettings =
             © 2026
 
             <span>
-              {' '}EduPortal
+              {' '}Prerna Institute
             </span>
 
             . All Rights Reserved.

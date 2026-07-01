@@ -31,8 +31,8 @@ function Navbar() {
             />
 
             <span className="fw-bold brand-text">
-              <span className="edu">Edu</span>
-              <span className="portal">Portal</span>
+              <span className="edu">Prerna</span>{' '}
+              <span className="portal">Institute</span>
             </span>
           </Link>
 

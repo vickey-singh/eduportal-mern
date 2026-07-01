@@ -62,7 +62,7 @@ router.post('/admin/login', async (req, res) => {
         id: admin._id,
       },
 
-      'eduportal_secret_key',
+      'Prerna Institute_secret_key',
 
       {
         expiresIn: '7d',

@@ -26,11 +26,11 @@ function Loader() {
       <h1 className="loader-text">
 
         <span className="loader-edu">
-          Edu
-        </span>
+          Prerna
+        </span>{' '}
 
         <span className="loader-portal">
-          Portal
+          Institute
         </span>
 
       </h1>

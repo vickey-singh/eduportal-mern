@@ -9,7 +9,7 @@ const settingSchema =
 
         type: String,
 
-        default: 'EduPortal',
+        default: 'Prerna Institute',
 
       },
 

@@ -87,7 +87,7 @@ router.get(
 />
 
 <title>
-EduPortal Receipt
+Prerna Institute Receipt
 </title>
 
 <style>
@@ -570,9 +570,9 @@ body {
                 <h1>
 
                     <span class="edu">
-                        Edu
-                    </span><span class="portal">
-                        Portal
+                        Prerna
+                    </span>{' '}<span class="portal">
+                        Institute
                     </span>
 
                 </h1>
@@ -763,7 +763,7 @@ body {
 
         Thank you for your payment.<br/>
 
-        EduPortal Institute Management System
+        Prerna Institute Institute Management System
 
     </div>
 

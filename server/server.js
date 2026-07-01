@@ -108,7 +108,7 @@ app.use('/api', accountRoutes)
 // Test Route
 app.get('/', (req, res) => {
 
-  res.send('EduPortal Backend Running 🚀')
+  res.send('Prerna Institute Backend Running 🚀')
 
 })
 

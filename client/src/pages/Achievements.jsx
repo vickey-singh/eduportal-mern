@@ -221,7 +221,7 @@ function Achievements() {
 
                   <p className="mb-1">
 
-                    "EduPortal helped me build a strong foundation
+                    "Prerna Institute helped me build a strong foundation
                     and gave me the confidence to crack NEET."
 
                   </p>
@@ -287,7 +287,7 @@ function Achievements() {
 
           <p>
 
-            Join EduPortal and turn your dreams into achievements.
+            Join Prerna Institute and turn your dreams into achievements.
 
           </p>
 
