@@ -4,6 +4,8 @@ import { useEffect, useState } from 'react'
 
 import axios from 'axios'
 
+import { API_URL } from '../../config/api'
+
 import {
 
   FaUserGraduate,
@@ -80,7 +82,7 @@ function AdminDashboard() {
 
           const response =
             await axios.get(
-              'https://eduportal-backend-m5t1.onrender.com/api/dashboard'
+              `${API_URL}/dashboard`
             )
 
           setStats(

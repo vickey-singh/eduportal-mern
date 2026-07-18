@@ -2,6 +2,8 @@ const express = require('express')
 
 const router = express.Router()
 
+const Student = require('../models/Student')
+
 const Application = require('../models/Application')
 
 
@@ -23,6 +25,35 @@ router.post('/apply', async (req, res) => {
       address,
       message,
     } = req.body
+
+    // ======================================
+    // CHECK EXISTING STUDENT
+    // ======================================
+    
+    const existingStudent = await Student.findOne({
+    
+      $or: [
+    
+        { contact: phone },
+    
+        { email: email }
+    
+      ]
+    
+    })
+    
+    if (existingStudent) {
+    
+      return res.status(409).json({
+    
+        success: false,
+    
+        message:
+          'Student already exists. Please use the Existing Student Payment option.',
+    
+      })
+    
+    }
 
     // Create Application
     const newApplication = new Application({

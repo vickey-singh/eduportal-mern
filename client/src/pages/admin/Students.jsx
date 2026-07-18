@@ -1,8 +1,34 @@
 import { useEffect, useState } from 'react'
 
-import axios from 'axios'
+import { API_BASE_URL } from '../../config/api'
+
+import {
+
+  getStudents,
+
+  createStudent,
+
+  updateStudent,
+
+  deleteStudentById,
+
+  addStudentPayment,
+
+} from '../../services/studentService'
+
+import {
+
+  getCourses,
+
+} from '../../services/courseService'
 
 import '../../assets/styles/admin.css'
+
+import PaymentForm from './PaymentForm'
+
+import PaymentHistory from './PaymentHistory'
+
+import ReceiptButton from './ReceiptButton'
 
 function Students() {
 
@@ -11,6 +37,9 @@ function Students() {
   // ======================================
 
   const [studentData, setStudentData]
+    = useState([])
+
+    const [courses, setCourses] 
     = useState([])
 
   const [editId, setEditId]
@@ -52,6 +81,10 @@ function Students() {
 
       paidFees: '',
 
+      minimumInstallment: '',
+
+      installmentAllowed: false,
+
       dueDate: '',
 
       contact: '',
@@ -76,13 +109,9 @@ function Students() {
         try {
 
           const response =
-            await axios.get(
-              'https://eduportal-backend-m5t1.onrender.com/api/students'
-            )
-
-          setStudentData(
-            response.data
-          )
+          await getStudents()
+          
+          setStudentData(response)
 
         } catch (error) {
 
@@ -92,7 +121,27 @@ function Students() {
 
       }
 
+      const fetchCourses = async () => {
+
+      try {
+    
+        const response =
+        await getCourses()
+        
+        setCourses(response)
+    
+    
+      } catch (error) {
+    
+        console.log(error)
+    
+      }
+    
+    }
+
     fetchStudents()
+    fetchCourses()
+    
 
   }, [])
 
@@ -102,16 +151,60 @@ function Students() {
 
   const handleChange = (e) => {
 
-    setFormData({
+  const { name, value } = e.target
 
-      ...formData,
+  // ==============================
+  // COURSE SELECTED
+  // ==============================
 
-      [e.target.name]:
-        e.target.value,
+  if (name === 'course') {
 
-    })
+    const selectedCourse = courses.find(
+
+      (course) => course.courseName === value
+
+    )
+
+    if (selectedCourse) {
+
+      setFormData({
+
+        ...formData,
+
+        course: value,
+
+        totalFees: selectedCourse.totalFee,
+
+        paidFees: selectedCourse.registrationFee,
+
+         minimumInstallment:
+           selectedCourse.minimumInstallment,
+       
+         installmentAllowed:
+           selectedCourse.installmentAllowed,
+
+
+      })
+
+      return
+
+    }
 
   }
+
+  // ==============================
+  // NORMAL INPUT
+  // ==============================
+
+  setFormData({
+
+    ...formData,
+
+    [name]: value,
+
+  })
+
+}
 
   // ======================================
   // HANDLE SUBMIT
@@ -190,27 +283,20 @@ function Students() {
         if (editId) {
 
           response =
-            await axios.put(
-
-              `https://eduportal-backend-m5t1.onrender.com/api/students/${editId}`,
-
-              studentFormData,
-
-              {
-                headers: {
-                  'Content-Type':
-                    'multipart/form-data',
-                },
-              }
-
-            )
+          await updateStudent(
+          
+              editId,
+          
+              studentFormData
+          
+          )
 
           setStudentData(
 
             studentData.map((item) =>
 
               item._id === editId
-                ? response.data.student
+                ? response.student
                 : item
 
             )
@@ -232,24 +318,13 @@ function Students() {
         else {
 
           response =
-            await axios.post(
-
-              'https://eduportal-backend-m5t1.onrender.com/api/students',
-
-              studentFormData,
-
-              {
-                headers: {
-                  'Content-Type':
-                    'multipart/form-data',
-                },
-              }
-
+            await createStudent(
+                studentFormData
             )
 
           setStudentData([
 
-            response.data.student,
+            response.student,
 
             ...studentData,
 
@@ -310,9 +385,7 @@ function Students() {
 
       try {
 
-        await axios.delete(
-          `https://eduportal-backend-m5t1.onrender.com/api/students/${id}`
-        )
+        await deleteStudentById(id)
 
         setStudentData(
 
@@ -344,12 +417,12 @@ function Students() {
       try {
 
         const response =
-          await axios.put(
-
-            `https://eduportal-backend-m5t1.onrender.com/api/students/add-payment/${studentId}`,
-
-            paymentData
-
+          await addStudentPayment(
+          
+              studentId,
+          
+              paymentData
+          
           )
 
         // ======================================
@@ -361,7 +434,7 @@ function Students() {
           studentData.map((item) =>
 
             item._id === studentId
-              ? response.data.student
+              ? response.student
               : item
 
           )
@@ -373,7 +446,7 @@ function Students() {
         // ======================================
 
         setSelectedStudent(
-          response.data.student
+          response.student
         )
 
         // ======================================
@@ -556,20 +629,37 @@ function Students() {
 
             {/* Course */}
             <div className="col-md-6 mb-3">
-
+            
               <label className="form-label">
                 Course
               </label>
-
-              <input
-                type="text"
+            
+              <select
                 className="form-control"
-                placeholder="Enter course"
                 name="course"
                 value={formData.course}
                 onChange={handleChange}
-              />
-
+              >
+            
+                <option value="">
+                  Select Course
+                </option>
+            
+                {courses.map((course) => (
+            
+                  <option
+                    key={course._id}
+                    value={course.courseName}
+                  >
+            
+                    {course.courseName}
+            
+                  </option>
+            
+                ))}
+            
+              </select>
+            
             </div>
 
             {/* Total Fees */}
@@ -582,30 +672,64 @@ function Students() {
               <input
                 type="number"
                 className="form-control"
-                placeholder="Enter total fees"
                 name="totalFees"
                 value={formData.totalFees}
-                onChange={handleChange}
+                readOnly
               />
 
             </div>
 
-            {/* Paid Fees */}
+            {/* Paid Fees
             <div className="col-md-6 mb-3">
 
               <label className="form-label">
-                Paid Fees
+                Registration Fee
               </label>
 
               <input
                 type="number"
                 className="form-control"
-                placeholder="Enter paid fees"
                 name="paidFees"
                 value={formData.paidFees}
-                onChange={handleChange}
+                readOnly
               />
 
+            </div> */}
+
+            {/* Minimum Installment */}
+            <div className="col-md-6 mb-3">
+            
+              <label className="form-label">
+                Minimum Installment
+              </label>
+            
+              <input
+                type="number"
+                className="form-control"
+                value={formData.minimumInstallment || ''}
+                readOnly
+              />
+            
+            </div>
+
+            {/* Installment Allowed */}
+            <div className="col-md-6 mb-3">
+            
+              <label className="form-label">
+                Installment Allowed
+              </label>
+            
+              <input
+                type="text"
+                className="form-control"
+                value={
+                  formData.installmentAllowed
+                    ? 'Yes'
+                    : 'No'
+                }
+                readOnly
+              />
+            
             </div>
 
             {/* Due Date */}
@@ -843,7 +967,7 @@ function Students() {
                 <td style={{ whiteSpace: 'nowrap' }}>
 
                   <img
-                    src={`https://eduportal-backend-m5t1.onrender.com${item.image}`}
+                    src={`${API_BASE_URL}${item.image}`}
                     alt={item.name}
                     width="60"
                     height="60"
@@ -985,128 +1109,19 @@ function Students() {
             <div className="text-center mb-4">
 
               <img
-                src={`https://eduportal-backend-m5t1.onrender.com${selectedStudent.image}`}
+                src={`${API_BASE_URL}${selectedStudent.image}`}
                 alt={selectedStudent.name}
                 className="student-modal-image"
               />
 
             </div>
 
-            {/* ====================================== */}
-            {/* ADD PAYMENT */}
-            {/* ====================================== */}
-
-            <div className="mb-4">
-
-              <h4 className="mb-3">
-                Add Payment
-              </h4>
-
-              <div className="row">
-
-                {/* Amount */}
-                <div className="col-md-4 mb-3">
-
-                  <input
-                    type="number"
-                    className="form-control"
-                    placeholder="Enter Amount"
-                    value={paymentData.amount}
-                    onChange={(e) =>
-
-                      setPaymentData({
-
-                        ...paymentData,
-
-                        amount:
-                          e.target.value,
-
-                      })
-
-                    }
-                  />
-
-                </div>
-
-                {/* Payment Method */}
-                <div className="col-md-4 mb-3">
-
-                  <select
-                    className="form-control"
-                    value={paymentData.paymentMethod}
-                    onChange={(e) =>
-
-                      setPaymentData({
-
-                        ...paymentData,
-
-                        paymentMethod:
-                          e.target.value,
-
-                      })
-
-                    }
-                  >
-
-                    <option value="Cash">
-                      Cash
-                    </option>
-
-                    <option value="UPI">
-                      UPI
-                    </option>
-
-                    <option value="Card">
-                      Card
-                    </option>
-
-                    <option value="Bank Transfer">
-                      Bank Transfer
-                    </option>
-
-                  </select>
-
-                </div>
-
-                {/* Date */}
-                <div className="col-md-4 mb-3">
-
-                  <input
-                    type="date"
-                    className="form-control"
-                    value={paymentData.paymentDate}
-                    onChange={(e) =>
-
-                      setPaymentData({
-
-                        ...paymentData,
-
-                        paymentDate:
-                          e.target.value,
-
-                      })
-
-                    }
-                  />
-
-                </div>
-
-              </div>
-
-              <button
-                className="table-btn approve-btn"
-                onClick={() =>
-                  addPayment(
-                    selectedStudent._id
-                  )
-                }
-              >
-
-                Add Payment
-
-              </button>
-
-            </div>
+            <PaymentForm
+              paymentData={paymentData}
+              setPaymentData={setPaymentData}
+              selectedStudent={selectedStudent}
+              addPayment={addPayment}
+            />
 
             {/* ====================================== */}
             {/* STUDENT DETAILS */}
@@ -1251,144 +1266,17 @@ function Students() {
             </div>
 
 
-          {/* ====================================== */}
-          {/* RECEIPT BUTTON */}
-          {/* ====================================== */}
+        
           
-          <div className="mb-4">
-          
-            <button
-              className="table-btn view-btn"
-              onClick={() => {
-          
-                if (
-          
-                  !selectedStudent.paymentHistory ||
-          
-                  selectedStudent.paymentHistory.length === 0
-          
-                ) {
-          
-                  alert(
-                    'No Payment History Found'
-                  )
-          
-                  return
-          
-                }
-          
-                // ======================================
-                // LAST PAYMENT INDEX
-                // ======================================
-          
-                const lastPaymentIndex =
-          
-                  selectedStudent.paymentHistory.length - 1
-          
-                // ======================================
-                // OPEN RECEIPT
-                // ======================================
-          
-                window.open(
-          
-                  `https://eduportal-backend-m5t1.onrender.com/api/receipt/${selectedStudent._id}/${lastPaymentIndex}`,
-          
-                  '_blank'
-          
-                )
-          
-              }}
-            >
-          
-              Generate Receipt
-          
-            </button>
-          
-          </div>
+          <ReceiptButton
+                selectedStudent={selectedStudent}
+          />
 
 
 
-            {/* ====================================== */}
-            {/* PAYMENT HISTORY */}
-            {/* ====================================== */}
-
-            <div className="mt-5">
-
-              <h4 className="mb-3">
-                Payment History
-              </h4>
-
-              <div className="table-responsive">
-
-                <table className="table applications-table">
-
-                  <thead>
-
-                    <tr>
-
-                      <th>Amount</th>
-
-                      <th>Method</th>
-
-                      <th>Date</th>
-
-                    </tr>
-
-                  </thead>
-
-                  <tbody>
-
-                    {selectedStudent.paymentHistory &&
-                    selectedStudent.paymentHistory.length > 0 ? (
-
-                      selectedStudent.paymentHistory.map(
-
-                        (payment, index) => (
-
-                          <tr key={index}>
-
-                            <td>
-                              ₹ {payment.amount}
-                            </td>
-
-                            <td>
-                              {payment.paymentMethod}
-                            </td>
-
-                            <td>
-                              {payment.paymentDate}
-                            </td>
-
-                          </tr>
-
-                        )
-
-                      )
-
-                    ) : (
-
-                      <tr>
-
-                        <td
-                          colSpan="3"
-                          className="text-center"
-                        >
-
-                          No Payment History
-
-                        </td>
-
-                      </tr>
-
-                    )}
-
-                  </tbody>
-
-                </table>
-
-              </div>
-
-            </div>
+            <PaymentHistory
+                selectedStudent={selectedStudent}
+            />
 
           </div>
 

@@ -13,6 +13,15 @@ import Feedbacks
 import Notices
   from '../pages/admin/Notices'
 
+import Course 
+  from '../pages/admin/Course'
+
+import Payments 
+  from '../pages/admin/Payments'
+
+import Receipt 
+  from '../pages/Receipt'
+
 import {
   BrowserRouter,
   Routes,
@@ -77,6 +86,8 @@ import Services from '../pages/Services'
 import Testimonials from '../pages/Testimonials'
 
 import Apply from '../pages/Apply'
+
+import ExistingStudent from '../pages/ExistingStudent'
 
 import NotFound from '../pages/NotFound'
 
@@ -186,6 +197,16 @@ function AppRoutes() {
             element={<Settings />}
           />
 
+          <Route
+            path="courses"
+            element={<Course />}
+          />
+
+          <Route
+            path="payments"
+            element={<Payments />}
+          />
+
         </Route>
 
         {/* ====================================== */}
@@ -257,7 +278,18 @@ function AppRoutes() {
             element={<Apply />}
           />
 
+          {/* Existing Student */}
+          <Route
+            path="existing-student"
+            element={<ExistingStudent />}
+          />
+
         </Route>
+
+        <Route
+          path="/receipt/:receiptNumber"
+          element={<Receipt />}
+        />
 
         {/* ====================================== */}
         {/* 404 PAGE */}

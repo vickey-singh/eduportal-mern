@@ -1,3 +1,5 @@
+import { useState } from 'react'
+
 import { Link, NavLink } from 'react-router-dom'
 
 // Import Navbar CSS
@@ -7,7 +9,8 @@ import '../assets/styles/navbar.css'
 import logo from '../assets/images/logo.jpeg'
 
 function Navbar() {
-    const closeNavbar = () => {
+  const [studentMenu, setStudentMenu] = useState(false)
+  const closeNavbar = () => {
   const navbar = document.getElementById('navbarNav')
 
   if (navbar.classList.contains('show')) {
@@ -115,6 +118,30 @@ function Navbar() {
                 Gallery
               </NavLink>
               </li>
+
+              <li className="nav-item">
+  <NavLink
+    to="/apply"
+    className={({ isActive }) =>
+      isActive ? 'nav-link active-nav' : 'nav-link'
+    }
+    onClick={closeNavbar}
+  >
+    New Admission
+  </NavLink>
+</li>
+
+<li className="nav-item">
+  <NavLink
+    to="/existing-student"
+    className={({ isActive }) =>
+      isActive ? 'nav-link active-nav' : 'nav-link'
+    }
+    onClick={closeNavbar}
+  >
+    Existing Student
+  </NavLink>
+</li>
 
               <li className="nav-item">
                 <NavLink

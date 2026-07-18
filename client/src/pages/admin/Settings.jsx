@@ -1,6 +1,9 @@
 import { useEffect, useState } from 'react'
 
-import axios from 'axios'
+import {
+  getSettings,
+  updateSettings,
+} from '../../services/settingsService'
 
 function Settings() {
 
@@ -55,10 +58,7 @@ function Settings() {
 
       try {
 
-        const response =
-          await axios.get(
-            'https://eduportal-backend-m5t1.onrender.com/api/settings'
-          )
+        const response = await getSettings()
 
         setFormData({
 
@@ -174,13 +174,7 @@ function Settings() {
 
         }
 
-        await axios.put(
-
-          'https://eduportal-backend-m5t1.onrender.com/api/settings',
-
-          data
-
-        )
+        await updateSettings(data)
 
         alert(
           'Settings Updated Successfully'

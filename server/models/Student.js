@@ -1,168 +1,177 @@
 const mongoose = require('mongoose')
 
-const paymentSchema =
-  new mongoose.Schema({
+// ======================================
+// PAYMENT SCHEMA
+// ======================================
 
-    amount: {
+const paymentSchema = new mongoose.Schema({
+  amount: {
+    type: Number,
+    required: true,
+  },
 
+  paymentMethod: {
+    type: String,
+    required: true,
+  },
+
+  paymentType: {
+    type: String,
+    enum: ['Full', 'Installment'],
+    default: 'Installment',
+  },
+
+  paymentMode: {
+    type: String,
+    enum: ['Offline', 'Online'],
+    default: 'Offline',
+  },
+
+  paymentStatus: {
+    type: String,
+    enum: ['Success', 'Pending', 'Failed'],
+    default: 'Success',
+  },
+
+  transactionId: {
+    type: String,
+    default: '',
+  },
+
+  orderId: {
+    type: String,
+    default: '',
+  },
+
+  paymentDate: {
+    type: String,
+    required: true,
+  },
+})
+
+// ======================================
+// STUDENT SCHEMA
+// ======================================
+
+const studentSchema = new mongoose.Schema(
+  {
+    // ======================================
+    // BASIC INFO
+    // ======================================
+
+    name: {
+      type: String,
+      required: true,
+      trim: true,
+    },
+
+    admissionNumber: {
+      type: String,
+      required: true,
+      unique: true,
+      trim: true,
+    },
+
+    course: {
+      type: String,
+      required: true,
+      trim: true,
+    },
+
+    contact: {
+      type: String,
+      required: true,
+      trim: true,
+    },
+
+    email: {
+      type: String,
+      required: true,
+      lowercase: true,
+      trim: true,
+    },
+
+    admissionDate: {
+      type: String,
+      required: true,
+    },
+
+    image: {
+      type: String,
+      default: '',
+    },
+
+    // ======================================
+    // ADMISSION
+    // ======================================
+
+    admissionType: {
+      type: String,
+      enum: ['Offline', 'Online'],
+      default: 'Offline',
+    },
+
+    // ======================================
+    // FEES
+    // ======================================
+
+    totalFees: {
       type: Number,
-
       required: true,
-
+      default: 0,
     },
 
-    paymentMethod: {
+        installmentAllowed: {
+      type: Boolean,
+      default: true,
+    },
+    
+    minimumInstallment: {
+      type: Number,
+      default: 0,
+    },
 
+    paidFees: {
+      type: Number,
+      required: true,
+      default: 0,
+    },
+
+    remainingFees: {
+      type: Number,
+      default: 0,
+    },
+
+    feesStatus: {
       type: String,
-
-      required: true,
-
+      enum: ['Pending', 'Partial', 'Paid'],
+      default: 'Pending',
     },
 
-    paymentDate: {
-
+    dueDate: {
       type: String,
-
       required: true,
-
     },
 
-  })
+    // ======================================
+    // LAST PAYMENT MODE
+    // ======================================
 
-const studentSchema =
-  new mongoose.Schema(
-
-    {
-
-      // ======================================
-      // BASIC INFO
-      // ======================================
-
-      name: {
-
-        type: String,
-
-        required: true,
-
-      },
-
-      admissionNumber: {
-
-        type: String,
-
-        required: true,
-
-      },
-
-      course: {
-
-        type: String,
-
-        required: true,
-
-      },
-
-      contact: {
-
-        type: String,
-
-        required: true,
-
-      },
-
-      email: {
-
-        type: String,
-
-        required: true,
-
-      },
-
-      admissionDate: {
-
-        type: String,
-
-        required: true,
-
-      },
-
-      image: {
-
-        type: String,
-
-        default: '',
-
-      },
-
-      // ======================================
-      // FEES MANAGEMENT
-      // ======================================
-
-      totalFees: {
-
-        type: Number,
-
-        required: true,
-
-      },
-
-      paidFees: {
-
-        type: Number,
-
-        required: true,
-
-      },
-
-      remainingFees: {
-
-        type: Number,
-
-        default: 0,
-
-      },
-
-      feesStatus: {
-
-        type: String,
-
-        default: 'Pending',
-
-      },
-
-      dueDate: {
-
-        type: String,
-
-        required: true,
-
-      },
-
-      // ======================================
-      // PAYMENT HISTORY
-      // ======================================
-
-      paymentHistory: [
-
-        paymentSchema
-
-      ],
-
+    paymentMode: {
+      type: String,
+      enum: ['Offline', 'Online'],
+      default: 'Offline',
     },
 
-    {
+    // ======================================
+    // PAYMENT HISTORY
+    // ======================================
 
-      timestamps: true,
+    paymentHistory: [paymentSchema],
+  },
+  {
+    timestamps: true,
+  }
+)
 
-    }
-
-  )
-
-module.exports =
-  mongoose.model(
-
-    'Student',
-
-    studentSchema
-
-  )
+module.exports = mongoose.model('Student', studentSchema)

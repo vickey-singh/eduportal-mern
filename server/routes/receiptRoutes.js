@@ -2,8 +2,17 @@ const express = require('express')
 
 const router = express.Router()
 
-const Student =
-  require('../models/Student')
+const Receipt = require('../models/Receipt')
+
+const Student = require('../models/Student')
+
+const Setting = require('../models/Setting')
+
+const {
+
+  getReceiptByNumber,
+
+} = require('../services/receiptService')
 
 // ======================================
 // RECEIPT PAGE
@@ -784,6 +793,63 @@ body {
           Server Error
         </h1>
       `)
+
+    }
+
+  }
+
+)
+
+// ======================================
+// GET RECEIPT BY RECEIPT NUMBER
+// ======================================
+
+
+router.get(
+
+  '/receipt/:receiptNumber',
+
+  async (req, res) => {
+
+    try {
+
+      const receipt = await getReceiptByNumber(
+
+        req.params.receiptNumber
+
+      )
+
+      if (!receipt) {
+
+        return res.status(404).json({
+
+          success: false,
+
+          message: 'Receipt Not Found',
+
+        })
+
+      }
+
+      res.status(200).json({
+
+        success: true,
+
+        receipt,
+
+      })
+
+    } catch (error) {
+
+      console.log(error)
+
+      res.status(500).json({
+
+        success: false,
+
+        message: 'Server Error',
+
+      })
 
     }
 

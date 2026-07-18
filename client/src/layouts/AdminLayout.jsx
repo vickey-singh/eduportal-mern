@@ -17,6 +17,8 @@ import {
   FaDownload,
   FaCog,
   FaBars,
+  FaBook,
+  FaMoneyBillWave,
 } from 'react-icons/fa'
 
 import '../assets/styles/admin-layout.css'
@@ -137,6 +139,46 @@ function AdminLayout() {
 
             </NavLink>
 
+          </li>
+
+          <li>
+
+            <NavLink
+              to="/admin/courses"
+              onClick={closeSidebar}
+              className={({ isActive }) =>
+                isActive
+                  ? 'admin-link active-admin-link'
+                  : 'admin-link'
+              }
+            >
+          
+              <FaBook />
+          
+              Courses
+          
+            </NavLink>
+          
+          </li>
+
+          <li>
+
+            <NavLink
+              to="/admin/payments"
+              onClick={closeSidebar}
+              className={({ isActive }) =>
+                isActive
+                  ? 'admin-link active-admin-link'
+                  : 'admin-link'
+              }
+            >
+          
+              <FaMoneyBillWave />
+          
+              Payments
+          
+            </NavLink>
+          
           </li>
 
           <li>

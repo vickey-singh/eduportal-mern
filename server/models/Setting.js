@@ -37,6 +37,14 @@ const settingSchema =
 
       },
 
+      website: {
+        
+          type: String,
+        
+          default: '',
+        
+        },
+
       address: {
 
         type: String,

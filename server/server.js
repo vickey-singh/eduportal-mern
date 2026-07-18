@@ -1,3 +1,20 @@
+require('dotenv').config()
+
+const express = require('express')
+const path = require('path')
+const cors = require('cors')
+
+const connectDB = require('./config/db')
+
+const paymentRoutes =
+  require('./routes/paymentRoutes')
+
+const testMailRoutes = 
+  require('./routes/testMailRoutes')
+
+const courseRoutes =
+  require('./routes/courseRoutes')
+
 const accountRoutes =
   require('./routes/accountRoutes')
 
@@ -40,16 +57,6 @@ const receiptRoutes =
 const noticeRoutes =
   require('./routes/noticeRoutes')
 
-const express = require('express')
-
-const path = require('path')
-
-const cors = require('cors')
-
-require('dotenv').config()
-
-const connectDB = require('./config/db')
-
 const applicationRoutes = require('./routes/applicationRoutes')
 
 // Create App
@@ -75,6 +82,8 @@ app.use(
 )
 
 // Routes
+app.use('/api', courseRoutes)
+
 app.use('/api', applicationRoutes)
 
 app.use('/api', adminRoutes)
@@ -94,6 +103,10 @@ app.use('/api', messageRoutes)
 app.use('/api', studentRoutes)
 
 app.use('/api', dashboardRoutes)
+
+app.use('/api', paymentRoutes)
+
+app.use('/api', testMailRoutes)
 
 app.use('/api', receiptRoutes)
 
