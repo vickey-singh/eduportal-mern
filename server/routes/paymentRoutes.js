@@ -170,11 +170,11 @@ router.post(
 
   async (req, res) => {
 
-    console.log('===== BODY =====')
-    console.log(req.body)
-    
-    console.log('===== FILE =====')
-    console.log(req.file)
+    console.log("========== VERIFY PAYMENT ==========");
+    console.log("BODY:", req.body);
+    console.log("PHONE:", req.body.phone);
+    console.log("EMAIL:", req.body.email);
+    console.log("FILE:", req.file);
 
     try {
 
