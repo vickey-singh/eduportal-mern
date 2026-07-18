@@ -501,30 +501,28 @@ router.post(
       
       await payment.save()
 
-      await sendAdmissionEmail({
+      try {
         
+        await sendAdmissionEmail({
           student,
-        
           receipt,
-        
           amountPaid: Number(req.body.amountPaid),
-
           transactionId: razorpay_payment_id,
-
-        
         })
-
+      } catch (err) {
+        console.error('Student email failed:', err.message)
+      }
+      
+      try {
         await sendAdminNotification({
-
           student,
-        
           receipt,
-        
           amountPaid: Number(req.body.amountPaid),
-
           transactionId: razorpay_payment_id,
-        
         })
+      } catch (err) {
+        console.error('Admin email failed:', err.message)
+      }
       
       res.status(200).json({
       
