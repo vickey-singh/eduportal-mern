@@ -170,6 +170,12 @@ router.post(
 
   async (req, res) => {
 
+    console.log('===== BODY =====')
+    console.log(req.body)
+    
+    console.log('===== FILE =====')
+    console.log(req.file)
+
     try {
 
       const {
