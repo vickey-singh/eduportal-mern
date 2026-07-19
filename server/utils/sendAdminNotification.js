@@ -14,7 +14,7 @@ const sendAdminNotification = async ({
 
   await transporter.sendMail({
 
-    from: `"EduPortal Notification" <${process.env.EMAIL_USER}>`,
+    from: `"Prerna Institute" <${process.env.SENDER_EMAIL}>`,
 
     to: process.env.EMAIL_USER,
 

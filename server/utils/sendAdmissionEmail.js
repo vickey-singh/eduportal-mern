@@ -14,7 +14,7 @@ const sendAdmissionEmail = async ({
 
   await transporter.sendMail({
 
-    from: `"Prerna Institute" <${process.env.EMAIL_USER}>`,
+    from: `"Prerna Institute" <${process.env.SENDER_EMAIL}>`,
 
     to: student.email,
 
