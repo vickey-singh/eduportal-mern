@@ -76,6 +76,12 @@ router.get(
       const receiptNumber =
         `REC-${Date.now()}`
 
+        const settings = await Setting.findOne()
+
+        const logo = settings?.logo
+          ? `https://eduportal-backend-m5t1.onrender.com${settings.logo}`
+          : ''
+
       // ======================================
       // HTML RESPONSE
       // ======================================
@@ -569,9 +575,9 @@ body {
         <div class="branding">
 
             <img
-                src="https://eduportal-backend-m5t1.onrender.com/uploads/logo.jpeg"
-                alt="Logo"
-                class="receipt-logo"
+              src="${logo}"
+              alt="Logo"
+              class="receipt-logo"
             />
 
             <div class="brand-text">
