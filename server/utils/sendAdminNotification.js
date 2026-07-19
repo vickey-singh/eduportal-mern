@@ -1,4 +1,4 @@
-const transporter = require('../config/mailer')
+const sendEmail = require('./sendEmail')
 
 const sendAdminNotification = async ({
   student,
@@ -12,9 +12,7 @@ const sendAdminNotification = async ({
       ? 'Full Payment'
       : 'Installment'
 
-  await transporter.sendMail({
-
-    from: `"Prerna Institute" <${process.env.SENDER_EMAIL}>`,
+  await sendEmail({
 
     to: process.env.SENDER_EMAIL,
 

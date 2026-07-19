@@ -1,15 +1,13 @@
 const express = require('express')
 const router = express.Router()
 
-const transporter = require('../config/mailer')
+const sendEmail = require('../utils/sendEmail')
 
 router.get('/test-email', async (req, res) => {
 
   try {
 
-    await transporter.sendMail({
-      
-      from: process.env.SENDER_EMAIL,
+    await sendEmail({
       
       to: process.env.SENDER_EMAIL,
 
