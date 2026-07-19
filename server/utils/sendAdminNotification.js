@@ -16,7 +16,7 @@ const sendAdminNotification = async ({
 
     from: `"Prerna Institute" <${process.env.SENDER_EMAIL}>`,
 
-    to: process.env.EMAIL_USER,
+    to: process.env.SENDER_EMAIL,
 
     subject: `📢 New Online Admission - ${student.name}`,
 

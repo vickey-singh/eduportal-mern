@@ -8,10 +8,10 @@ router.get('/test-email', async (req, res) => {
   try {
 
     await transporter.sendMail({
-
-      from: process.env.EMAIL_USER,
-
-      to: process.env.EMAIL_USER,
+      
+      from: process.env.SENDER_EMAIL,
+      
+      to: process.env.SENDER_EMAIL,
 
       subject: 'EduPortal Test Email',
 
