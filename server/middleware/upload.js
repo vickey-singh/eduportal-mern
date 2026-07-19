@@ -1,88 +1,56 @@
 const multer = require('multer')
+const fs = require('fs')
+const path = require('path')
 
+// Absolute uploads path
+const uploadDir = path.join(__dirname, '..', 'uploads')
 
-// ======================================
-// STORAGE CONFIG
-// ======================================
+// Create uploads folder if missing
+if (!fs.existsSync(uploadDir)) {
+  fs.mkdirSync(uploadDir, { recursive: true })
+}
 
 const storage = multer.diskStorage({
 
   destination: (req, file, cb) => {
 
-    cb(null, 'uploads')
+    cb(null, uploadDir)
 
   },
 
   filename: (req, file, cb) => {
 
     cb(
-
       null,
-
-      Date.now() +
-      '-' +
-      file.originalname
-
+      Date.now() + '-' + file.originalname
     )
 
   },
 
 })
 
+const fileFilter = (req, file, cb) => {
 
-// ======================================
-// FILE FILTER
-// ======================================
+  const allowedTypes = [
+    'image/jpeg',
+    'image/png',
+    'image/jpg',
+    'image/webp',
+  ]
 
-const fileFilter =
-  (req, file, cb) => {
+  if (allowedTypes.includes(file.mimetype)) {
 
-    const allowedTypes = [
+    cb(null, true)
 
-      'image/jpeg',
+  } else {
 
-      'image/png',
-
-      'image/jpg',
-
-      'image/webp',
-
-    ]
-
-    if (
-
-      allowedTypes.includes(
-        file.mimetype
-      )
-
-    ) {
-
-      cb(null, true)
-
-    } else {
-
-      cb(
-        new Error(
-          'Only Images Allowed'
-        ),
-        false
-      )
-
-    }
+    cb(new Error('Only Images Allowed'), false)
 
   }
 
+}
 
-// ======================================
-// MULTER CONFIG
-// ======================================
-
-const upload = multer({
-
+module.exports = multer({
   storage,
-
   fileFilter,
-
 })
-
-module.exports = upload
