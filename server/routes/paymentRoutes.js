@@ -501,45 +501,61 @@ router.post(
       
       await payment.save()
 
-      try {
-        
-        await sendAdmissionEmail({
-          student,
-          receipt,
-          amountPaid: Number(req.body.amountPaid),
-          transactionId: razorpay_payment_id,
-        })
-      } catch (err) {
-        console.error('Student email failed:', err.message)
-      }
-      
-      try {
-        await sendAdminNotification({
-          student,
-          receipt,
-          amountPaid: Number(req.body.amountPaid),
-          transactionId: razorpay_payment_id,
-        })
-      } catch (err) {
-        console.error('Admin email failed:', err.message)
-      }
+      // ===============================
+      // SEND RESPONSE FIRST
+      // ===============================
       
       res.status(200).json({
       
         success: true,
       
-        message:
-      
-          'Payment Verified Successfully',
+        message: 'Payment Verified Successfully',
       
         payment,
-
+      
         student,
-
+      
         receiptNumber: receipt.receiptNumber,
-
       
       })
+      
+      // ===============================
+      // SEND EMAILS IN BACKGROUND
+      // ===============================
+      
+      sendAdmissionEmail({
+      
+        student,
+      
+        receipt,
+      
+        amountPaid: Number(req.body.amountPaid),
+      
+        transactionId: razorpay_payment_id,
+      
+      }).catch((err) =>
+      
+        console.error('Student Email:', err)
+      
+      )
+      
+      sendAdminNotification({
+      
+        student,
+      
+        receipt,
+      
+        amountPaid: Number(req.body.amountPaid),
+      
+        transactionId: razorpay_payment_id,
+      
+      }).catch((err) =>
+      
+        console.error('Admin Email:', err)
+      
+      )
+
+
 
     } catch (error) {
 
