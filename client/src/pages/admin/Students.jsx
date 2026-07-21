@@ -331,7 +331,7 @@ function Students() {
           ])
 
           alert(
-            response.data.message
+            response.message || 'Student Added Successfully'
           )
 
         }
@@ -679,11 +679,11 @@ function Students() {
 
             </div>
 
-            {/* Paid Fees
+            {/* Paid Fees */}
             <div className="col-md-6 mb-3">
 
               <label className="form-label">
-                Registration Fee
+                Paid Fees
               </label>
 
               <input
@@ -691,10 +691,10 @@ function Students() {
                 className="form-control"
                 name="paidFees"
                 value={formData.paidFees}
-                readOnly
+                onChange={handleChange}
               />
 
-            </div> */}
+            </div>
 
             {/* Minimum Installment */}
             <div className="col-md-6 mb-3">
