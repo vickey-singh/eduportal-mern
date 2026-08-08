@@ -107,7 +107,7 @@ function CourseForm({
             />
           </div>
 
-          {/* Registration Fee
+          Registration Fee
           <div className="col-md-6 mb-3">
             <label className="form-label">
               Registration Fee
@@ -121,7 +121,7 @@ function CourseForm({
               value={formData.registrationFee}
               onChange={handleChange}
             />
-          </div> */}
+          </div>
 
           {/* Minimum Installment */}
           <div className="col-md-6 mb-3">

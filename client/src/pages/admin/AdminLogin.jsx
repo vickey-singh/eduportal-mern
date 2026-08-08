@@ -111,7 +111,7 @@ function AdminLogin() {
             </span>{' '}
 
             <span className="portal">
-              Institute
+              Institute Of Excellence
             </span>
 
           </h1>

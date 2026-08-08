@@ -172,7 +172,7 @@ color:#0d6efd;
 
 <div class="header">
 
-<h1>🎓 Prerna Institute</h1>
+<h1>🎓 Prerna Institute Of Excellence</h1>
 
 <p>Admission Confirmation</p>
 
@@ -314,7 +314,7 @@ Below are your admission details.
 
 <div class="footer">
 
-<strong>Prerna Institute</strong>
+<strong>Prerna Institute Of Excellence</strong>
 
 <br><br>
 

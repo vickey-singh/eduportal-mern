@@ -18,6 +18,8 @@ function Settings() {
 
       address: '',
 
+      googleMapUrl: '',
+
       instagram: '',
 
       youtube: '',
@@ -73,6 +75,9 @@ function Settings() {
 
           address:
             response.data.address || '',
+
+          googleMapUrl:
+            response.data.googleMapUrl || '',
 
           instagram:
             response.data.instagram || '',
@@ -143,6 +148,11 @@ function Settings() {
         data.append(
           'address',
           formData.address
+        )
+
+        data.append(
+          'googleMapUrl',
+          formData.googleMapUrl
         )
 
         data.append(
@@ -378,6 +388,19 @@ const handleAccountSubmit =
               onChange={handleChange}
             />
 
+          </div>
+
+          <div className="col-12 mb-3">
+          
+            <input
+              type="text"
+              className="form-control"
+              placeholder="Google Maps Embed URL"
+              name="googleMapUrl"
+              value={formData.googleMapUrl}
+              onChange={handleChange}
+            />
+          
           </div>
 
           <div className="col-md-6 mb-3">

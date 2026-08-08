@@ -62,7 +62,7 @@ router.post('/admin/login', async (req, res) => {
         id: admin._id,
       },
 
-      'Prerna Institute_secret_key',
+      'Prerna Institute Of Excellence_secret_key',
 
       {
         expiresIn: '7d',

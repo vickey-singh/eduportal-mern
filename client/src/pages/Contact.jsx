@@ -149,7 +149,7 @@ function Contact() {
 
             settings?.instituteName ||
 
-            'Prerna Institute'
+            'Prerna Institute Of Excellence'
 
           }
 
@@ -364,6 +364,49 @@ function Contact() {
 
           </div>
 
+        </div>
+
+        {/* ====================================== */}
+        {/* GOOGLE MAP */}
+        {/* ====================================== */}
+        
+        <div
+          className="contact-map mt-5"
+          data-aos="fade-up"
+        >
+        
+          <h4 className="fw-bold mb-3">
+            Find Us
+          </h4>
+        
+          <div className="map-container">
+        
+            {settings?.googleMapUrl ? (
+        
+              <iframe
+                title="Prerna Institute Location"
+                src={settings.googleMapUrl}
+                width="100%"
+                height="400"
+                style={{
+                  border: 0,
+                  borderRadius: '12px'
+                }}
+                allowFullScreen
+                loading="lazy"
+                referrerPolicy="no-referrer-when-downgrade"
+              ></iframe>
+        
+            ) : (
+        
+              <div className="text-center p-5 bg-light">
+                Google Map Location Not Available
+              </div>
+        
+            )}
+        
+          </div>
+        
         </div>
 
       </div>

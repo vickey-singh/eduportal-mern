@@ -196,12 +196,12 @@ const fetchSettings =
 
           </div>
 
-          {/* Why Prerna Institute */}
+          {/* Why Prerna Institute Of Excellence */}
 
           <div className="footer-column">
 
             <h4>
-              Why Prerna Institute?
+              Why Prerna Institute Of Excellence?
             </h4>
 
             <ul>
@@ -299,7 +299,7 @@ const fetchSettings =
             © 2026
 
             <span>
-              {' '}Prerna Institute
+              {' '}Prerna Institute Of Excellence
             </span>
 
             . All Rights Reserved.

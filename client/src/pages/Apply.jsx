@@ -116,7 +116,7 @@ const openRazorpay = (order) => {
 
     currency: order.currency,
 
-    name: 'Prerna Institute',
+    name: ' Prerna Institute Of Excellence',
 
     description: 'Admission Fee',
 
@@ -531,13 +531,13 @@ const openRazorpay = (order) => {
           
                     <div className="col-md-6">
           
-                      {/* <p>
+                      <p>
           
                         <strong>Registration Fee :</strong>
           
                         ₹ {selectedCourse.registrationFee}
           
-                      </p> */}
+                      </p>
           
                     </div>
           

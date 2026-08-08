@@ -10,6 +10,13 @@ import aboutImage from '../assets/images/about.jpeg'
 
 import principalImage from '../assets/images/principal.jpeg'
 
+import image1 from '../assets/images/1.JPG'
+import image2 from '../assets/images/2.JPG'
+import image3 from '../assets/images/3.JPG'
+
+import video1 from '../assets/images/vid1.MP4'
+import video2 from '../assets/images/vid2.MP4'
+
 // Import Home CSS
 import '../assets/styles/home.css'
 
@@ -26,11 +33,70 @@ function Home() {
 
     = useState([])
 
+    const [activeSlide,
+     setActiveSlide]
+
+     = useState(0)
+
+     const [videoMuted, 
+      setVideoMuted]
+      
+     = useState(true)
+
   useEffect(() => {
 
     fetchNotices()
 
   }, [])
+
+  useEffect(() => {
+
+  if (activeSlide === 3) {
+
+    const video =
+      document.getElementById(
+        'home-video-1'
+      )
+
+    if (video) {
+      video.currentTime = 0
+      video.play().catch(() => {})
+    }
+
+    return
+  }
+
+
+  if (activeSlide === 4) {
+
+    const video =
+      document.getElementById(
+        'home-video-2'
+      )
+
+    if (video) {
+      video.currentTime = 0
+      video.play().catch(() => {})
+    }
+
+    return
+  }
+
+
+  const timer = setTimeout(() => {
+
+    setActiveSlide(
+      activeSlide === 2
+        ? 3
+        : activeSlide + 1
+    )
+
+  }, 5000)
+
+
+  return () => clearTimeout(timer)
+
+}, [activeSlide])
 
 
   const pinnedNotice =
@@ -219,7 +285,7 @@ const importantNotice =
     
                 )
     
-            : '📢 Welcome To Prerna Institute'
+            : '📢 Welcome To Prerna Institute Of Excellence'
     
         }
     
@@ -244,7 +310,7 @@ const importantNotice =
              </span>{' '}
 
             <span className="hero-portal">
-             Institute
+             Institute Of Excellence
             </span>
          </h1>
 
@@ -300,31 +366,181 @@ const importantNotice =
       }
 
       {/* ✅ About Section */}
-      <section className="about-section"
-      data-aos="zoom-in"
+{/* ====================================== */}
+{/* HOME IMAGE / VIDEO SLIDER */}
+{/* ====================================== */}
+
+<section className="home-slider">
+
+  <div className="home-slider-container">
+
+    {/* Slide 1 */}
+
+    <div
+      className={`home-slide ${
+        activeSlide === 0 ? 'active' : ''
+      }`}
+    >
+      <img
+        src={image1}
+        alt="Prerna Institute Of Excellence"
+      />
+    </div>
+
+
+    {/* Slide 2 */}
+
+    <div
+      className={`home-slide ${
+        activeSlide === 1 ? 'active' : ''
+      }`}
+    >
+      <img
+        src={image2}
+        alt="Prerna Institute Of Excellence"
+      />
+    </div>
+
+
+    {/* Slide 3 */}
+
+    <div
+      className={`home-slide ${
+        activeSlide === 2 ? 'active' : ''
+      }`}
+    >
+      <img
+        src={image3}
+        alt="Prerna Institute Of Excellence"
+      />
+    </div>
+
+
+    {/* Video 1 */}
+
+    <div
+      className={`home-slide ${
+        activeSlide === 3 ? 'active' : ''
+      }`}
+    >
+      <video
+        id="home-video-1"
+        muted={videoMuted}
+        playsInline
+        preload="metadata"
+        onEnded={() => setActiveSlide(4)}
       >
-        <div className="content">
+        <source
+          src={video1}
+          type="video/mp4"
+        />
+      </video>
+      
+      <button
+        type="button"
+        className="video-sound-button"
+        onClick={() =>
+          setVideoMuted(!videoMuted)
+        }
+      >
+        {videoMuted ? '🔇' : '🔊'}
+      </button>
+    </div>
 
-          <h2>Welcome to Prerna Institute</h2>
 
-          <div className="animated-text">
+    {/* Video 2 */}
 
-            <p>
-              Empowering students with quality education for a brighter future.
-            </p>
+    <div
+      className={`home-slide ${
+        activeSlide === 4 ? 'active' : ''
+      }`}
+    >
+      <video
+        id="home-video-2"
+        muted={videoMuted}
+        playsInline
+        preload="metadata"
+        onEnded={() => setActiveSlide(0)}
+      >
+        <source
+          src={video2}
+          type="video/mp4"
+        />
+      </video>
+      
+      <button
+        type="button"
+        className="video-sound-button"
+        onClick={() =>
+          setVideoMuted(!videoMuted)
+        }
+      >
+        {videoMuted ? '🔇' : '🔊'}
+      </button>
+    </div>
 
-            <p>
-              Join us to learn, grow, and achieve your academic goals.
-            </p>
 
-            <p>
-              Innovative teaching methods combined with dedicated faculty.
-            </p>
+    {/* Previous Button */}
 
-          </div>
+    <button
+      type="button"
+      className="home-slider-prev"
+      onClick={() =>
+        setActiveSlide(
+          activeSlide === 0
+            ? 4
+            : activeSlide - 1
+        )
+      }
+    >
+      ❮
+    </button>
 
-        </div>
-      </section>
+
+    {/* Next Button */}
+
+    <button
+      type="button"
+      className="home-slider-next"
+      onClick={() =>
+        setActiveSlide(
+          activeSlide === 4
+            ? 0
+            : activeSlide + 1
+        )
+      }
+    >
+      ❯
+    </button>
+
+
+    {/* Indicators */}
+
+    <div className="home-slider-indicators">
+
+      {[0, 1, 2, 3, 4].map((index) => (
+
+        <button
+          key={index}
+          type="button"
+          className={
+            activeSlide === index
+              ? 'active'
+              : ''
+          }
+          onClick={() =>
+            setActiveSlide(index)
+          }
+          aria-label={`Slide ${index + 1}`}
+        />
+
+      ))}
+
+    </div>
+
+  </div>
+
+</section>
 
 
       {/* ====================================== */}
@@ -346,7 +562,7 @@ const importantNotice =
 
         <img
           src={aboutImage}
-          alt="About Prerna Institute"
+          alt="About Prerna Institute Of Excellence"
           className="img-fluid rounded shadow"
         />
 
@@ -359,11 +575,11 @@ const importantNotice =
         
 
         <h2 className="fw-bold mt-2 mb-4">
-          About Prerna Institute Institute
+          About Prerna Institute Of Excellence
         </h2>
 
         <p>
-          Prerna Institute Institute is a trusted educational institution dedicated
+          Prerna Institute Of Excellence Institute is a trusted educational institution dedicated
           to providing quality education and career-oriented learning for
           students. Our mission is to empower learners with knowledge,
           confidence, and practical skills that help them succeed in academics,
@@ -379,7 +595,7 @@ const importantNotice =
         </p>
 
         <p>
-          At Prerna Institute, we continuously strive to maintain the highest academic
+          At Prerna Institute Of Excellence, we continuously strive to maintain the highest academic
           standards through regular assessments, personalized mentoring, doubt
           clearing sessions, digital learning resources, and career guidance.
           Thousands of students have trusted us to shape their future, and we
@@ -468,11 +684,11 @@ const importantNotice =
               />
       
               <h4 className="mt-4 mb-1">
-                Dr. Rajesh Kumar
+                Vikash Upadhyay
               </h4>
       
               <p className="text-muted">
-                Principal
+                Director
               </p>
       
             </div>
@@ -482,11 +698,11 @@ const importantNotice =
             <div className="col-lg-8">
       
               <h2 className="mb-4">
-                Principal's Message
+                Director's Message
               </h2>
       
               <p>
-                At Prerna Institute, we don't just teach—we inspire. We believe that every
+                At Prerna Institute Of Excellence, we don't just teach—we inspire. We believe that every
                 student has the potential to achieve excellence when guided with the
                 right knowledge, discipline, and encouragement.
               </p>
@@ -550,10 +766,10 @@ const importantNotice =
         <div className="container text-center">
 
           <h2 className="mb-4">
-            Why Choose Prerna Institute?
+            Why Choose Prerna Institute Of Excellence?
           </h2>
           <p className="mb-5">
-           Prerna Institute Institute is committed to delivering quality
+           Prerna Institute Of Excellence is committed to delivering quality
            education through modern infrastructure, experienced
            faculty, practical learning, and personalized guidance.
            We ensure every student receives the attention and

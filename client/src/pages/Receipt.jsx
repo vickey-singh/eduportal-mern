@@ -157,7 +157,7 @@ const downloadPDF = async () => {
         
               <h2 className="receipt-title">
         
-                {settings?.instituteName || 'Prerna Institute'}
+                {settings?.instituteName || 'Prerna Institute Of Excellence'}
         
               </h2>
         

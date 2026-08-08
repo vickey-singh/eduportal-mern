@@ -100,6 +100,9 @@ router.put(
       settings.address =
         req.body.address
 
+      settings.googleMapUrl =
+        req.body.googleMapUrl
+
       settings.instagram =
         req.body.instagram
 

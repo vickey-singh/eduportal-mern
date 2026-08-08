@@ -89,7 +89,7 @@ function ExistingStudent() {
 
     currency: order.currency,
 
-    name: 'Prerna Institute',
+    name: 'Prerna Institute Of Excellence',
 
     description: 'Remaining Fee Payment',
 

@@ -9,7 +9,7 @@ const settingSchema =
 
         type: String,
 
-        default: 'Prerna Institute',
+        default: 'Prerna Institute Of Excellence',
 
       },
 
@@ -51,6 +51,14 @@ const settingSchema =
 
         default: '',
 
+      },
+
+      googleMapUrl: {
+
+        type: String,
+      
+        default: '',
+      
       },
 
       instagram: {

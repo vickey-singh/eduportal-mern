@@ -102,7 +102,7 @@ router.get(
 />
 
 <title>
-Prerna Institute Receipt
+Prerna Institute Of Excellence Receipt
 </title>
 
 <style>
@@ -587,7 +587,7 @@ body {
                     <span class="edu">
                         Prerna
                     </span><span class="portal">
-                        Institute
+                        Institute Of Excellence
                     </span>
 
                 </h1>
@@ -778,7 +778,7 @@ body {
 
         Thank you for your payment.<br/>
 
-        Prerna Institute Institute Management System
+        Prerna Institute Of Excellence Management System
 
     </div>
 

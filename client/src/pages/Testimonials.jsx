@@ -282,7 +282,7 @@ function Testimonials() {
 
                   Our students consistently achieve
                   excellent results and recommend
-                  Prerna Institute for quality education,
+                  Prerna Institute Of Excellence for quality education,
                   guidance, and mentorship.
 
                 </p>

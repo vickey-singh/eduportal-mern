@@ -22,7 +22,7 @@ function Services() {
             </h2>
 
             <p className="text-muted mx-auto" style={{ maxWidth: "850px" }}>
-             At Prerna Institute Institute, we are committed to providing quality education,
+             At Prerna Institute Of Excellence, we are committed to providing quality education,
              innovative teaching methodologies, and comprehensive academic support that
              empower students to achieve excellence. Our experienced faculty members,
              modern learning environment, and student-centric approach ensure that every
@@ -208,7 +208,7 @@ function Services() {
               className="text-muted mx-auto mb-5"
               style={{ maxWidth: "850px" }}
             >
-              Students choose Prerna Institute because of our commitment to quality education,
+              Students choose Prerna Institute Of Excellence because of our commitment to quality education,
               experienced faculty, personalized mentoring, and a positive learning
               environment. We encourage innovation, discipline, and confidence, helping
               every student achieve academic excellence and prepare for future success.
@@ -320,7 +320,7 @@ function Services() {
          </h2>
          
          <p className="mt-3 mx-auto" style={{ maxWidth: "750px" }}>
-           Join thousands of successful students who have trusted Prerna Institute Institute
+           Join thousands of successful students who have trusted Prerna Institute Of Excellence
            for quality education, expert guidance, and career-focused learning.
            Admissions are now open for the new academic session. Take the first step
            toward a brighter future today.

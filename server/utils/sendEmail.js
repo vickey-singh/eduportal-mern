@@ -10,7 +10,7 @@ const sendEmail = async ({
       'https://api.brevo.com/v3/smtp/email',
       {
         sender: {
-          name: 'Prerna Institute',
+          name: 'Prerna Institute Of Excellence',
           email: process.env.SENDER_EMAIL,
         },
         to: [

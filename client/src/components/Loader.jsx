@@ -30,7 +30,7 @@ function Loader() {
         </span>{' '}
 
         <span className="loader-portal">
-          Institute
+          Institute Of Excellence
         </span>
 
       </h1>
