@@ -107,7 +107,7 @@ function CourseForm({
             />
           </div>
 
-          Registration Fee
+          {/* Registration Fee */}
           <div className="col-md-6 mb-3">
             <label className="form-label">
               Registration Fee
@@ -123,19 +123,79 @@ function CourseForm({
             />
           </div>
 
-          {/* Minimum Installment */}
+          {/* Monthly Installment */}
           <div className="col-md-6 mb-3">
+          
             <label className="form-label">
-              Minimum Installment
+              Monthly Installment
             </label>
-
+          
             <input
               type="number"
               className="form-control"
-              placeholder="5000"name="minimumInstallment"
-              value={formData.minimumInstallment}
+              placeholder="5000"
+              name="monthlyInstallment"
+              value={formData.monthlyInstallment}
               onChange={handleChange}
             />
+          
+          </div>
+          
+          
+          {/* 3 Month Installment */}
+          <div className="col-md-6 mb-3">
+          
+            <label className="form-label">
+              3 Month Installment
+            </label>
+          
+            <input
+              type="number"
+              className="form-control"
+              placeholder="12000"
+              name="threeMonthInstallment"
+              value={formData.threeMonthInstallment}
+              onChange={handleChange}
+            />
+          
+          </div>
+          
+          
+          {/* 6 Month Installment */}
+          <div className="col-md-6 mb-3">
+          
+            <label className="form-label">
+              6 Month Installment
+            </label>
+          
+            <input
+              type="number"
+              className="form-control"
+              placeholder="20000"
+              name="sixMonthInstallment"
+              value={formData.sixMonthInstallment}
+              onChange={handleChange}
+            />
+          
+          </div>
+          
+          
+          {/* Full Payment Fee */}
+          <div className="col-md-6 mb-3">
+          
+            <label className="form-label">
+              Full Payment Fee
+            </label>
+          
+            <input
+              type="number"
+              className="form-control"
+              placeholder="28000"
+              name="fullPaymentFee"
+              value={formData.fullPaymentFee}
+              onChange={handleChange}
+            />
+          
           </div>
 
         {/* Installment */}

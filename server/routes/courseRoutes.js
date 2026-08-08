@@ -20,7 +20,10 @@ router.post('/courses', async (req, res) => {
       totalFee,
       registrationFee,
       installmentAllowed,
-      minimumInstallment,
+      monthlyInstallment,
+      threeMonthInstallment,
+      sixMonthInstallment,
+      fullPaymentFee,
       status,
     } = req.body
 
@@ -45,7 +48,10 @@ router.post('/courses', async (req, res) => {
       totalFee,
       registrationFee,
       installmentAllowed,
-      minimumInstallment,
+      monthlyInstallment,
+      threeMonthInstallment,
+      sixMonthInstallment,
+      fullPaymentFee,
       status,
     })
 

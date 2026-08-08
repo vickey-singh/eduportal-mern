@@ -30,10 +30,19 @@ function CourseTable({
 
     installmentAllowed:
       course.installmentAllowed,
-
-    minimumInstallment:
-      course.minimumInstallment,
-
+    
+    monthlyInstallment:
+      course.monthlyInstallment || '',
+    
+    threeMonthInstallment:
+      course.threeMonthInstallment || '',
+    
+    sixMonthInstallment:
+      course.sixMonthInstallment || '',
+    
+    fullPaymentFee:
+      course.fullPaymentFee || '',
+    
     status: course.status,
 
   })
@@ -66,14 +75,22 @@ function CourseTable({
 
             <th>Duration</th>
 
-            <th>Total Fee</th>            
+            <th>Total Fee</th>
 
-            <th>Minimum Installment</th>
-
+            <th>Registration Fee</th>
+            
+            <th>Monthly</th>
+            
+            <th>3 Months</th>
+            
+            <th>6 Months</th>
+            
+            <th>Full Payment</th>
+            
             <th>Installment</th>
-
+            
             <th>Status</th>
-
+            
             <th>Action</th>
 
           </tr>
@@ -87,7 +104,7 @@ function CourseTable({
             <tr>
         
               <td
-                colSpan="9"
+                colSpan="12"
                 className="text-center"
               >
         
@@ -109,18 +126,34 @@ function CourseTable({
         
                 <td>{course.duration}</td>
         
-                <td>₹ {course.totalFee}</td>
-        
-                <td>₹ {course.registrationFee}</td>
-        
-                <td>₹ {course.minimumInstallment}</td>
-        
                 <td>
-        
+                  ₹ {course.totalFee}
+                </td>
+                
+                <td>
+                  ₹ {course.registrationFee}
+                </td>
+                
+                <td>
+                  ₹ {course.monthlyInstallment || 0}
+                </td>
+                
+                <td>
+                  ₹ {course.threeMonthInstallment || 0}
+                </td>
+                
+                <td>
+                  ₹ {course.sixMonthInstallment || 0}
+                </td>
+                
+                <td>
+                  ₹ {course.fullPaymentFee || 0}
+                </td>
+                
+                <td>
                   {course.installmentAllowed
                     ? 'Yes'
                     : 'No'}
-        
                 </td>
         
                 <td>

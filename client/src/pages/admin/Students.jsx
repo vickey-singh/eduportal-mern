@@ -674,7 +674,7 @@ function Students() {
                 className="form-control"
                 name="totalFees"
                 value={formData.totalFees}
-                readOnly
+                onChange={handleChange}
               />
 
             </div>
@@ -707,7 +707,7 @@ function Students() {
                 type="number"
                 className="form-control"
                 value={formData.minimumInstallment || ''}
-                readOnly
+                onChange={handleChange}
               />
             
             </div>

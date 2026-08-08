@@ -25,7 +25,10 @@ function Course() {
     totalFee: '',
     registrationFee: '',
     installmentAllowed: true,
-    minimumInstallment: '',
+    monthlyInstallment: '',
+    threeMonthInstallment: '',
+    sixMonthInstallment: '',
+    fullPaymentFee: '',
     status: 'Active',
 
   })
@@ -98,9 +101,11 @@ function Course() {
         totalFee: '',
         registrationFee: '',
         installmentAllowed: true,
-        minimumInstallment: '',
+        monthlyInstallment: '',
+        threeMonthInstallment: '',
+        sixMonthInstallment: '',
+        fullPaymentFee: '',
         status: 'Active',
-
       })
 
     } catch (error) {

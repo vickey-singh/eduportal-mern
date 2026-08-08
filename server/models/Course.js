@@ -42,7 +42,22 @@ const courseSchema = new mongoose.Schema(
       default: true,
     },
 
-    minimumInstallment: {
+    monthlyInstallment: {
+      type: Number,
+      default: 0,
+    },
+
+    threeMonthInstallment: {
+      type: Number,
+      default: 0,
+    },
+
+    sixMonthInstallment: {
+      type: Number,
+      default: 0,
+    },
+
+    fullPaymentFee: {
       type: Number,
       default: 0,
     },
