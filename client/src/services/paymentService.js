@@ -93,3 +93,30 @@ export const getPayments = async () => {
   return response.data
 
 }
+
+// ======================================
+// GET PAYMENT REVENUE
+// ======================================
+
+export const getPaymentRevenue = async () => {
+
+  const response = await axios.get(
+    `${API_URL}/payments/revenue`
+  )
+
+  return response.data
+}
+
+// ======================================
+// GET REVENUE REPORT
+// ======================================
+
+export const getRevenueReport = async () => {
+
+  const response = await axios.get(
+    `${API_URL}/payments/revenue-report`
+  )
+
+  return response.data
+
+}

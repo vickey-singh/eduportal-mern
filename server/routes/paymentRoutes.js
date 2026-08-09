@@ -585,10 +585,9 @@ router.post(
       // IMAGE
       // ==================================
 
-      const image =
-        req.file
-          ? `/uploads/${req.file.filename}`
-          : ''
+      const image = req.file
+        ? req.file.path
+        : ''
 
 
       // ==================================
@@ -2012,6 +2011,554 @@ router.post(
 
 )
 
+// ======================================
+// GET PAYMENT REVENUE
+// ======================================
+
+router.get(
+  '/payments/revenue',
+  async (req, res) => {
+
+    try {
+
+      // ==================================
+      // TOTAL REVENUE
+      // ==================================
+
+      const totalRevenueResult =
+        await Payment.aggregate([
+
+          {
+            $match: {
+              paymentStatus: 'Success',
+            },
+          },
+
+          {
+            $group: {
+              _id: null,
+
+              totalRevenue: {
+                $sum: '$amountPaid',
+              },
+
+              totalPayments: {
+                $sum: 1,
+              },
+
+            },
+          },
+
+        ])
+
+
+      const totalRevenue =
+        totalRevenueResult[0]?.totalRevenue || 0
+
+      const totalPayments =
+        totalRevenueResult[0]?.totalPayments || 0
+
+
+      // ==================================
+      // TODAY REVENUE
+      // INDIA TIMEZONE
+      // ==================================
+
+      const todayRevenueResult =
+        await Payment.aggregate([
+
+          {
+            $match: {
+              paymentStatus: 'Success',
+            },
+          },
+
+          {
+            $addFields: {
+
+              paymentDateIST: {
+
+                $dateToString: {
+
+                  format: '%Y-%m-%d',
+
+                  date: '$createdAt',
+
+                  timezone: 'Asia/Kolkata',
+
+                },
+
+              },
+
+            },
+          },
+
+          {
+            $match: {
+
+              paymentDateIST:
+                new Date()
+                  .toLocaleDateString(
+                    'en-CA',
+                    {
+                      timeZone:
+                        'Asia/Kolkata',
+                    }
+                  ),
+
+            },
+
+          },
+
+          {
+            $group: {
+
+              _id: null,
+
+              revenue: {
+                $sum: '$amountPaid',
+              },
+
+              payments: {
+                $sum: 1,
+              },
+
+            },
+
+          },
+
+        ])
+
+
+      const todayRevenue =
+        todayRevenueResult[0]?.revenue || 0
+
+      const todayPayments =
+        todayRevenueResult[0]?.payments || 0
+
+
+      // ==================================
+      // THIS MONTH REVENUE
+      // ==================================
+
+      const currentMonth =
+        new Date()
+          .toLocaleDateString(
+            'en-CA',
+            {
+              timeZone:
+                'Asia/Kolkata',
+            }
+          )
+          .substring(0, 7)
+
+
+      const monthRevenueResult =
+        await Payment.aggregate([
+
+          {
+            $match: {
+              paymentStatus: 'Success',
+            },
+          },
+
+          {
+            $addFields: {
+
+              paymentMonthIST: {
+
+                $dateToString: {
+
+                  format: '%Y-%m',
+
+                  date: '$createdAt',
+
+                  timezone:
+                    'Asia/Kolkata',
+
+                },
+
+              },
+
+            },
+
+          },
+
+          {
+            $match: {
+
+              paymentMonthIST:
+                currentMonth,
+
+            },
+
+          },
+
+          {
+            $group: {
+
+              _id: null,
+
+              revenue: {
+                $sum: '$amountPaid',
+              },
+
+              payments: {
+                $sum: 1,
+              },
+
+            },
+
+          },
+
+        ])
+
+
+      const monthlyRevenue =
+        monthRevenueResult[0]?.revenue || 0
+
+      const monthlyPayments =
+        monthRevenueResult[0]?.payments || 0
+
+
+      // ==================================
+      // REGISTRATION REVENUE
+      // ==================================
+
+      const registrationResult =
+        await Payment.aggregate([
+
+          {
+            $match: {
+
+              paymentStatus:
+                'Success',
+
+              paymentCategory:
+                'Registration',
+
+            },
+          },
+
+          {
+            $group: {
+
+              _id: null,
+
+              revenue: {
+                $sum: '$amountPaid',
+              },
+
+            },
+
+          },
+
+        ])
+
+
+      const registrationRevenue =
+        registrationResult[0]?.revenue || 0
+
+
+      // ==================================
+      // COURSE FEE REVENUE
+      // ==================================
+
+      const courseFeeResult =
+        await Payment.aggregate([
+
+          {
+            $match: {
+
+              paymentStatus:
+                'Success',
+
+              paymentCategory:
+                'CourseFee',
+
+            },
+          },
+
+          {
+            $group: {
+
+              _id: null,
+
+              revenue: {
+                $sum: '$amountPaid',
+              },
+
+            },
+
+          },
+
+        ])
+
+
+      const courseFeeRevenue =
+        courseFeeResult[0]?.revenue || 0
+
+
+      // ==================================
+      // ONLINE REVENUE
+      // ==================================
+
+      const onlineRevenueResult =
+        await Payment.aggregate([
+
+          {
+            $match: {
+
+              paymentStatus:
+                'Success',
+
+              paymentMethod:
+                'Online',
+
+            },
+          },
+
+          {
+            $group: {
+
+              _id: null,
+
+              revenue: {
+                $sum: '$amountPaid',
+              },
+
+            },
+
+          },
+
+        ])
+
+
+      const onlineRevenue =
+        onlineRevenueResult[0]?.revenue || 0
+
+
+      // ==================================
+      // RESPONSE
+      // ==================================
+
+      res.status(200).json({
+
+        success: true,
+
+        revenue: {
+
+          totalRevenue,
+
+          todayRevenue,
+
+          monthlyRevenue,
+
+          totalPayments,
+
+          todayPayments,
+
+          monthlyPayments,
+
+          registrationRevenue,
+
+          courseFeeRevenue,
+
+          onlineRevenue,
+
+        },
+
+      })
+
+    }
+
+    catch (error) {
+
+      console.log(
+        'Revenue Error:',
+        error
+      )
+
+      res.status(500).json({
+
+        success: false,
+
+        message:
+          'Unable to fetch revenue data',
+
+      })
+
+    }
+
+  }
+)
+
+// ======================================
+// GET REVENUE REPORT
+// ======================================
+
+router.get(
+  '/payments/revenue-report',
+  async (req, res) => {
+
+    try {
+
+      // ==================================
+      // DAILY REVENUE - LAST 30 DAYS
+      // ==================================
+
+      const dailyRevenue =
+        await Payment.aggregate([
+
+          {
+            $match: {
+              paymentStatus: 'Success',
+            },
+          },
+
+          {
+            $group: {
+
+              _id: {
+
+                year: {
+                  $year: {
+                    date: '$createdAt',
+                    timezone: 'Asia/Kolkata',
+                  },
+                },
+
+                month: {
+                  $month: {
+                    date: '$createdAt',
+                    timezone: 'Asia/Kolkata',
+                  },
+                },
+
+                day: {
+                  $dayOfMonth: {
+                    date: '$createdAt',
+                    timezone: 'Asia/Kolkata',
+                  },
+                },
+
+              },
+
+              revenue: {
+                $sum: '$amountPaid',
+              },
+
+              payments: {
+                $sum: 1,
+              },
+
+            },
+
+          },
+
+          {
+            $sort: {
+              '_id.year': 1,
+              '_id.month': 1,
+              '_id.day': 1,
+            },
+          },
+
+        ])
+
+
+      // ==================================
+      // MONTHLY REVENUE
+      // ==================================
+
+      const monthlyRevenue =
+        await Payment.aggregate([
+
+          {
+            $match: {
+              paymentStatus: 'Success',
+            },
+          },
+
+          {
+            $group: {
+
+              _id: {
+
+                year: {
+                  $year: {
+                    date: '$createdAt',
+                    timezone: 'Asia/Kolkata',
+                  },
+                },
+
+                month: {
+                  $month: {
+                    date: '$createdAt',
+                    timezone: 'Asia/Kolkata',
+                  },
+                },
+
+              },
+
+              revenue: {
+                $sum: '$amountPaid',
+              },
+
+              payments: {
+                $sum: 1,
+              },
+
+            },
+
+          },
+
+          {
+            $sort: {
+              '_id.year': 1,
+              '_id.month': 1,
+            },
+          },
+
+        ])
+
+
+      // ==================================
+      // RESPONSE
+      // ==================================
+
+      res.status(200).json({
+
+        success: true,
+
+        dailyRevenue,
+
+        monthlyRevenue,
+
+      })
+
+    }
+
+    catch (error) {
+
+      console.log(
+        'Revenue Report Error:',
+        error
+      )
+
+      res.status(500).json({
+
+        success: false,
+
+        message:
+          'Unable to fetch revenue report',
+
+      })
+
+    }
+
+  }
+)
 
 // ======================================
 // EXPORT ROUTER
