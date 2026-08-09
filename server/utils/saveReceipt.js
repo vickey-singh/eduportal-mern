@@ -1,104 +1,217 @@
 const Receipt = require('../models/Receipt')
-const generateReceiptNumber = require('./generateReceiptNumber')
+
+const generateReceiptNumber =
+  require('./generateReceiptNumber')
+
 
 const saveReceipt = async ({
+
   student,
+
   amountPaid,
+
   paymentType,
+
   paymentCategory,
+
   paymentPlan,
+
+  paymentMethod,
+
   transactionId,
+
   orderId,
+
 }) => {
+
+
+  // ======================================
+  // GENERATE RECEIPT NUMBER
+  // ======================================
 
   const receiptNumber =
     await generateReceiptNumber()
 
-  const receipt = await Receipt.create({
 
-    // ======================================
-    // RECEIPT
-    // ======================================
+  // ======================================
+  // GET MINIMUM INSTALLMENT
+  // ======================================
 
-    receiptNumber,
+  let minimumInstallment = 0
 
-    // ======================================
-    // STUDENT
-    // ======================================
 
-    admissionNumber:
-      student.admissionNumber,
+  if (
+    paymentPlan === 'monthly'
+  ) {
 
-    studentName:
-      student.name,
+    minimumInstallment =
+      Number(
+        student.monthlyInstallment || 0
+      )
 
-    studentPhone:
-      student.contact,
+  }
 
-    studentEmail:
-      student.email,
+  else if (
+    paymentPlan === 'three_month'
+  ) {
 
-    course:
-      student.course,
+    minimumInstallment =
+      Number(
+        student.threeMonthInstallment || 0
+      )
 
-    // ======================================
-    // FEE
-    // ======================================
+  }
 
-    courseFee:
-      student.totalFees,
+  else if (
+    paymentPlan === 'six_month'
+  ) {
 
-    registrationFee:
-      student.registrationFee,
+    minimumInstallment =
+      Number(
+        student.sixMonthInstallment || 0
+      )
 
-    // ======================================
-    // PAYMENT CATEGORY
-    // ======================================
+  }
 
-    paymentCategory,
+  else if (
+    paymentPlan === 'full'
+  ) {
 
-    // ======================================
-    // PAYMENT PLAN
-    // ======================================
+    minimumInstallment =
+      Number(
+        student.fullPaymentFee ||
+        student.remainingFees ||
+        0
+      )
 
-    paymentPlan:
-      paymentPlan || '',
+  }
 
-    // ======================================
-    // PAYMENT TYPE
-    // ======================================
 
-    paymentType,
+  // ======================================
+  // CREATE RECEIPT
+  // ======================================
 
-    // ======================================
-    // PAYMENT AMOUNT
-    // ======================================
+  const receipt =
+    await Receipt.create({
 
-    amountPaid,
+      // ==================================
+      // RECEIPT
+      // ==================================
 
-    totalPaid:
-      student.paidFees,
+      receiptNumber,
 
-    remainingFee:
-      student.remainingFees,
 
-    // ======================================
-    // PAYMENT DETAILS
-    // ======================================
+      // ==================================
+      // STUDENT
+      // ==================================
 
-    paymentMethod:
-      'Razorpay',
+      admissionNumber:
+        student.admissionNumber,
 
-    transactionId,
+      studentName:
+        student.name,
 
-    orderId,
+      studentPhone:
+        student.contact,
 
-    paymentStatus:
-      'Success',
+      studentEmail:
+        student.email,
 
-  })
+      course:
+        student.course,
+
+
+      // ==================================
+      // FEE DETAILS
+      // ==================================
+
+      courseFee:
+        Number(
+          student.totalFees || 0
+        ),
+
+      registrationFee:
+        Number(
+          student.registrationFee || 0
+        ),
+
+      registrationFeePaid:
+        Number(
+          student.registrationFeePaid || 0
+        ),
+
+
+      // ==================================
+      // PAYMENT CATEGORY
+      // ==================================
+
+      paymentCategory,
+
+
+      // ==================================
+      // PAYMENT PLAN
+      // ==================================
+
+      paymentPlan:
+        paymentPlan || '',
+
+
+      // ==================================
+      // MINIMUM INSTALLMENT
+      // ==================================
+
+      minimumInstallment,
+
+
+      // ==================================
+      // PAYMENT TYPE
+      // ==================================
+
+      paymentType,
+
+
+      // ==================================
+      // PAYMENT AMOUNT
+      // ==================================
+
+      amountPaid:
+        Number(
+          amountPaid || 0
+        ),
+
+      totalPaid:
+        Number(
+          student.paidFees || 0
+        ),
+
+      remainingFee:
+        Number(
+          student.remainingFees || 0
+        ),
+
+
+      // ==================================
+      // PAYMENT DETAILS
+      // ==================================
+
+      paymentMethod:
+        paymentMethod || 'Razorpay',
+
+      transactionId:
+        transactionId || '',
+
+      orderId:
+        orderId || '',
+
+      paymentStatus:
+        'Success',
+
+    })
+
 
   return receipt
+
 }
+
 
 module.exports = saveReceipt

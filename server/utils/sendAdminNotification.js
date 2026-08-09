@@ -1,313 +1,747 @@
 const sendEmail = require('./sendEmail')
 
+// ======================================
+// PAYMENT PLAN LABEL
+// ======================================
+
+const getPaymentPlanLabel = (paymentPlan) => {
+
+  switch (paymentPlan) {
+
+    case 'monthly':
+      return 'Monthly'
+
+    case 'three_month':
+      return 'Every 3 Months'
+
+    case 'six_month':
+      return 'Every 6 Months'
+
+    case 'full':
+      return 'Full Payment'
+
+    default:
+      return 'Not Applicable'
+
+  }
+
+}
+
+
+// ======================================
+// PAYMENT CATEGORY LABEL
+// ======================================
+
+const getPaymentCategoryLabel = (
+  paymentCategory
+) => {
+
+  switch (paymentCategory) {
+
+    case 'Registration':
+      return 'Registration Fee'
+
+    case 'CourseFee':
+      return 'Course Fee'
+
+    default:
+      return '-'
+
+  }
+
+}
+
+
+// ======================================
+// SEND ADMIN / TEACHER EMAIL
+// ======================================
+
 const sendAdminNotification = async ({
+
   student,
+
   receipt,
+
   amountPaid,
+
   transactionId,
+
 }) => {
 
+  // ======================================
+  // PAYMENT INFORMATION
+  // ======================================
+
+  const paymentCategory =
+    getPaymentCategoryLabel(
+      receipt.paymentCategory
+    )
+
+  const paymentPlan =
+    getPaymentPlanLabel(
+      receipt.paymentPlan
+    )
+
   const paymentType =
-    student.remainingFees === 0
-      ? 'Full Payment'
-      : 'Installment'
+    receipt.paymentType || '-'
+
+  const paymentMethod =
+    receipt.paymentMethod || '-'
+
+
+  // ======================================
+  // SEND EMAIL
+  // ======================================
 
   await sendEmail({
 
     to: process.env.SENDER_EMAIL,
 
-    subject: `📢 New Online Admission - ${student.name}`,
+    subject:
+      `📢 New Online Admission - ${student.name}`,
 
     html: `
 
-<!DOCTYPE html>
+      <div
+        style="
+          font-family: Arial, Helvetica, sans-serif;
+          max-width: 750px;
+          margin: 0 auto;
+          padding: 30px;
+          color: #333;
+          background-color: #ffffff;
+        "
+      >
+
+        <!-- ================================= -->
+        <!-- HEADER -->
+        <!-- ================================= -->
+
+        <div
+          style="
+            text-align: center;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #00adb5;
+          "
+        >
+
+          <h2
+            style="
+              margin: 0;
+              color: #00adb5;
+            "
+          >
+            📢 New Online Admission
+          </h2>
+
+          <p
+            style="
+              margin: 8px 0 0;
+              color: #666;
+            "
+          >
+            EduPortal ERP
+          </p>
+
+        </div>
+
+
+        <!-- ================================= -->
+        <!-- MESSAGE -->
+        <!-- ================================= -->
+
+        <div
+          style="
+            margin-top: 25px;
+            margin-bottom: 25px;
+          "
+        >
+
+          <p>
+            A new student has successfully completed
+            the online admission process.
+          </p>
+
+          <p>
+            The registration payment has been
+            successfully verified.
+          </p>
+
+        </div>
+
+
+        <!-- ================================= -->
+        <!-- STUDENT DETAILS -->
+        <!-- ================================= -->
+
+        <h3
+          style="
+            color: #00adb5;
+            border-bottom: 1px solid #ddd;
+            padding-bottom: 8px;
+          "
+        >
+          Student Details
+        </h3>
+
+
+        <table
+          width="100%"
+          cellpadding="8"
+          cellspacing="0"
+          style="
+            border-collapse: collapse;
+            margin-bottom: 25px;
+          "
+        >
+
+          <tr>
+            <td>
+              <strong>Admission Number</strong>
+            </td>
+
+            <td>
+              ${student.admissionNumber}
+            </td>
+          </tr>
 
-<html>
 
-<head>
+          <tr>
+            <td>
+              <strong>Student Name</strong>
+            </td>
 
-<meta charset="UTF-8">
+            <td>
+              ${student.name}
+            </td>
+          </tr>
 
-<style>
 
-body{
+          <tr>
+            <td>
+              <strong>Course</strong>
+            </td>
 
-margin:0;
+            <td>
+              ${student.course}
+            </td>
+          </tr>
 
-padding:30px;
 
-background:#f4f6f9;
+          <tr>
+            <td>
+              <strong>Batch Time</strong>
+            </td>
 
-font-family:Arial,Helvetica,sans-serif;
+            <td>
+              ${student.batchTime || '-'}
+            </td>
+          </tr>
 
-}
 
-.container{
+          <tr>
+            <td>
+              <strong>Mobile</strong>
+            </td>
 
-max-width:700px;
+            <td>
+              ${student.contact || '-'}
+            </td>
+          </tr>
 
-margin:auto;
 
-background:#ffffff;
+          <tr>
+            <td>
+              <strong>Email</strong>
+            </td>
 
-border-radius:12px;
+            <td>
+              ${student.email || '-'}
+            </td>
+          </tr>
 
-overflow:hidden;
 
-box-shadow:0 5px 20px rgba(0,0,0,.08);
+          <tr>
+            <td>
+              <strong>Admission Date</strong>
+            </td>
 
-}
+            <td>
+              ${student.admissionDate || '-'}
+            </td>
+          </tr>
 
-.header{
 
-background:#198754;
+        </table>
 
-color:#fff;
 
-padding:30px;
+        <!-- ================================= -->
+        <!-- PARENT DETAILS -->
+        <!-- ================================= -->
 
-text-align:center;
+        <h3
+          style="
+            color: #00adb5;
+            border-bottom: 1px solid #ddd;
+            padding-bottom: 8px;
+          "
+        >
+          Parent Details
+        </h3>
 
-}
 
-.header h1{
+        <table
+          width="100%"
+          cellpadding="8"
+          cellspacing="0"
+          style="
+            border-collapse: collapse;
+            margin-bottom: 25px;
+          "
+        >
 
-margin:0;
+          <tr>
+            <td>
+              <strong>Father Name</strong>
+            </td>
 
-font-size:28px;
+            <td>
+              ${student.fatherName || '-'}
+            </td>
+          </tr>
 
-}
 
-.content{
+          <tr>
+            <td>
+              <strong>Father Occupation</strong>
+            </td>
 
-padding:30px;
+            <td>
+              ${student.fatherOccupation || '-'}
+            </td>
+          </tr>
 
-}
 
-.content h2{
+          <tr>
+            <td>
+              <strong>Father Mobile</strong>
+            </td>
 
-margin-top:0;
+            <td>
+              ${student.fatherMobile || '-'}
+            </td>
+          </tr>
 
-color:#198754;
 
-}
+          <tr>
+            <td>
+              <strong>Mother Name</strong>
+            </td>
 
-table{
+            <td>
+              ${student.motherName || '-'}
+            </td>
+          </tr>
 
-width:100%;
 
-border-collapse:collapse;
+          <tr>
+            <td>
+              <strong>Mother Occupation</strong>
+            </td>
 
-margin-top:20px;
+            <td>
+              ${student.motherOccupation || '-'}
+            </td>
+          </tr>
 
-}
 
-table td{
+          <tr>
+            <td>
+              <strong>Mother Mobile</strong>
+            </td>
 
-padding:12px;
+            <td>
+              ${student.motherMobile || '-'}
+            </td>
+          </tr>
 
-border:1px solid #ddd;
 
-font-size:15px;
+        </table>
 
-}
 
-table td:first-child{
+        <!-- ================================= -->
+        <!-- EDUCATION & ADDRESS -->
+        <!-- ================================= -->
 
-background:#f8f9fa;
+        <h3
+          style="
+            color: #00adb5;
+            border-bottom: 1px solid #ddd;
+            padding-bottom: 8px;
+          "
+        >
+          Other Details
+        </h3>
 
-font-weight:bold;
 
-width:45%;
+        <table
+          width="100%"
+          cellpadding="8"
+          cellspacing="0"
+          style="
+            border-collapse: collapse;
+            margin-bottom: 25px;
+          "
+        >
 
-}
+          <tr>
+            <td>
+              <strong>Date of Birth</strong>
+            </td>
 
-.alert{
+            <td>
+              ${student.dob || '-'}
+            </td>
+          </tr>
 
-margin-top:25px;
 
-padding:18px;
+          <tr>
+            <td>
+              <strong>Aadhaar Number</strong>
+            </td>
 
-background:#e8f5e9;
+            <td>
+              ${student.aadharNumber || '-'}
+            </td>
+          </tr>
 
-border-left:5px solid #198754;
 
-}
+          <tr>
+            <td>
+              <strong>School / College</strong>
+            </td>
 
-.footer{
+            <td>
+              ${student.schoolCollegeName || '-'}
+            </td>
+          </tr>
 
-background:#f8f9fa;
 
-padding:20px;
+          <tr>
+            <td>
+              <strong>Permanent Address</strong>
+            </td>
 
-text-align:center;
+            <td>
+              ${student.permanentAddress || '-'}
+            </td>
+          </tr>
 
-font-size:14px;
 
-color:#666;
+          <tr>
+            <td>
+              <strong>Current Address</strong>
+            </td>
 
-}
+            <td>
+              ${student.currentAddress || '-'}
+            </td>
+          </tr>
 
-</style>
 
-</head>
+        </table>
 
-<body>
 
-<div class="container">
+        <!-- ================================= -->
+        <!-- PAYMENT DETAILS -->
+        <!-- ================================= -->
 
-<div class="header">
+        <h3
+          style="
+            color: #00adb5;
+            border-bottom: 1px solid #ddd;
+            padding-bottom: 8px;
+          "
+        >
+          Payment Details
+        </h3>
 
-<h1>📢 New Online Admission</h1>
 
-<p>EduPortal Notification</p>
+        <table
+          width="100%"
+          cellpadding="8"
+          cellspacing="0"
+          style="
+            border-collapse: collapse;
+            margin-bottom: 25px;
+          "
+        >
 
-</div>
+          <tr>
+            <td>
+              <strong>Payment Category</strong>
+            </td>
 
-<div class="content">
+            <td>
+              ${paymentCategory}
+            </td>
+          </tr>
 
-<h2>A new student has successfully completed admission.</h2>
+
+          <tr>
+            <td>
+              <strong>Payment Type</strong>
+            </td>
 
-<table>
+            <td>
+              ${paymentType}
+            </td>
+          </tr>
 
-<tr>
 
-<td>Student Name</td>
+          <tr>
+            <td>
+              <strong>Payment Plan</strong>
+            </td>
 
-<td>${student.name}</td>
+            <td>
+              ${paymentPlan}
+            </td>
+          </tr>
 
-</tr>
 
-<tr>
+          <tr>
+            <td>
+              <strong>Registration Fee</strong>
+            </td>
+
+            <td>
+              ₹ ${Number(
+                receipt.registrationFee || 0
+              ).toLocaleString('en-IN')}
+            </td>
+          </tr>
 
-<td>Admission Number</td>
 
-<td>${student.admissionNumber}</td>
+          <tr>
+            <td>
+              <strong>Registration Fee Paid</strong>
+            </td>
 
-</tr>
+            <td>
+              ₹ ${Number(
+                receipt.registrationFeePaid || 0
+              ).toLocaleString('en-IN')}
+            </td>
+          </tr>
 
-<tr>
 
-<td>Course</td>
-
-<td>${student.course}</td>
-
-</tr>
-
-<tr>
-
-<td>Admission Date</td>
-
-<td>${student.admissionDate}</td>
-
-</tr>
-
-<tr>
-
-<td>Phone Number</td>
-
-<td>${student.contact}</td>
-
-</tr>
-
-<tr>
-
-<td>Email</td>
-
-<td>${student.email}</td>
-
-</tr>
-
-<tr>
-
-<td>Payment Type</td>
-
-<td>${paymentType}</td>
-
-</tr>
-
-<tr>
-
-<td>Total Course Fee</td>
-
-<td>₹ ${student.totalFees}</td>
-
-</tr>
-
-<tr>
-
-<td>Amount Paid</td>
-
-<td>₹ ${amountPaid}</td>
-
-</tr>
-
-<tr>
-
-<td>Remaining Fee</td>
-
-<td>₹ ${student.remainingFees}</td>
-
-</tr>
-
-<tr>
-
-<td>Receipt Number</td>
-
-<td>${receipt.receiptNumber}</td>
-
-</tr>
-
-<tr>
-
-<td>Transaction ID</td>
-
-<td>${transactionId}</td>
-
-</tr>
-
-</table>
-
-<div class="alert">
-
-<b>Action Required</b>
-
-<ul>
-
-<li>Student admission has been completed successfully.</li>
-
-<li>Please verify the admission in the Admin Panel.</li>
-
-<li>Check payment details and remaining fee.</li>
-
-<li>Contact the student if additional documents are required.</li>
-
-</ul>
-
-</div>
-
-</div>
-
-<div class="footer">
-
-<b>EduPortal ERP</b>
-
-<br>
-
-Automatic notification generated after successful payment.
-
-</div>
-
-</div>
-
-</body>
-
-</html>
-
-`
+          <tr>
+            <td>
+              <strong>Total Course Fee</strong>
+            </td>
+
+            <td>
+              ₹ ${Number(
+                receipt.courseFee || 0
+              ).toLocaleString('en-IN')}
+            </td>
+          </tr>
+
+
+          <tr>
+            <td>
+              <strong>Current Payment</strong>
+            </td>
+
+            <td>
+              <strong>
+                ₹ ${Number(
+                  amountPaid || 0
+                ).toLocaleString('en-IN')}
+              </strong>
+            </td>
+          </tr>
+
+
+          <tr>
+            <td>
+              <strong>Total Course Fee Paid</strong>
+            </td>
+
+            <td>
+              ₹ ${Number(
+                receipt.totalPaid || 0
+              ).toLocaleString('en-IN')}
+            </td>
+          </tr>
+
+
+          <tr>
+            <td>
+              <strong>Remaining Course Fee</strong>
+            </td>
+
+            <td>
+              ₹ ${Number(
+                receipt.remainingFee || 0
+              ).toLocaleString('en-IN')}
+            </td>
+          </tr>
+
+
+          <tr>
+            <td>
+              <strong>Payment Method</strong>
+            </td>
+
+            <td>
+              ${paymentMethod}
+            </td>
+          </tr>
+
+
+          <tr>
+            <td>
+              <strong>Payment Status</strong>
+            </td>
+
+            <td>
+              <strong
+                style="color: green;"
+              >
+                ${receipt.paymentStatus || 'Success'}
+              </strong>
+            </td>
+          </tr>
+
+
+        </table>
+
+
+        <!-- ================================= -->
+        <!-- RECEIPT DETAILS -->
+        <!-- ================================= -->
+
+        <h3
+          style="
+            color: #00adb5;
+            border-bottom: 1px solid #ddd;
+            padding-bottom: 8px;
+          "
+        >
+          Receipt Details
+        </h3>
+
+
+        <table
+          width="100%"
+          cellpadding="8"
+          cellspacing="0"
+          style="
+            border-collapse: collapse;
+            margin-bottom: 25px;
+          "
+        >
+
+          <tr>
+            <td>
+              <strong>Receipt Number</strong>
+            </td>
+
+            <td>
+              ${receipt.receiptNumber}
+            </td>
+          </tr>
+
+
+          <tr>
+            <td>
+              <strong>Transaction ID</strong>
+            </td>
+
+            <td>
+              ${
+                transactionId ||
+                receipt.transactionId ||
+                '-'
+              }
+            </td>
+          </tr>
+
+
+          <tr>
+            <td>
+              <strong>Order ID</strong>
+            </td>
+
+            <td>
+              ${receipt.orderId || '-'}
+            </td>
+          </tr>
+
+
+          <tr>
+            <td>
+              <strong>Payment Date</strong>
+            </td>
+
+            <td>
+              ${new Date(
+                receipt.paymentDate
+              ).toLocaleString('en-IN')}
+            </td>
+          </tr>
+
+
+        </table>
+
+
+        <!-- ================================= -->
+        <!-- FOOTER -->
+        <!-- ================================= -->
+
+        <div
+          style="
+            margin-top: 30px;
+            padding-top: 15px;
+            border-top: 1px solid #ddd;
+          "
+        >
+
+          <p>
+            Please log in to the admin panel to view
+            the complete student and payment record.
+          </p>
+
+          <p>
+            Regards,<br />
+
+            <strong>
+              EduPortal ERP
+            </strong>
+          </p>
+
+          <p
+            style="
+              font-size: 12px;
+              color: #777;
+            "
+          >
+            This is an automatic notification generated
+            after successful payment verification.
+          </p>
+
+        </div>
+
+      </div>
+
+    `,
 
   })
 
 }
 
-module.exports = sendAdminNotification
+
+module.exports =
+  sendAdminNotification

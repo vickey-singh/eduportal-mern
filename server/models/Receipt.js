@@ -12,6 +12,7 @@ const receiptSchema = new mongoose.Schema({
     unique: true,
   },
 
+
   // ======================================
   // STUDENT
   // ======================================
@@ -41,8 +42,9 @@ const receiptSchema = new mongoose.Schema({
     required: true,
   },
 
+
   // ======================================
-  // COURSE / FEE
+  // FEE DETAILS
   // ======================================
 
   courseFee: {
@@ -55,18 +57,27 @@ const receiptSchema = new mongoose.Schema({
     default: 0,
   },
 
+  registrationFeePaid: {
+    type: Number,
+    default: 0,
+  },
+
+
   // ======================================
   // PAYMENT CATEGORY
   // ======================================
 
   paymentCategory: {
     type: String,
+
     enum: [
       'Registration',
       'CourseFee',
     ],
+
     required: true,
   },
+
 
   // ======================================
   // PAYMENT PLAN
@@ -74,6 +85,7 @@ const receiptSchema = new mongoose.Schema({
 
   paymentPlan: {
     type: String,
+
     enum: [
       'monthly',
       'three_month',
@@ -81,8 +93,20 @@ const receiptSchema = new mongoose.Schema({
       'full',
       '',
     ],
+
     default: '',
   },
+
+
+  // ======================================
+  // MINIMUM INSTALLMENT
+  // ======================================
+
+  minimumInstallment: {
+    type: Number,
+    default: 0,
+  },
+
 
   // ======================================
   // PAYMENT TYPE
@@ -90,12 +114,15 @@ const receiptSchema = new mongoose.Schema({
 
   paymentType: {
     type: String,
+
     enum: [
       'Full',
       'Installment',
     ],
+
     required: true,
   },
+
 
   // ======================================
   // PAYMENT AMOUNT
@@ -115,6 +142,7 @@ const receiptSchema = new mongoose.Schema({
     type: Number,
     required: true,
   },
+
 
   // ======================================
   // PAYMENT DETAILS
@@ -137,6 +165,13 @@ const receiptSchema = new mongoose.Schema({
 
   paymentStatus: {
     type: String,
+
+    enum: [
+      'Success',
+      'Pending',
+      'Failed',
+    ],
+
     default: 'Success',
   },
 
@@ -145,11 +180,13 @@ const receiptSchema = new mongoose.Schema({
     default: Date.now,
   },
 
+
 }, {
 
   timestamps: true,
 
 })
+
 
 module.exports = mongoose.model(
   'Receipt',

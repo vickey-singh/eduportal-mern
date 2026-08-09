@@ -1,5 +1,6 @@
 const mongoose = require('mongoose')
 
+
 // ======================================
 // PAYMENT SCHEMA
 // ======================================
@@ -13,7 +14,10 @@ const paymentSchema = new mongoose.Schema({
 
   paymentCategory: {
     type: String,
-    enum: ['Registration', 'CourseFee'],
+    enum: [
+      'Registration',
+      'CourseFee',
+    ],
     required: true,
   },
 
@@ -24,7 +28,10 @@ const paymentSchema = new mongoose.Schema({
 
   paymentType: {
     type: String,
-    enum: ['Full', 'Installment'],
+    enum: [
+      'Full',
+      'Installment',
+    ],
     default: 'Installment',
   },
 
@@ -42,13 +49,20 @@ const paymentSchema = new mongoose.Schema({
 
   paymentMode: {
     type: String,
-    enum: ['Offline', 'Online'],
+    enum: [
+      'Offline',
+      'Online',
+    ],
     default: 'Offline',
   },
 
   paymentStatus: {
     type: String,
-    enum: ['Success', 'Pending', 'Failed'],
+    enum: [
+      'Success',
+      'Pending',
+      'Failed',
+    ],
     default: 'Success',
   },
 
@@ -75,10 +89,11 @@ const paymentSchema = new mongoose.Schema({
 // ======================================
 
 const studentSchema = new mongoose.Schema(
+
   {
 
     // ======================================
-    // BASIC INFO
+    // BASIC INFORMATION
     // ======================================
 
     name: {
@@ -216,7 +231,10 @@ const studentSchema = new mongoose.Schema(
 
     admissionType: {
       type: String,
-      enum: ['Offline', 'Online'],
+      enum: [
+        'Offline',
+        'Online',
+      ],
       default: 'Offline',
     },
 
@@ -237,7 +255,10 @@ const studentSchema = new mongoose.Schema(
 
     registrationFeeStatus: {
       type: String,
-      enum: ['Pending', 'Paid'],
+      enum: [
+        'Pending',
+        'Paid',
+      ],
       default: 'Pending',
     },
 
@@ -245,52 +266,57 @@ const studentSchema = new mongoose.Schema(
     // ======================================
     // COURSE FEE
     // ======================================
-    
+
     totalFees: {
       type: Number,
       required: true,
       default: 0,
     },
-    
-    // ======================================
-    // STUDENT-SPECIFIC PAYMENT OPTIONS
-    // ======================================
-    
-    monthlyInstallment: {
-      type: Number,
-      default: 0,
-    },
-    
-    threeMonthInstallment: {
-      type: Number,
-      default: 0,
-    },
-    
-    sixMonthInstallment: {
-      type: Number,
-      default: 0,
-    },
-    
-    fullPaymentFee: {
-      type: Number,
-      default: 0,
-    },
-    
+
     paidFees: {
       type: Number,
       required: true,
       default: 0,
     },
-    
+
     remainingFees: {
       type: Number,
       default: 0,
     },
-    
+
     feesStatus: {
       type: String,
-      enum: ['Pending', 'Partial', 'Paid'],
+      enum: [
+        'Pending',
+        'Partial',
+        'Paid',
+      ],
       default: 'Pending',
+    },
+
+
+    // ======================================
+    // STUDENT-SPECIFIC PAYMENT OPTIONS
+    // ======================================
+
+    monthlyInstallment: {
+      type: Number,
+      default: 0,
+    },
+
+    threeMonthInstallment: {
+      type: Number,
+      default: 0,
+    },
+
+    sixMonthInstallment: {
+      type: Number,
+      default: 0,
+    },
+
+    fullPaymentFee: {
+      type: Number,
+      default: 0,
     },
 
 
@@ -327,7 +353,10 @@ const studentSchema = new mongoose.Schema(
 
     paymentMode: {
       type: String,
-      enum: ['Offline', 'Online'],
+      enum: [
+        'Offline',
+        'Online',
+      ],
       default: 'Offline',
     },
 
@@ -336,14 +365,21 @@ const studentSchema = new mongoose.Schema(
     // PAYMENT HISTORY
     // ======================================
 
-    paymentHistory: [paymentSchema],
+    paymentHistory: [
+      paymentSchema
+    ],
 
   },
 
   {
     timestamps: true,
   }
+
 )
 
+
 module.exports =
-  mongoose.model('Student', studentSchema)
+  mongoose.model(
+    'Student',
+    studentSchema
+  )
