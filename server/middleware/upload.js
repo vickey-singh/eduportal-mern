@@ -1,56 +1,138 @@
 const multer = require('multer')
-const fs = require('fs')
-const path = require('path')
 
-// Absolute uploads path
-const uploadDir = path.join(__dirname, '..', 'uploads')
+const {
+  CloudinaryStorage,
+} = require('multer-storage-cloudinary')
 
-// Create uploads folder if missing
-if (!fs.existsSync(uploadDir)) {
-  fs.mkdirSync(uploadDir, { recursive: true })
-}
+const {
+  v2: cloudinary,
+} = require('cloudinary')
 
-const storage = multer.diskStorage({
 
-  destination: (req, file, cb) => {
+// ======================================
+// CLOUDINARY CONFIGURATION
+// ======================================
 
-    cb(null, uploadDir)
+cloudinary.config({
 
-  },
+  cloud_name:
+    process.env.CLOUDINARY_CLOUD_NAME,
 
-  filename: (req, file, cb) => {
+  api_key:
+    process.env.CLOUDINARY_API_KEY,
 
-    cb(
-      null,
-      Date.now() + '-' + file.originalname
-    )
-
-  },
+  api_secret:
+    process.env.CLOUDINARY_API_SECRET,
 
 })
 
-const fileFilter = (req, file, cb) => {
+
+// ======================================
+// CLOUDINARY STORAGE
+// ======================================
+
+const storage =
+  new CloudinaryStorage({
+
+    cloudinary,
+
+    params: {
+
+      folder:
+        'eduportal',
+
+      allowed_formats: [
+        'jpg',
+        'jpeg',
+        'png',
+        'webp',
+      ],
+
+      transformation: [
+        {
+          quality: 'auto',
+          fetch_format: 'auto',
+        },
+      ],
+
+    },
+
+  })
+
+
+// ======================================
+// FILE FILTER
+// ======================================
+
+const fileFilter = (
+  req,
+  file,
+  cb
+) => {
 
   const allowedTypes = [
+
     'image/jpeg',
+
     'image/png',
+
     'image/jpg',
+
     'image/webp',
+
   ]
 
-  if (allowedTypes.includes(file.mimetype)) {
 
-    cb(null, true)
+  if (
+    allowedTypes.includes(
+      file.mimetype
+    )
+  ) {
 
-  } else {
+    cb(
+      null,
+      true
+    )
 
-    cb(new Error('Only Images Allowed'), false)
+  }
+
+  else {
+
+    cb(
+
+      new Error(
+        'Only Images Allowed'
+      ),
+
+      false
+
+    )
 
   }
 
 }
 
-module.exports = multer({
-  storage,
-  fileFilter,
-})
+
+// ======================================
+// MULTER
+// ======================================
+
+const upload =
+  multer({
+
+    storage,
+
+    fileFilter,
+
+    limits: {
+
+      fileSize:
+        5 * 1024 * 1024,
+
+    },
+
+  })
+
+
+module.exports =
+  upload

@@ -35,12 +35,12 @@ router.post(
 
 
       // ======================================
-      // IMAGE
+      // CLOUDINARY IMAGE
       // ======================================
 
       const image =
         req.file
-          ? `/uploads/${req.file.filename}`
+          ? req.file.path
           : ''
 
 
@@ -86,15 +86,21 @@ router.post(
 
       })
 
-    } catch (error) {
+    }
 
-      console.log(error)
+    catch (error) {
+
+      console.log(
+        'Add Testimonial Error:',
+        error
+      )
 
       res.status(500).json({
 
         success: false,
 
-        message: 'Server Error',
+        message:
+          'Server Error',
 
       })
 
@@ -120,19 +126,30 @@ router.get(
       const testimonials =
         await Testimonial.find()
 
+          .sort({
+            createdAt: -1,
+          })
+
+
       res.status(200).json(
         testimonials
       )
 
-    } catch (error) {
+    }
 
-      console.log(error)
+    catch (error) {
+
+      console.log(
+        'Get Testimonials Error:',
+        error
+      )
 
       res.status(500).json({
 
         success: false,
 
-        message: 'Server Error',
+        message:
+          'Server Error',
 
       })
 
@@ -155,9 +172,44 @@ router.delete(
 
     try {
 
+      const testimonial =
+        await Testimonial.findById(
+          req.params.id
+        )
+
+
+      // ======================================
+      // CHECK TESTIMONIAL
+      // ======================================
+
+      if (!testimonial) {
+
+        return res.status(404).json({
+
+          success: false,
+
+          message:
+            'Testimonial Not Found',
+
+        })
+
+      }
+
+
+      // ======================================
+      // DELETE DATABASE RECORD
+      // ======================================
+
       await Testimonial.findByIdAndDelete(
+
         req.params.id
+
       )
+
+
+      // ======================================
+      // RESPONSE
+      // ======================================
 
       res.status(200).json({
 
@@ -168,15 +220,21 @@ router.delete(
 
       })
 
-    } catch (error) {
+    }
 
-      console.log(error)
+    catch (error) {
+
+      console.log(
+        'Delete Testimonial Error:',
+        error
+      )
 
       res.status(500).json({
 
         success: false,
 
-        message: 'Server Error',
+        message:
+          'Server Error',
 
       })
 
@@ -223,12 +281,40 @@ router.put(
 
 
       // ======================================
+      // CHECK TESTIMONIAL
+      // ======================================
+
+      if (!existingTestimonial) {
+
+        return res.status(404).json({
+
+          success: false,
+
+          message:
+            'Testimonial Not Found',
+
+        })
+
+      }
+
+
+      // ======================================
       // IMAGE UPDATE
+      // ======================================
+      //
+      // New image uploaded:
+      //     Cloudinary URL
+      //
+      // No new image:
+      //     Keep existing image
       // ======================================
 
       const image =
+
         req.file
-          ? `/uploads/${req.file.filename}`
+
+          ? req.file.path
+
           : existingTestimonial.image
 
 
@@ -254,7 +340,11 @@ router.put(
           },
 
           {
+
             new: true,
+
+            runValidators: true,
+
           }
 
         )
@@ -276,15 +366,21 @@ router.put(
 
       })
 
-    } catch (error) {
+    }
 
-      console.log(error)
+    catch (error) {
+
+      console.log(
+        'Update Testimonial Error:',
+        error
+      )
 
       res.status(500).json({
 
         success: false,
 
-        message: 'Server Error',
+        message:
+          'Server Error',
 
       })
 
@@ -294,4 +390,10 @@ router.put(
 
 )
 
-module.exports = router
+
+// ======================================
+// EXPORT ROUTER
+// ======================================
+
+module.exports =
+  router

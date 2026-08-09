@@ -4,14 +4,23 @@ import axios from 'axios'
 
 import '../../assets/styles/admin.css'
 
+
+// ======================================
+// API BASE URL
+// ======================================
+
+const API_BASE_URL =
+  'https://eduportal-backend-m5t1.onrender.com'
+
+
 function Achievements() {
 
   // ======================================
   // STATE
   // ======================================
 
-  const [formData, setFormData]
-    = useState({
+  const [formData, setFormData] =
+    useState({
 
       studentName: '',
 
@@ -27,13 +36,14 @@ function Achievements() {
 
     })
 
-  const [achievementData,
-    setAchievementData]
 
-    = useState([])
+  const [achievementData, setAchievementData] =
+    useState([])
 
-  const [editId, setEditId]
-    = useState(null)
+
+  const [editId, setEditId] =
+    useState(null)
+
 
   // ======================================
   // HANDLE INPUT
@@ -52,6 +62,7 @@ function Achievements() {
 
   }
 
+
   // ======================================
   // HANDLE SUBMIT
   // ======================================
@@ -61,41 +72,54 @@ function Achievements() {
 
       e.preventDefault()
 
+
       try {
 
-        // ======================================
+        // ==================================
         // FORMDATA
-        // ======================================
+        // ==================================
 
         const achievementFormData =
           new FormData()
+
 
         achievementFormData.append(
           'studentName',
           formData.studentName
         )
 
+
         achievementFormData.append(
           'course',
           formData.course
         )
+
 
         achievementFormData.append(
           'rank',
           formData.rank
         )
 
+
         achievementFormData.append(
           'marks',
           formData.marks
         )
+
 
         achievementFormData.append(
           'description',
           formData.description
         )
 
-        if (formData.image) {
+
+        // ==================================
+        // IMAGE
+        // ==================================
+
+        if (
+          formData.image
+        ) {
 
           achievementFormData.append(
             'image',
@@ -104,74 +128,98 @@ function Achievements() {
 
         }
 
+
         let response
 
-        // ======================================
+
+        // ==================================
         // UPDATE ACHIEVEMENT
-        // ======================================
+        // ==================================
 
         if (editId) {
 
           response =
             await axios.put(
 
-              `https://eduportal-backend-m5t1.onrender.com/api/achievements/${editId}`,
+              `${API_BASE_URL}/api/achievements/${editId}`,
 
               achievementFormData,
 
               {
+
                 headers: {
+
                   'Content-Type':
                     'multipart/form-data',
+
                 },
+
               }
 
             )
 
-          // Update UI
+
+          // ==================================
+          // UPDATE UI
+          // ==================================
+
           setAchievementData(
 
-            achievementData.map((item) =>
+            achievementData.map(
+              (item) =>
 
-              item._id === editId
-                ? response.data.achievement
-                : item
+                item._id === editId
+
+                  ? response.data.achievement
+
+                  : item
 
             )
 
           )
+
 
           alert(
             'Achievement Updated Successfully'
           )
 
+
           setEditId(null)
 
         }
 
-        // ======================================
+
+        // ==================================
         // ADD ACHIEVEMENT
-        // ======================================
+        // ==================================
 
         else {
 
           response =
             await axios.post(
 
-              'https://eduportal-backend-m5t1.onrender.com/api/achievements',
+              `${API_BASE_URL}/api/achievements`,
 
               achievementFormData,
 
               {
+
                 headers: {
+
                   'Content-Type':
                     'multipart/form-data',
+
                 },
+
               }
 
             )
 
-          // Add New Achievement
+
+          // ==================================
+          // ADD NEW ACHIEVEMENT TO UI
+          // ==================================
+
           setAchievementData([
 
             response.data.achievement,
@@ -180,15 +228,18 @@ function Achievements() {
 
           ])
 
+
           alert(
-            response.data.message
+            response.data.message ||
+            'Achievement Added Successfully'
           )
 
         }
 
-        // ======================================
+
+        // ==================================
         // RESET FORM
-        // ======================================
+        // ==================================
 
         setFormData({
 
@@ -206,15 +257,28 @@ function Achievements() {
 
         })
 
-      } catch (error) {
+      }
 
-        console.log(error)
+      catch (error) {
 
-        alert('Achievement Operation Failed')
+        console.log(
+          'Achievement Operation Error:',
+          error
+        )
+
+
+        alert(
+
+          error?.response?.data?.message ||
+
+          'Achievement Operation Failed'
+
+        )
 
       }
 
     }
+
 
   // ======================================
   // FETCH ACHIEVEMENTS
@@ -229,24 +293,36 @@ function Achievements() {
 
           const response =
             await axios.get(
-              'https://eduportal-backend-m5t1.onrender.com/api/achievements'
+
+              `${API_BASE_URL}/api/achievements`
+
             )
 
+
           setAchievementData(
+
             response.data
+
           )
 
-        } catch (error) {
+        }
 
-          console.log(error)
+        catch (error) {
+
+          console.log(
+            'Fetch Achievements Error:',
+            error
+          )
 
         }
 
       }
 
+
     fetchAchievements()
 
   }, [])
+
 
   // ======================================
   // DELETE ACHIEVEMENT
@@ -258,30 +334,46 @@ function Achievements() {
       try {
 
         await axios.delete(
-          `https://eduportal-backend-m5t1.onrender.com/api/achievements/${id}`
+
+          `${API_BASE_URL}/api/achievements/${id}`
+
         )
+
 
         setAchievementData(
 
           achievementData.filter(
-            (item) => item._id !== id
+
+            (item) =>
+              item._id !== id
+
           )
 
         )
+
 
         alert(
           'Achievement Deleted Successfully'
         )
 
-      } catch (error) {
+      }
 
-        console.log(error)
+      catch (error) {
 
-        alert('Delete Failed')
+        console.log(
+          'Delete Achievement Error:',
+          error
+        )
+
+
+        alert(
+          'Delete Failed'
+        )
 
       }
 
     }
+
 
   // ======================================
   // EDIT ACHIEVEMENT
@@ -293,31 +385,112 @@ function Achievements() {
       setFormData({
 
         studentName:
-          item.studentName,
+          item.studentName || '',
 
         course:
-          item.course,
+          item.course || '',
 
         rank:
-          item.rank,
+          item.rank || '',
 
         marks:
-          item.marks,
+          item.marks || '',
+
+        // ==================================
+        // IMPORTANT
+        // Don't put existing image URL here
+        // ==================================
 
         image: '',
 
         description:
-          item.description,
+          item.description || '',
 
       })
 
-      setEditId(item._id)
+
+      setEditId(
+        item._id
+      )
+
+
+      // Scroll to top
+      window.scrollTo({
+
+        top: 0,
+
+        behavior: 'smooth',
+
+      })
 
     }
+
+
+  // ======================================
+  // IMAGE URL
+  // ======================================
+  //
+  // Cloudinary:
+  // item.image = complete URL
+  //
+  // Old records:
+  // item.image = /uploads/filename.jpg
+  //
+  // This helper supports BOTH.
+  // ======================================
+
+  const getImageUrl =
+    (image) => {
+
+      if (!image) {
+
+        return '/logo.png'
+
+      }
+
+
+      // ==================================
+      // CLOUDINARY / EXTERNAL URL
+      // ==================================
+
+      if (
+
+        image.startsWith(
+          'http://'
+        ) ||
+
+        image.startsWith(
+          'https://'
+        )
+
+      ) {
+
+        return image
+
+      }
+
+
+      // ==================================
+      // OLD LOCAL UPLOAD
+      // ==================================
+
+      return `${API_BASE_URL}${
+
+        image.startsWith('/')
+
+          ? image
+
+          : `/${image}`
+
+      }`
+
+    }
+
 
   return (
 
     <div className="applications-section">
+
 
       {/* ====================================== */}
       {/* PAGE HEADER */}
@@ -329,11 +502,13 @@ function Achievements() {
           Achievement Management
         </h2>
 
+
         <p>
           Add and manage topper achievements.
         </p>
 
       </div>
+
 
       {/* ====================================== */}
       {/* FORM */}
@@ -341,144 +516,329 @@ function Achievements() {
 
       <div className="admin-form-wrapper">
 
-        <form onSubmit={handleSubmit}>
+        <form
+          onSubmit={handleSubmit}
+        >
 
           <div className="row">
 
-            {/* Student Name */}
+
+            {/* ==================================
+                STUDENT NAME
+            ================================== */}
+
             <div className="col-md-6 mb-3">
 
               <label className="form-label">
+
                 Student Name
+
               </label>
 
+
               <input
+
                 type="text"
+
                 className="form-control"
+
                 placeholder="Enter student name"
+
                 name="studentName"
-                value={formData.studentName}
-                onChange={handleChange}
+
+                value={
+                  formData.studentName
+                }
+
+                onChange={
+                  handleChange
+                }
+
+                required
+
               />
 
             </div>
 
-            {/* Course */}
+
+            {/* ==================================
+                COURSE
+            ================================== */}
+
             <div className="col-md-6 mb-3">
 
               <label className="form-label">
+
                 Course
+
               </label>
 
+
               <input
+
                 type="text"
+
                 className="form-control"
+
                 placeholder="Enter course"
+
                 name="course"
-                value={formData.course}
-                onChange={handleChange}
+
+                value={
+                  formData.course
+                }
+
+                onChange={
+                  handleChange
+                }
+
+                required
+
               />
 
             </div>
 
-            {/* Rank */}
+
+            {/* ==================================
+                RANK
+            ================================== */}
+
             <div className="col-md-6 mb-3">
 
               <label className="form-label">
+
                 Rank
+
               </label>
 
+
               <input
+
                 type="text"
+
                 className="form-control"
+
                 placeholder="Enter rank"
+
                 name="rank"
-                value={formData.rank}
-                onChange={handleChange}
+
+                value={
+                  formData.rank
+                }
+
+                onChange={
+                  handleChange
+                }
+
+                required
+
               />
 
             </div>
 
-            {/* Marks */}
+
+            {/* ==================================
+                MARKS
+            ================================== */}
+
             <div className="col-md-6 mb-3">
 
               <label className="form-label">
+
                 Marks
+
               </label>
 
+
               <input
+
                 type="text"
+
                 className="form-control"
+
                 placeholder="Enter marks"
+
                 name="marks"
-                value={formData.marks}
-                onChange={handleChange}
+
+                value={
+                  formData.marks
+                }
+
+                onChange={
+                  handleChange
+                }
+
+                required
+
               />
 
             </div>
 
-            {/* Image */}
+
+            {/* ==================================
+                IMAGE
+            ================================== */}
+
             <div className="col-12 mb-3">
 
               <label className="form-label">
+
                 Upload Student Image
+
               </label>
 
+
               <input
+
                 type="file"
+
                 className="form-control"
+
                 name="image"
-                onChange={(e) =>
+
+                accept="image/jpeg,image/png,image/jpg,image/webp"
+
+                onChange={(e) => {
 
                   setFormData({
 
                     ...formData,
 
                     image:
-                      e.target.files[0],
+                      e.target.files[0] || '',
 
                   })
 
-                }
+                }}
+
               />
+
+
+              {/* Existing image notice */}
+
+              {editId && (
+
+                <small className="text-muted">
+
+                  Leave this empty to keep the
+                  existing image.
+
+                </small>
+
+              )}
 
             </div>
 
-            {/* Description */}
+
+            {/* ==================================
+                DESCRIPTION
+            ================================== */}
+
             <div className="col-12 mb-4">
 
               <label className="form-label">
+
                 Description
+
               </label>
 
+
               <textarea
+
                 className="form-control"
+
                 rows="5"
+
                 placeholder="Write achievement details"
+
                 name="description"
-                value={formData.description}
-                onChange={handleChange}
+
+                value={
+                  formData.description
+                }
+
+                onChange={
+                  handleChange
+                }
+
+                required
+
               ></textarea>
 
             </div>
 
           </div>
 
-          {/* Submit */}
+
+          {/* ======================================
+              SUBMIT BUTTON
+          ====================================== */}
+
           <button
+
             type="submit"
+
             className="table-btn approve-btn"
+
           >
 
             {editId
+
               ? 'Update Achievement'
-              : 'Add Achievement'}
+
+              : 'Add Achievement'
+
+            }
 
           </button>
+
+
+          {/* ======================================
+              CANCEL EDIT
+          ====================================== */}
+
+          {editId && (
+
+            <button
+
+              type="button"
+
+              className="table-btn reject-btn ms-2"
+
+              onClick={() => {
+
+                setEditId(null)
+
+                setFormData({
+
+                  studentName: '',
+
+                  course: '',
+
+                  rank: '',
+
+                  marks: '',
+
+                  image: '',
+
+                  description: '',
+
+                })
+
+              }}
+
+            >
+
+              Cancel
+
+            </button>
+
+          )}
 
         </form>
 
       </div>
+
 
       {/* ====================================== */}
       {/* TABLE */}
@@ -488,102 +848,222 @@ function Achievements() {
 
         <table className="table applications-table">
 
+
           <thead>
 
             <tr>
 
-              <th>Image</th>
+              <th>
+                Image
+              </th>
 
-              <th>Name</th>
+              <th>
+                Name
+              </th>
 
-              <th>Course</th>
+              <th>
+                Course
+              </th>
 
-              <th>Rank</th>
+              <th>
+                Rank
+              </th>
 
-              <th>Marks</th>
+              <th>
+                Marks
+              </th>
 
-              <th>Action</th>
+              <th>
+                Action
+              </th>
 
             </tr>
 
           </thead>
 
+
           <tbody>
 
-            {achievementData.map((item) => (
+            {achievementData.length === 0 ? (
 
-              <tr key={item._id}>
+              <tr>
 
-                {/* Image */}
-                <td>
+                <td
+                  colSpan="6"
+                  className="text-center"
+                >
 
-                  <img
-                    src={`https://eduportal-backend-m5t1.onrender.com${item.image}`}
-                    alt={item.studentName}
-                    width="60"
-                    height="60"
-                    style={{
-                      objectFit: 'cover',
-                      borderRadius: '8px',
-                    }}
-                  />
-
-                </td>
-
-                {/* Name */}
-                <td>
-                  {item.studentName}
-                </td>
-
-                {/* Course */}
-                <td>
-                  {item.course}
-                </td>
-
-                {/* Rank */}
-                <td>
-                  {item.rank}
-                </td>
-
-                {/* Marks */}
-                <td>
-                  {item.marks}
-                </td>
-
-                {/* Actions */}
-                <td>
-
-                  <div className="d-flex gap-2">
-
-                    <button
-                      className="table-btn approve-btn"
-                      onClick={() =>
-                        editAchievement(item)
-                      }
-                    >
-
-                      Edit
-
-                    </button>
-
-                    <button
-                      className="table-btn reject-btn"
-                      onClick={() =>
-                        deleteAchievement(item._id)
-                      }
-                    >
-
-                      Delete
-
-                    </button>
-
-                  </div>
+                  No achievements found.
 
                 </td>
 
               </tr>
 
-            ))}
+            ) : (
+
+              achievementData.map(
+                (item) => (
+
+                  <tr
+                    key={
+                      item._id
+                    }
+                  >
+
+
+                    {/* ==================================
+                        IMAGE
+                    ================================== */}
+
+                    <td>
+
+                      <img
+
+                        src={
+                          getImageUrl(
+                            item.image
+                          )
+                        }
+
+                        alt={
+                          item.studentName
+                        }
+
+                        width="60"
+
+                        height="60"
+
+                        style={{
+
+                          objectFit:
+                            'cover',
+
+                          borderRadius:
+                            '8px',
+
+                        }}
+
+                        onError={(e) => {
+
+                          e.currentTarget.src =
+                            '/logo.png'
+
+                        }}
+
+                      />
+
+                    </td>
+
+
+                    {/* ==================================
+                        NAME
+                    ================================== */}
+
+                    <td>
+
+                      {
+                        item.studentName
+                      }
+
+                    </td>
+
+
+                    {/* ==================================
+                        COURSE
+                    ================================== */}
+
+                    <td>
+
+                      {
+                        item.course
+                      }
+
+                    </td>
+
+
+                    {/* ==================================
+                        RANK
+                    ================================== */}
+
+                    <td>
+
+                      {
+                        item.rank
+                      }
+
+                    </td>
+
+
+                    {/* ==================================
+                        MARKS
+                    ================================== */}
+
+                    <td>
+
+                      {
+                        item.marks
+                      }
+
+                    </td>
+
+
+                    {/* ==================================
+                        ACTIONS
+                    ================================== */}
+
+                    <td>
+
+                      <div className="d-flex gap-2">
+
+
+                        <button
+
+                          type="button"
+
+                          className="table-btn approve-btn"
+
+                          onClick={() =>
+                            editAchievement(
+                              item
+                            )
+                          }
+
+                        >
+
+                          Edit
+
+                        </button>
+
+
+                        <button
+
+                          type="button"
+
+                          className="table-btn reject-btn"
+
+                          onClick={() =>
+                            deleteAchievement(
+                              item._id
+                            )
+                          }
+
+                        >
+
+                          Delete
+
+                        </button>
+
+                      </div>
+
+                    </td>
+
+                  </tr>
+
+                )
+
+              )
+
+            )}
 
           </tbody>
 
@@ -596,5 +1076,6 @@ function Achievements() {
   )
 
 }
+
 
 export default Achievements

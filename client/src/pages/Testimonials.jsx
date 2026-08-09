@@ -4,6 +4,15 @@ import axios from 'axios'
 
 import '../assets/styles/testimonials.css'
 
+
+// ======================================
+// API BASE URL
+// ======================================
+
+const API_BASE_URL =
+  'https://eduportal-backend-m5t1.onrender.com'
+
+
 function Testimonials() {
 
   // ======================================
@@ -15,10 +24,12 @@ function Testimonials() {
 
     = useState([])
 
+
   const [feedbacks,
     setFeedbacks]
 
     = useState([])
+
 
   const [formData,
     setFormData]
@@ -35,6 +46,7 @@ function Testimonials() {
 
     })
 
+
   // ======================================
   // FETCH TESTIMONIALS
   // ======================================
@@ -48,24 +60,34 @@ function Testimonials() {
 
           const response =
             await axios.get(
-              'https://eduportal-backend-m5t1.onrender.com/api/testimonials'
+
+              `${API_BASE_URL}/api/testimonials`
+
             )
+
 
           setTestimonials(
             response.data
           )
 
-        } catch (error) {
+        }
 
-          console.log(error)
+        catch (error) {
+
+          console.log(
+            'Fetch Testimonials Error:',
+            error
+          )
 
         }
 
       }
 
+
     fetchTestimonials()
 
   }, [])
+
 
   // ======================================
   // FETCH APPROVED FEEDBACKS
@@ -80,41 +102,114 @@ function Testimonials() {
 
           const response =
             await axios.get(
-              'https://eduportal-backend-m5t1.onrender.com/api/feedback/approved'
+
+              `${API_BASE_URL}/api/feedback/approved`
+
             )
+
 
           setFeedbacks(
             response.data
           )
 
-        } catch (error) {
+        }
 
-          console.log(error)
+        catch (error) {
+
+          console.log(
+            'Fetch Approved Feedbacks Error:',
+            error
+          )
 
         }
 
       }
 
+
     fetchApprovedFeedbacks()
 
   }, [])
+
+
+  // ======================================
+  // IMAGE URL
+  // ======================================
+  //
+  // Cloudinary:
+  //     complete URL
+  //
+  // Old local upload:
+  //     /uploads/filename.jpg
+  //
+  // Supports both.
+  // ======================================
+
+  const getImageUrl =
+    (image) => {
+
+      if (!image) {
+
+        return '/logo.png'
+
+      }
+
+
+      // ==================================
+      // CLOUDINARY / EXTERNAL URL
+      // ==================================
+
+      if (
+
+        image.startsWith(
+          'http://'
+        ) ||
+
+        image.startsWith(
+          'https://'
+        )
+
+      ) {
+
+        return image
+
+      }
+
+
+      // ==================================
+      // OLD LOCAL UPLOAD
+      // ==================================
+
+      return `${API_BASE_URL}${
+
+        image.startsWith('/')
+
+          ? image
+
+          : `/${image}`
+
+      }`
+
+    }
+
 
   // ======================================
   // HANDLE INPUT
   // ======================================
 
-  const handleChange = (e) => {
+  const handleChange =
+    (e) => {
 
-    setFormData({
+      setFormData({
 
-      ...formData,
+        ...formData,
 
-      [e.target.name]:
-        e.target.value,
+        [e.target.name]:
+          e.target.value,
 
-    })
+      })
 
-  }
+    }
+
 
   // ======================================
   // SUBMIT FEEDBACK
@@ -125,21 +220,27 @@ function Testimonials() {
 
       e.preventDefault()
 
+
       try {
 
         await axios.post(
 
-          'https://eduportal-backend-m5t1.onrender.com/api/feedback',
+          `${API_BASE_URL}/api/feedback`,
 
           formData
 
         )
 
+
         alert(
           'Feedback Submitted Successfully'
         )
 
-        // Reset Form
+
+        // ==================================
+        // RESET FORM
+        // ==================================
+
         setFormData({
 
           studentName: '',
@@ -152,9 +253,15 @@ function Testimonials() {
 
         })
 
-      } catch (error) {
+      }
 
-        console.log(error)
+      catch (error) {
+
+        console.log(
+          'Feedback Submission Error:',
+          error
+        )
+
 
         alert(
           'Feedback Submission Failed'
@@ -164,15 +271,20 @@ function Testimonials() {
 
     }
 
+
   // ======================================
   // STAR RENDER
   // ======================================
 
-  const renderStars = (rating) => {
+  const renderStars =
+    (rating) => {
 
-    return '⭐'.repeat(rating)
+      return '⭐'.repeat(
+        Number(rating || 0)
+      )
 
-  }
+    }
+
 
   return (
 
@@ -183,71 +295,132 @@ function Testimonials() {
       {/* ====================================== */}
 
       <section
+
         id="testimonials"
+
         className="py-5 bg-light"
+
         data-aos="fade-up"
+
       >
 
         <div className="container">
 
-          {/* Heading */}
+
+          {/* ==================================
+              HEADING
+          ================================== */}
+
           <h2 className="text-center mb-5 fw-bold">
 
             What Our Students Say
 
           </h2>
 
-          {/* Cards */}
+
+          {/* ==================================
+              TESTIMONIAL CARDS
+          ================================== */}
+
           <div className="row g-4">
 
-            {testimonials.map((item, index) => (
+            {testimonials.map(
+              (item, index) => (
 
-              <div
-                className="col-md-4"
-                key={item._id}
-                data-aos="zoom-in"
-                data-aos-delay={index * 100}
-              >
+                <div
 
-                <div className="testimonial-card p-4 bg-white shadow rounded h-100">
+                  className="col-md-4"
 
-                  {/* Image */}
-                  <div className="text-center mb-3">
+                  key={
+                    item._id
+                  }
 
-                    <img
-                      src={`https://eduportal-backend-m5t1.onrender.com${item.image}`}
-                      alt={item.studentName}
-                      className="rounded-circle testimonial-img"
-                    />
+                  data-aos="zoom-in"
+
+                  data-aos-delay={
+                    index * 100
+                  }
+
+                >
+
+                  <div className="testimonial-card p-4 bg-white shadow rounded h-100">
+
+
+                    {/* ==================================
+                        IMAGE
+                    ================================== */}
+
+                    <div className="text-center mb-3">
+
+                      <img
+
+                        src={
+                          getImageUrl(
+                            item.image
+                          )
+                        }
+
+                        alt={
+                          item.studentName
+                        }
+
+                        className="rounded-circle testimonial-img"
+
+                        onError={(e) => {
+
+                          e.currentTarget.src =
+                            '/logo.png'
+
+                        }}
+
+                      />
+
+                    </div>
+
+
+                    {/* ==================================
+                        NAME
+                    ================================== */}
+
+                    <h5 className="text-center fw-bold">
+
+                      {
+                        item.studentName
+                      }
+
+                    </h5>
+
+
+                    {/* ==================================
+                        COURSE
+                    ================================== */}
+
+                    <p className="text-muted small text-center">
+
+                      {
+                        item.course
+                      }
+
+                    </p>
+
+
+                    {/* ==================================
+                        REVIEW
+                    ================================== */}
+
+                    <p className="text-center fst-italic text-muted">
+
+                      "{item.review}"
+
+                    </p>
 
                   </div>
 
-                  {/* Name */}
-                  <h5 className="text-center fw-bold">
-
-                    {item.studentName}
-
-                  </h5>
-
-                  {/* Course */}
-                  <p className="text-muted small text-center">
-
-                    {item.course}
-
-                  </p>
-
-                  {/* Review */}
-                  <p className="text-center fst-italic text-muted">
-
-                    "{item.review}"
-
-                  </p>
-
                 </div>
 
-              </div>
+              )
 
-            ))}
+            )}
 
           </div>
 
@@ -255,13 +428,17 @@ function Testimonials() {
 
       </section>
 
+
       {/* ====================================== */}
       {/* STATS SECTION */}
       {/* ====================================== */}
 
       <section
+
         className="py-5"
+
         data-aos="fade-up"
+
       >
 
         <div className="container">
@@ -272,22 +449,26 @@ function Testimonials() {
 
               <div className="feedback-form shadow p-5 rounded bg-white text-center">
 
+
                 <h3 className="fw-bold mb-3">
 
                   Trusted By Hundreds Of Students
 
                 </h3>
 
+
                 <p className="text-muted">
 
                   Our students consistently achieve
                   excellent results and recommend
-                  Prerna Institute Of Excellence for quality education,
-                  guidance, and mentorship.
+                  Prerna Institute Of Excellence for
+                  quality education, guidance, and mentorship.
 
                 </p>
 
+
                 <div className="row mt-4">
+
 
                   <div className="col-md-4">
 
@@ -297,6 +478,7 @@ function Testimonials() {
 
                     </h2>
 
+
                     <p className="text-muted">
 
                       Happy Students
@@ -304,6 +486,7 @@ function Testimonials() {
                     </p>
 
                   </div>
+
 
                   <div className="col-md-4">
 
@@ -313,6 +496,7 @@ function Testimonials() {
 
                     </h2>
 
+
                     <p className="text-muted">
 
                       Positive Reviews
@@ -320,6 +504,7 @@ function Testimonials() {
                     </p>
 
                   </div>
+
 
                   <div className="col-md-4">
 
@@ -329,6 +514,7 @@ function Testimonials() {
 
                     </h2>
 
+
                     <p className="text-muted">
 
                       Successful Selections
@@ -336,6 +522,7 @@ function Testimonials() {
                     </p>
 
                   </div>
+
 
                 </div>
 
@@ -349,13 +536,17 @@ function Testimonials() {
 
       </section>
 
+
       {/* ====================================== */}
       {/* FEEDBACK FORM */}
       {/* ====================================== */}
 
       <section
+
         className="py-5 bg-light"
+
         data-aos="fade-up"
+
       >
 
         <div className="container">
@@ -366,45 +557,87 @@ function Testimonials() {
 
               <div className="feedback-form shadow p-5 rounded bg-white">
 
+
                 <h3 className="text-center fw-bold mb-4">
 
                   Share Your Feedback
 
                 </h3>
 
-                <form onSubmit={handleSubmit}>
 
-                  {/* Name */}
+                <form
+                  onSubmit={
+                    handleSubmit
+                  }
+                >
+
+
+                  {/* ==================================
+                      NAME
+                  ================================== */}
+
                   <div className="mb-3">
 
                     <input
+
                       type="text"
+
                       name="studentName"
+
                       className="form-control"
+
                       placeholder="Your Name"
-                      value={formData.studentName}
-                      onChange={handleChange}
+
+                      value={
+                        formData.studentName
+                      }
+
+                      onChange={
+                        handleChange
+                      }
+
                       required
+
                     />
 
                   </div>
 
-                  {/* Course */}
+
+                  {/* ==================================
+                      COURSE
+                  ================================== */}
+
                   <div className="mb-3">
 
                     <input
+
                       type="text"
+
                       name="course"
+
                       className="form-control"
+
                       placeholder="Your Course"
-                      value={formData.course}
-                      onChange={handleChange}
+
+                      value={
+                        formData.course
+                      }
+
+                      onChange={
+                        handleChange
+                      }
+
                       required
+
                     />
 
                   </div>
 
-                  {/* Rating */}
+
+                  {/* ==================================
+                      RATING
+                  ================================== */}
+
                   <div className="mb-3">
 
                     <label className="form-label fw-bold">
@@ -413,58 +646,105 @@ function Testimonials() {
 
                     </label>
 
+
                     <select
+
                       className="form-control"
+
                       name="rating"
-                      value={formData.rating}
-                      onChange={handleChange}
+
+                      value={
+                        formData.rating
+                      }
+
+                      onChange={
+                        handleChange
+                      }
+
                     >
 
                       <option value="5">
+
                         ⭐⭐⭐⭐⭐ (5)
+
                       </option>
+
 
                       <option value="4">
+
                         ⭐⭐⭐⭐ (4)
+
                       </option>
+
 
                       <option value="3">
+
                         ⭐⭐⭐ (3)
+
                       </option>
+
 
                       <option value="2">
+
                         ⭐⭐ (2)
+
                       </option>
 
+
                       <option value="1">
+
                         ⭐ (1)
+
                       </option>
 
                     </select>
 
                   </div>
 
-                  {/* Message */}
+
+                  {/* ==================================
+                      MESSAGE
+                  ================================== */}
+
                   <div className="mb-4">
 
                     <textarea
+
                       rows="5"
+
                       className="form-control"
+
                       placeholder="Write your feedback"
+
                       name="message"
-                      value={formData.message}
-                      onChange={handleChange}
+
+                      value={
+                        formData.message
+                      }
+
+                      onChange={
+                        handleChange
+                      }
+
                       required
+
                     ></textarea>
 
                   </div>
 
-                  {/* Submit */}
+
+                  {/* ==================================
+                      SUBMIT
+                  ================================== */}
+
                   <div className="text-center">
 
                     <button
+
                       type="submit"
+
                       className="btn feedback-btn px-4"
+
                     >
 
                       Submit Feedback
@@ -485,16 +765,21 @@ function Testimonials() {
 
       </section>
 
+
       {/* ====================================== */}
       {/* APPROVED FEEDBACKS */}
       {/* ====================================== */}
 
       <section
+
         className="py-5"
+
         data-aos="fade-up"
+
       >
 
         <div className="container">
+
 
           <h2 className="text-center fw-bold mb-5">
 
@@ -502,52 +787,89 @@ function Testimonials() {
 
           </h2>
 
+
           <div className="row g-4">
 
-            {feedbacks.map((item, index) => (
+            {feedbacks.map(
+              (item, index) => (
 
-              <div
-                className="col-md-4"
-                key={item._id}
-                data-aos="zoom-in"
-                data-aos-delay={index * 100}
-              >
+                <div
 
-                <div className="testimonial-card p-4 bg-white shadow rounded h-100">
+                  className="col-md-4"
 
-                  {/* Name */}
-                  <h5 className="fw-bold text-center">
+                  key={
+                    item._id
+                  }
 
-                    {item.studentName}
+                  data-aos="zoom-in"
 
-                  </h5>
+                  data-aos-delay={
+                    index * 100
+                  }
 
-                  {/* Course */}
-                  <p className="text-muted text-center">
+                >
 
-                    {item.course}
+                  <div className="testimonial-card p-4 bg-white shadow rounded h-100">
 
-                  </p>
 
-                  {/* Rating */}
-                  <div className="text-center mb-2">
+                    {/* ==================================
+                        NAME
+                    ================================== */}
 
-                    {renderStars(item.rating)}
+                    <h5 className="fw-bold text-center">
+
+                      {
+                        item.studentName
+                      }
+
+                    </h5>
+
+
+                    {/* ==================================
+                        COURSE
+                    ================================== */}
+
+                    <p className="text-muted text-center">
+
+                      {
+                        item.course
+                      }
+
+                    </p>
+
+
+                    {/* ==================================
+                        RATING
+                    ================================== */}
+
+                    <div className="text-center mb-2">
+
+                      {
+                        renderStars(
+                          item.rating
+                        )
+                      }
+
+                    </div>
+
+
+                    {/* ==================================
+                        MESSAGE
+                    ================================== */}
+
+                    <p className="text-center fst-italic text-muted">
+
+                      "{item.message}"
+
+                    </p>
 
                   </div>
 
-                  {/* Message */}
-                  <p className="text-center fst-italic text-muted">
-
-                    "{item.message}"
-
-                  </p>
-
                 </div>
 
-              </div>
+              )
 
-            ))}
+            )}
 
           </div>
 
@@ -560,5 +882,6 @@ function Testimonials() {
   )
 
 }
+
 
 export default Testimonials

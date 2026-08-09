@@ -4,14 +4,24 @@ import axios from 'axios'
 
 import '../assets/styles/faculty.css'
 
+
+// ======================================
+// API BASE URL
+// ======================================
+
+const API_BASE_URL =
+  'https://eduportal-backend-m5t1.onrender.com'
+
+
 function Faculty() {
 
   // ======================================
   // STATE
   // ======================================
 
-  const [facultyData, setFacultyData]
-    = useState([])
+  const [facultyData, setFacultyData] =
+    useState([])
+
 
   // ======================================
   // FETCH FACULTY
@@ -26,24 +36,95 @@ function Faculty() {
 
           const response =
             await axios.get(
-              'https://eduportal-backend-m5t1.onrender.com/api/faculty'
+
+              `${API_BASE_URL}/api/faculty`
+
             )
+
 
           setFacultyData(
             response.data
           )
 
-        } catch (error) {
+        }
 
-          console.log(error)
+        catch (error) {
+
+          console.log(
+            'Fetch Faculty Error:',
+            error
+          )
 
         }
 
       }
 
+
     fetchFaculty()
 
   }, [])
+
+
+  // ======================================
+  // IMAGE URL
+  // ======================================
+  //
+  // Cloudinary:
+  //     complete URL
+  //
+  // Old local upload:
+  //     /uploads/filename.jpg
+  //
+  // Supports both.
+  // ======================================
+
+  const getImageUrl =
+    (image) => {
+
+      if (!image) {
+
+        return '/logo.png'
+
+      }
+
+
+      // ==================================
+      // CLOUDINARY / EXTERNAL URL
+      // ==================================
+
+      if (
+
+        image.startsWith(
+          'http://'
+        ) ||
+
+        image.startsWith(
+          'https://'
+        )
+
+      ) {
+
+        return image
+
+      }
+
+
+      // ==================================
+      // OLD LOCAL UPLOAD
+      // ==================================
+
+      return `${API_BASE_URL}${
+
+        image.startsWith('/')
+
+          ? image
+
+          : `/${image}`
+
+      }`
+
+    }
+
 
   return (
 
@@ -54,26 +135,40 @@ function Faculty() {
       {/* ====================================== */}
 
       <section
+
         id="faculty"
+
         className="py-5 bg-light"
+
         data-aos="fade-up"
+
       >
 
         <div className="container">
 
-          {/* Heading */}
+
+          {/* ==================================
+              HEADING
+          ================================== */}
+
           <div className="text-center mb-5">
 
             <h2 className="fw-bold">
+
               Our Faculty
+
             </h2>
 
+
             <p className="text-muted">
+
               Meet our experienced educators who are passionate
               about shaping your future.
+
             </p>
 
           </div>
+
 
           {/* ====================================== */}
           {/* FACULTY CARDS */}
@@ -81,56 +176,115 @@ function Faculty() {
 
           <div className="row g-4">
 
-            {facultyData.map((item, index) => (
+            {facultyData.map(
+              (item, index) => (
 
-              <div
-                className="col-md-4"
-                key={item._id}
-                data-aos="zoom-in"
-                data-aos-delay={index * 100}
-              >
+                <div
 
-                <div className="card border-0 shadow-sm text-center py-4 faculty-card">
+                  className="col-md-4"
 
-                  {/* Faculty Image */}
-                  <img
-                    src={`https://eduportal-backend-m5t1.onrender.com${item.image}`}
-                    className="rounded-circle mx-auto mb-3 faculty-img"
-                    alt={item.name}
-                  />
+                  key={
+                    item._id
+                  }
 
-                  <div className="card-body">
+                  data-aos="zoom-in"
 
-                    {/* Faculty Name */}
-                    <h5 className="fw-bold">
-                      {item.name}
-                    </h5>
+                  data-aos-delay={
+                    index * 100
+                  }
 
-                    {/* Subject + Experience */}
-                    <p className="text-muted mb-1">
+                >
 
-                      {item.subject}
-                      {' | '}
-                      {item.experience}
+                  <div className="card border-0 shadow-sm text-center py-4 faculty-card">
 
-                    </p>
 
-                    {/* Description */}
-                    <p className="text-muted small">
+                    {/* ==================================
+                        FACULTY IMAGE
+                    ================================== */}
 
-                      {item.description}
+                    <img
 
-                    </p>
+                      src={
+                        getImageUrl(
+                          item.image
+                        )
+                      }
+
+                      className="rounded-circle mx-auto mb-3 faculty-img"
+
+                      alt={
+                        item.name
+                      }
+
+                      onError={(e) => {
+
+                        e.currentTarget.src =
+                          '/logo.png'
+
+                      }}
+
+                    />
+
+
+                    <div className="card-body">
+
+
+                      {/* ==================================
+                          FACULTY NAME
+                      ================================== */}
+
+                      <h5 className="fw-bold">
+
+                        {
+                          item.name
+                        }
+
+                      </h5>
+
+
+                      {/* ==================================
+                          SUBJECT + EXPERIENCE
+                      ================================== */}
+
+                      <p className="text-muted mb-1">
+
+                        {
+                          item.subject
+                        }
+
+                        {' | '}
+
+                        {
+                          item.experience
+                        }
+
+                      </p>
+
+
+                      {/* ==================================
+                          DESCRIPTION
+                      ================================== */}
+
+                      <p className="text-muted small">
+
+                        {
+                          item.description
+                        }
+
+                      </p>
+
+                    </div>
 
                   </div>
 
                 </div>
 
-              </div>
+              )
 
-            ))}
+            )}
 
           </div>
+
 
           {/* ====================================== */}
           {/* PHILOSOPHY */}
@@ -141,8 +295,11 @@ function Faculty() {
             <div className="col-lg-10 mx-auto text-center">
 
               <h4 className="fw-bold">
+
                 Our Teaching Philosophy
+
               </h4>
+
 
               <p className="text-muted">
 
@@ -160,24 +317,33 @@ function Faculty() {
 
           </div>
 
+
           {/* ====================================== */}
           {/* TESTIMONIAL CAROUSEL */}
           {/* ====================================== */}
 
           <div
+
             className="row mt-5"
+
             data-aos="fade-right"
+
           >
 
             <div className="col-md-10 mx-auto">
 
               <div
+
                 id="facultyTestimonial"
+
                 className="carousel slide"
+
                 data-bs-ride="carousel"
+
               >
 
                 <div className="carousel-inner text-center">
+
 
                   <div className="carousel-item active">
 
@@ -190,6 +356,7 @@ function Faculty() {
 
                       </p>
 
+
                       <footer className="blockquote-footer">
 
                         Sneha Singh
@@ -199,6 +366,7 @@ function Faculty() {
                     </blockquote>
 
                   </div>
+
 
                   <div className="carousel-item">
 
@@ -210,6 +378,7 @@ function Faculty() {
                         topics feel simple."
 
                       </p>
+
 
                       <footer className="blockquote-footer">
 
@@ -223,24 +392,42 @@ function Faculty() {
 
                 </div>
 
-                {/* Prev Button */}
+
+                {/* ==================================
+                    PREV BUTTON
+                ================================== */}
+
                 <button
+
                   className="carousel-control-prev"
+
                   type="button"
+
                   data-bs-target="#facultyTestimonial"
+
                   data-bs-slide="prev"
+
                 >
 
                   <span className="carousel-control-prev-icon"></span>
 
                 </button>
 
-                {/* Next Button */}
+
+                {/* ==================================
+                    NEXT BUTTON
+                ================================== */}
+
                 <button
+
                   className="carousel-control-next"
+
                   type="button"
+
                   data-bs-target="#facultyTestimonial"
+
                   data-bs-slide="next"
+
                 >
 
                   <span className="carousel-control-next-icon"></span>
@@ -253,47 +440,68 @@ function Faculty() {
 
           </div>
 
+
           {/* ====================================== */}
           {/* STATS */}
           {/* ====================================== */}
 
           <div
+
             className="row text-center mt-5"
+
             data-aos="fade-right"
+
           >
 
             <div className="col-md-4">
 
               <h2 className="text-success fw-bold">
+
                 98%
+
               </h2>
 
+
               <p className="text-muted">
+
                 Student Satisfaction
+
               </p>
 
             </div>
+
 
             <div className="col-md-4">
 
               <h2 className="text-primary fw-bold">
+
                 1200+
+
               </h2>
 
+
               <p className="text-muted">
+
                 Students Mentored
+
               </p>
 
             </div>
 
+
             <div className="col-md-4">
 
               <h2 className="text-warning fw-bold">
+
                 15+
+
               </h2>
 
+
               <p className="text-muted">
+
                 Competitive Exams Covered
+
               </p>
 
             </div>
@@ -309,5 +517,6 @@ function Faculty() {
   )
 
 }
+
 
 export default Faculty

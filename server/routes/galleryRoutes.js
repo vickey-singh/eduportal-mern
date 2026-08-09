@@ -23,15 +23,18 @@ router.post(
 
     try {
 
-      const { title } = req.body
+      const {
+        title,
+      } = req.body
+
 
       // ======================================
-      // IMAGE
+      // CLOUDINARY IMAGE
       // ======================================
 
       const image =
         req.file
-          ? `/uploads/${req.file.filename}`
+          ? req.file.path
           : ''
 
 
@@ -73,15 +76,21 @@ router.post(
 
       })
 
-    } catch (error) {
+    }
 
-      console.log(error)
+    catch (error) {
+
+      console.log(
+        'Add Gallery Error:',
+        error
+      )
 
       res.status(500).json({
 
         success: false,
 
-        message: 'Server Error',
+        message:
+          'Server Error',
 
       })
 
@@ -107,19 +116,30 @@ router.get(
       const gallery =
         await Gallery.find()
 
+          .sort({
+            createdAt: -1,
+          })
+
+
       res.status(200).json(
         gallery
       )
 
-    } catch (error) {
+    }
 
-      console.log(error)
+    catch (error) {
+
+      console.log(
+        'Get Gallery Error:',
+        error
+      )
 
       res.status(500).json({
 
         success: false,
 
-        message: 'Server Error',
+        message:
+          'Server Error',
 
       })
 
@@ -142,9 +162,44 @@ router.delete(
 
     try {
 
+      const gallery =
+        await Gallery.findById(
+          req.params.id
+        )
+
+
+      // ======================================
+      // CHECK GALLERY
+      // ======================================
+
+      if (!gallery) {
+
+        return res.status(404).json({
+
+          success: false,
+
+          message:
+            'Gallery Image Not Found',
+
+        })
+
+      }
+
+
+      // ======================================
+      // DELETE DATABASE RECORD
+      // ======================================
+
       await Gallery.findByIdAndDelete(
+
         req.params.id
+
       )
+
+
+      // ======================================
+      // RESPONSE
+      // ======================================
 
       res.status(200).json({
 
@@ -155,15 +210,21 @@ router.delete(
 
       })
 
-    } catch (error) {
+    }
 
-      console.log(error)
+    catch (error) {
+
+      console.log(
+        'Delete Gallery Error:',
+        error
+      )
 
       res.status(500).json({
 
         success: false,
 
-        message: 'Server Error',
+        message:
+          'Server Error',
 
       })
 
@@ -188,10 +249,13 @@ router.put(
 
     try {
 
-      const { title } = req.body
+      const {
+        title,
+      } = req.body
+
 
       // ======================================
-      // EXISTING IMAGE
+      // EXISTING GALLERY
       // ======================================
 
       const existingGallery =
@@ -201,12 +265,40 @@ router.put(
 
 
       // ======================================
+      // CHECK GALLERY
+      // ======================================
+
+      if (!existingGallery) {
+
+        return res.status(404).json({
+
+          success: false,
+
+          message:
+            'Gallery Image Not Found',
+
+        })
+
+      }
+
+
+      // ======================================
       // IMAGE UPDATE
+      // ======================================
+      //
+      // New image uploaded:
+      //     Cloudinary URL
+      //
+      // No new image:
+      //     Keep existing image
       // ======================================
 
       const image =
+
         req.file
-          ? `/uploads/${req.file.filename}`
+
+          ? req.file.path
+
           : existingGallery.image
 
 
@@ -228,7 +320,11 @@ router.put(
           },
 
           {
+
             new: true,
+
+            runValidators: true,
+
           }
 
         )
@@ -250,15 +346,21 @@ router.put(
 
       })
 
-    } catch (error) {
+    }
 
-      console.log(error)
+    catch (error) {
+
+      console.log(
+        'Update Gallery Error:',
+        error
+      )
 
       res.status(500).json({
 
         success: false,
 
-        message: 'Server Error',
+        message:
+          'Server Error',
 
       })
 
@@ -268,4 +370,10 @@ router.put(
 
 )
 
-module.exports = router
+
+// ======================================
+// EXPORT ROUTER
+// ======================================
+
+module.exports =
+  router

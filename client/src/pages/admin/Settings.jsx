@@ -1,11 +1,26 @@
 import { useEffect, useState } from 'react'
 
+import axios from 'axios'
+
 import {
   getSettings,
   updateSettings,
 } from '../../services/settingsService'
 
+
+// ======================================
+// API BASE URL
+// ======================================
+
+const API_BASE_URL =
+  'https://eduportal-backend-m5t1.onrender.com'
+
+
 function Settings() {
+
+  // ======================================
+  // WEBSITE SETTINGS
+  // ======================================
 
   const [formData, setFormData] =
     useState({
@@ -31,23 +46,47 @@ function Settings() {
       logo: null,
 
     })
-    
-    const [accountData, setAccountData] =
-      useState({
-    
-        currentEmail: '',
-    
-        newEmail: '',
-    
-        currentPassword: '',
-    
-        newPassword: '',
-    
-        confirmPassword: '',
-    
-      })
 
-    
+
+  // ======================================
+  // EXISTING LOGO
+  // ======================================
+
+  const [existingLogo, setExistingLogo] =
+    useState('')
+
+
+  // ======================================
+  // ADMIN ACCOUNT
+  // ======================================
+
+  const [accountData, setAccountData] =
+    useState({
+
+      currentEmail: '',
+
+      newEmail: '',
+
+      currentPassword: '',
+
+      newPassword: '',
+
+      confirmPassword: '',
+
+    })
+
+
+  // ======================================
+  // LOADING
+  // ======================================
+
+  const [loading, setLoading] =
+    useState(false)
+
+
+  // ======================================
+  // FETCH SETTINGS
+  // ======================================
 
   useEffect(() => {
 
@@ -55,56 +94,145 @@ function Settings() {
 
   }, [])
 
+
   const fetchSettings =
     async () => {
 
       try {
 
-        const response = await getSettings()
+        const response =
+          await getSettings()
+
+
+        const settings =
+          response.data
+
+
+        // ==================================
+        // FORM DATA
+        // ==================================
 
         setFormData({
 
           instituteName:
-            response.data.instituteName || '',
+            settings.instituteName || '',
 
           phone:
-            response.data.phone || '',
+            settings.phone || '',
 
           email:
-            response.data.email || '',
+            settings.email || '',
 
           address:
-            response.data.address || '',
+            settings.address || '',
 
           googleMapUrl:
-            response.data.googleMapUrl || '',
+            settings.googleMapUrl || '',
 
           instagram:
-            response.data.instagram || '',
+            settings.instagram || '',
 
           youtube:
-            response.data.youtube || '',
+            settings.youtube || '',
 
           linkedin:
-            response.data.linkedin || '',
+            settings.linkedin || '',
 
           twitter:
-            response.data.twitter || '',
+            settings.twitter || '',
 
           logo: null,
 
         })
 
-    
+
+        // ==================================
+        // EXISTING LOGO
+        // ==================================
+
+        setExistingLogo(
+          settings.logo || ''
+        )
+
+
       }
 
       catch (error) {
 
-        console.log(error)
+        console.log(
+          'Fetch Settings Error:',
+          error
+        )
 
       }
 
     }
+
+
+  // ======================================
+  // IMAGE URL
+  // ======================================
+  //
+  // Cloudinary:
+  //     complete URL
+  //
+  // Old local upload:
+  //     /uploads/filename
+  //
+  // Supports both.
+  // ======================================
+
+  const getImageUrl =
+    (image) => {
+
+      if (!image) {
+
+        return '/logo.png'
+
+      }
+
+
+      // ==================================
+      // CLOUDINARY / EXTERNAL URL
+      // ==================================
+
+      if (
+
+        image.startsWith(
+          'http://'
+        ) ||
+
+        image.startsWith(
+          'https://'
+        )
+
+      ) {
+
+        return image
+
+      }
+
+
+      // ==================================
+      // OLD LOCAL UPLOAD
+      // ==================================
+
+      return `${API_BASE_URL}${
+
+        image.startsWith('/')
+
+          ? image
+
+          : `/${image}`
+
+      }`
+
+    }
+
+
+  // ======================================
+  // HANDLE SETTINGS INPUT
+  // ======================================
 
   const handleChange =
     (e) => {
@@ -120,6 +248,11 @@ function Settings() {
 
     }
 
+
+  // ======================================
+  // HANDLE SETTINGS SUBMIT
+  // ======================================
+
   const handleSubmit =
     async (e) => {
 
@@ -127,53 +260,82 @@ function Settings() {
 
       try {
 
+        setLoading(true)
+
+
         const data =
           new FormData()
+
+
+        // ==================================
+        // BASIC DETAILS
+        // ==================================
 
         data.append(
           'instituteName',
           formData.instituteName
         )
 
+
         data.append(
           'phone',
           formData.phone
         )
+
 
         data.append(
           'email',
           formData.email
         )
 
+
         data.append(
           'address',
           formData.address
         )
+
+
+        // ==================================
+        // GOOGLE MAP
+        // ==================================
 
         data.append(
           'googleMapUrl',
           formData.googleMapUrl
         )
 
+
+        // ==================================
+        // SOCIAL LINKS
+        // ==================================
+
         data.append(
           'instagram',
           formData.instagram
         )
+
 
         data.append(
           'youtube',
           formData.youtube
         )
 
+
         data.append(
           'linkedin',
           formData.linkedin
         )
 
+
         data.append(
           'twitter',
           formData.twitter
         )
+
+
+        // ==================================
+        // LOGO
+        // ==================================
 
         if (formData.logo) {
 
@@ -184,131 +346,207 @@ function Settings() {
 
         }
 
-        await updateSettings(data)
+
+        // ==================================
+        // UPDATE
+        // ==================================
+
+        await updateSettings(
+          data
+        )
+
 
         alert(
           'Settings Updated Successfully'
         )
 
+
+        // ==================================
+        // FETCH UPDATED SETTINGS
+        // ==================================
+
+        await fetchSettings()
+
+
       }
 
       catch (error) {
 
-        console.log(error)
+        console.log(
+          'Update Settings Error:',
+          error
+        )
+
+
+        alert(
+
+          error.response?.data?.message ||
+
+          'Settings Update Failed'
+
+        )
+
+      }
+
+      finally {
+
+        setLoading(false)
 
       }
 
     }
 
-    const handleAccountChange =
-  (e) => {
 
-    setAccountData({
+  // ======================================
+  // HANDLE ACCOUNT INPUT
+  // ======================================
 
-      ...accountData,
-
-      [e.target.name]:
-        e.target.value,
-
-    })
-
-  }
-
-const handleAccountSubmit =
-  async (e) => {
-
-    e.preventDefault()
-
-    if (
-
-      accountData.newPassword &&
-
-      accountData.newPassword !==
-
-      accountData.confirmPassword
-
-    ) {
-
-      alert(
-        'Passwords Do Not Match'
-      )
-
-      return
-
-    }
-
-    try {
-
-      const response =
-        await axios.put(
-
-          'https://eduportal-backend-m5t1.onrender.com/api/account-settings',
-
-          {
-
-            currentEmail:
-              accountData.currentEmail,
-
-            newEmail:
-              accountData.newEmail,
-
-            currentPassword:
-              accountData.currentPassword,
-
-            newPassword:
-              accountData.newPassword,
-
-          }
-
-        )
-
-      alert(
-        response.data.message
-      )
+  const handleAccountChange =
+    (e) => {
 
       setAccountData({
 
-        currentEmail: '',
+        ...accountData,
 
-        newEmail: '',
-
-        currentPassword: '',
-
-        newPassword: '',
-
-        confirmPassword: '',
+        [e.target.name]:
+          e.target.value,
 
       })
 
     }
 
-    catch (error) {
 
-      alert(
+  // ======================================
+  // HANDLE ACCOUNT SUBMIT
+  // ======================================
 
-        error.response?.data?.message ||
+  const handleAccountSubmit =
+    async (e) => {
 
-        'Update Failed'
+      e.preventDefault()
 
-      )
+
+      // ==================================
+      // PASSWORD MATCH
+      // ==================================
+
+      if (
+
+        accountData.newPassword &&
+
+        accountData.newPassword !==
+        accountData.confirmPassword
+
+      ) {
+
+        alert(
+          'Passwords Do Not Match'
+        )
+
+        return
+
+      }
+
+
+      try {
+
+        const response =
+          await axios.put(
+
+            `${API_BASE_URL}/api/account-settings`,
+
+            {
+
+              currentEmail:
+                accountData.currentEmail,
+
+              newEmail:
+                accountData.newEmail,
+
+              currentPassword:
+                accountData.currentPassword,
+
+              newPassword:
+                accountData.newPassword,
+
+            }
+
+          )
+
+
+        alert(
+          response.data.message
+        )
+
+
+        // ==================================
+        // RESET ACCOUNT FORM
+        // ==================================
+
+        setAccountData({
+
+          currentEmail: '',
+
+          newEmail: '',
+
+          currentPassword: '',
+
+          newPassword: '',
+
+          confirmPassword: '',
+
+        })
+
+
+      }
+
+      catch (error) {
+
+        console.log(
+          'Account Update Error:',
+          error
+        )
+
+
+        alert(
+
+          error.response?.data?.message ||
+
+          'Update Failed'
+
+        )
+
+      }
 
     }
 
-  }
 
   return (
 
     <div className="applications-section">
 
+
+      {/* ====================================== */}
+      {/* PAGE HEADER */}
+      {/* ====================================== */}
+
       <div className="applications-header">
 
         <h2>
-
           Website Settings
-
         </h2>
 
+        <p>
+          Manage your institute information,
+          logo and social media links.
+        </p>
+
       </div>
+
+
+      {/* ====================================== */}
+      {/* WEBSITE SETTINGS FORM */}
+      {/* ====================================== */}
 
       <form
         onSubmit={handleSubmit}
@@ -316,258 +554,695 @@ const handleAccountSubmit =
 
         <div className="row">
 
+
+          {/* ==================================
+              INSTITUTE NAME
+          ================================== */}
+
           <div className="col-md-6 mb-3">
 
+            <label className="form-label">
+
+              Institute Name
+
+            </label>
+
+
             <input
+
               type="text"
+
               className="form-control"
+
               placeholder="Institute Name"
+
               name="instituteName"
-              value={formData.instituteName}
-              onChange={handleChange}
+
+              value={
+                formData.instituteName
+              }
+
+              onChange={
+                handleChange
+              }
+
             />
 
           </div>
 
+
+          {/* ==================================
+              PHONE
+          ================================== */}
+
           <div className="col-md-6 mb-3">
 
+            <label className="form-label">
+
+              Phone Number
+
+            </label>
+
+
             <input
+
               type="text"
+
               className="form-control"
+
               placeholder="Phone Number"
+
               name="phone"
-              value={formData.phone}
-              onChange={handleChange}
+
+              value={
+                formData.phone
+              }
+
+              onChange={
+                handleChange
+              }
+
             />
 
           </div>
 
+
+          {/* ==================================
+              EMAIL
+          ================================== */}
+
           <div className="col-md-6 mb-3">
 
+            <label className="form-label">
+
+              Email
+
+            </label>
+
+
             <input
+
               type="email"
+
               className="form-control"
+
               placeholder="Email"
+
               name="email"
-              value={formData.email}
-              onChange={handleChange}
+
+              value={
+                formData.email
+              }
+
+              onChange={
+                handleChange
+              }
+
             />
 
           </div>
 
+
+          {/* ==================================
+              LOGO
+          ================================== */}
+
           <div className="col-md-6 mb-3">
 
+            <label className="form-label">
+
+              Institute Logo
+
+            </label>
+
+
             <input
+
               type="file"
+
               className="form-control"
+
               accept="image/*"
-              onChange={(e) =>
+
+              onChange={(e) => {
 
                 setFormData({
 
                   ...formData,
 
                   logo:
-                    e.target.files[0],
+                    e.target.files?.[0] ||
+                    null,
 
                 })
 
-              }
+              }}
+
             />
+
+
+            {/* ==================================
+                EXISTING LOGO PREVIEW
+            ================================== */}
+
+            {existingLogo && (
+
+              <div className="mt-3">
+
+                <small className="text-muted d-block mb-2">
+
+                  Current Logo
+
+                </small>
+
+
+                <img
+
+                  src={
+                    getImageUrl(
+                      existingLogo
+                    )
+                  }
+
+                  alt="Current Institute Logo"
+
+                  style={{
+
+                    width: '100px',
+
+                    height: '100px',
+
+                    objectFit: 'contain',
+
+                    borderRadius: '8px',
+
+                    border:
+                      '1px solid #ddd',
+
+                    padding: '5px',
+
+                  }}
+
+                  onError={(e) => {
+
+                    e.currentTarget.src =
+                      '/logo.png'
+
+                  }}
+
+                />
+
+              </div>
+
+            )}
 
           </div>
 
+
+          {/* ==================================
+              ADDRESS
+          ================================== */}
+
           <div className="col-12 mb-3">
+
+            <label className="form-label">
+
+              Address
+
+            </label>
+
 
             <textarea
+
               rows="4"
+
               className="form-control"
+
               placeholder="Address"
+
               name="address"
-              value={formData.address}
-              onChange={handleChange}
+
+              value={
+                formData.address
+              }
+
+              onChange={
+                handleChange
+              }
+
             />
 
           </div>
+
+
+          {/* ==================================
+              GOOGLE MAP
+          ================================== */}
 
           <div className="col-12 mb-3">
-          
+
+            <label className="form-label">
+
+              Google Maps Embed URL
+
+            </label>
+
+
             <input
+
               type="text"
+
               className="form-control"
+
               placeholder="Google Maps Embed URL"
+
               name="googleMapUrl"
-              value={formData.googleMapUrl}
-              onChange={handleChange}
+
+              value={
+                formData.googleMapUrl
+              }
+
+              onChange={
+                handleChange
+              }
+
             />
-          
+
           </div>
+
+
+          {/* ==================================
+              INSTAGRAM
+          ================================== */}
 
           <div className="col-md-6 mb-3">
 
+            <label className="form-label">
+
+              Instagram
+
+            </label>
+
+
             <input
+
               type="text"
+
               className="form-control"
+
               placeholder="Instagram Link"
+
               name="instagram"
-              value={formData.instagram}
-              onChange={handleChange}
+
+              value={
+                formData.instagram
+              }
+
+              onChange={
+                handleChange
+              }
+
             />
 
           </div>
 
+
+          {/* ==================================
+              YOUTUBE
+          ================================== */}
+
           <div className="col-md-6 mb-3">
 
+            <label className="form-label">
+
+              YouTube
+
+            </label>
+
+
             <input
+
               type="text"
+
               className="form-control"
+
               placeholder="YouTube Link"
+
               name="youtube"
-              value={formData.youtube}
-              onChange={handleChange}
+
+              value={
+                formData.youtube
+              }
+
+              onChange={
+                handleChange
+              }
+
             />
 
           </div>
 
+
+          {/* ==================================
+              LINKEDIN
+          ================================== */}
+
           <div className="col-md-6 mb-3">
 
+            <label className="form-label">
+
+              LinkedIn
+
+            </label>
+
+
             <input
+
               type="text"
+
               className="form-control"
+
               placeholder="LinkedIn Link"
+
               name="linkedin"
-              value={formData.linkedin}
-              onChange={handleChange}
+
+              value={
+                formData.linkedin
+              }
+
+              onChange={
+                handleChange
+              }
+
             />
 
           </div>
+
+
+          {/* ==================================
+              TWITTER / X
+          ================================== */}
 
           <div className="col-md-6 mb-3">
 
+            <label className="form-label">
+
+              Twitter / X
+
+            </label>
+
+
             <input
+
               type="text"
+
               className="form-control"
+
               placeholder="Twitter / X Link"
+
               name="twitter"
-              value={formData.twitter}
-              onChange={handleChange}
+
+              value={
+                formData.twitter
+              }
+
+              onChange={
+                handleChange
+              }
+
             />
 
           </div>
+
 
         </div>
 
+
+        {/* ====================================== */}
+        {/* SAVE SETTINGS */}
+        {/* ====================================== */}
+
         <button
+
+          type="submit"
+
           className="table-btn approve-btn"
+
+          disabled={loading}
+
         >
 
-          Save Settings
+          {loading
+            ? 'Saving...'
+            : 'Save Settings'}
 
         </button>
 
+
       </form>
+
+
       <hr className="my-5" />
 
-<div className="applications-header">
 
-  <h2>
+      {/* ====================================== */}
+      {/* ADMIN ACCOUNT SECURITY */}
+      {/* ====================================== */}
 
-    Admin Account Security
+      <div className="applications-header">
 
-  </h2>
+        <h3>
+          Admin Account Security
+        </h3>
 
-</div>
+        <p>
+          Update your admin login credentials.
+        </p>
 
-<form
-  onSubmit={handleAccountSubmit}
->
+      </div>
 
-  <div className="row">
 
-    <div className="col-md-6 mb-3">
+      <form
+        onSubmit={
+          handleAccountSubmit
+        }
+      >
 
-      <input
-        type="email"
-        className="form-control"
-        placeholder="Current Email"
-        name="currentEmail"
-        value={accountData.currentEmail}
-        onChange={handleAccountChange}
-        required
-      />
+        <div className="row">
 
-    </div>
 
-    <div className="col-md-6 mb-3">
+          {/* ==================================
+              CURRENT EMAIL
+          ================================== */}
 
-      <input
-        type="email"
-        className="form-control"
-        placeholder="New Email"
-        name="newEmail"
-        value={accountData.newEmail}
-        onChange={handleAccountChange}
-      />
+          <div className="col-md-6 mb-3">
 
-    </div>
+            <label className="form-label">
 
-    <div className="col-md-6 mb-3">
+              Current Email
 
-      <input
-        type="password"
-        className="form-control"
-        placeholder="Current Password"
-        name="currentPassword"
-        value={accountData.currentPassword}
-        onChange={handleAccountChange}
-        required
-      />
+            </label>
 
-    </div>
 
-    <div className="col-md-6 mb-3">
+            <input
 
-      <input
-        type="password"
-        className="form-control"
-        placeholder="New Password"
-        name="newPassword"
-        value={accountData.newPassword}
-        onChange={handleAccountChange}
-      />
+              type="email"
 
-    </div>
+              className="form-control"
 
-    <div className="col-12 mb-3">
+              placeholder="Current Email"
 
-      <input
-        type="password"
-        className="form-control"
-        placeholder="Confirm New Password"
-        name="confirmPassword"
-        value={accountData.confirmPassword}
-        onChange={handleAccountChange}
-      />
+              name="currentEmail"
 
-    </div>
+              value={
+                accountData.currentEmail
+              }
 
-  </div>
+              onChange={
+                handleAccountChange
+              }
 
-  <button
-    type="submit"
-    className="table-btn approve-btn"
-  >
+              required
 
-    Update Login Credentials
+            />
 
-  </button>
+          </div>
 
-</form>
+
+          {/* ==================================
+              NEW EMAIL
+          ================================== */}
+
+          <div className="col-md-6 mb-3">
+
+            <label className="form-label">
+
+              New Email
+
+            </label>
+
+
+            <input
+
+              type="email"
+
+              className="form-control"
+
+              placeholder="New Email"
+
+              name="newEmail"
+
+              value={
+                accountData.newEmail
+              }
+
+              onChange={
+                handleAccountChange
+              }
+
+            />
+
+          </div>
+
+
+          {/* ==================================
+              CURRENT PASSWORD
+          ================================== */}
+
+          <div className="col-md-6 mb-3">
+
+            <label className="form-label">
+
+              Current Password
+
+            </label>
+
+
+            <input
+
+              type="password"
+
+              className="form-control"
+
+              placeholder="Current Password"
+
+              name="currentPassword"
+
+              value={
+                accountData.currentPassword
+              }
+
+              onChange={
+                handleAccountChange
+              }
+
+              required
+
+            />
+
+          </div>
+
+
+          {/* ==================================
+              NEW PASSWORD
+          ================================== */}
+
+          <div className="col-md-6 mb-3">
+
+            <label className="form-label">
+
+              New Password
+
+            </label>
+
+
+            <input
+
+              type="password"
+
+              className="form-control"
+
+              placeholder="New Password"
+
+              name="newPassword"
+
+              value={
+                accountData.newPassword
+              }
+
+              onChange={
+                handleAccountChange
+              }
+
+            />
+
+          </div>
+
+
+          {/* ==================================
+              CONFIRM PASSWORD
+          ================================== */}
+
+          <div className="col-12 mb-3">
+
+            <label className="form-label">
+
+              Confirm New Password
+
+            </label>
+
+
+            <input
+
+              type="password"
+
+              className="form-control"
+
+              placeholder="Confirm New Password"
+
+              name="confirmPassword"
+
+              value={
+                accountData.confirmPassword
+              }
+
+              onChange={
+                handleAccountChange
+              }
+
+            />
+
+          </div>
+
+
+        </div>
+
+
+        {/* ====================================== */}
+        {/* UPDATE ACCOUNT */}
+        {/* ====================================== */}
+
+        <button
+
+          type="submit"
+
+          className="table-btn approve-btn"
+
+        >
+
+          Update Login Credentials
+
+        </button>
+
+
+      </form>
+
 
     </div>
 
   )
 
 }
+
 
 export default Settings

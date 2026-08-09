@@ -7,6 +7,15 @@ import { Link } from 'react-router-dom'
 // Import CSS
 import '../assets/styles/achievements.css'
 
+
+// ======================================
+// API BASE URL
+// ======================================
+
+const API_BASE_URL =
+  'https://eduportal-backend-m5t1.onrender.com'
+
+
 function Achievements() {
 
   // ======================================
@@ -17,6 +26,7 @@ function Achievements() {
     setAchievementData]
 
     = useState([])
+
 
   // ======================================
   // FETCH ACHIEVEMENTS
@@ -31,24 +41,95 @@ function Achievements() {
 
           const response =
             await axios.get(
-              'https://eduportal-backend-m5t1.onrender.com/api/achievements'
+
+              `${API_BASE_URL}/api/achievements`
+
             )
+
 
           setAchievementData(
             response.data
           )
 
-        } catch (error) {
+        }
 
-          console.log(error)
+        catch (error) {
+
+          console.log(
+            'Fetch Achievements Error:',
+            error
+          )
 
         }
 
       }
 
+
     fetchAchievements()
 
   }, [])
+
+
+  // ======================================
+  // IMAGE URL
+  // ======================================
+  //
+  // Cloudinary:
+  //     complete URL
+  //
+  // Old local upload:
+  //     /uploads/filename.jpg
+  //
+  // Supports both.
+  // ======================================
+
+  const getImageUrl =
+    (image) => {
+
+      if (!image) {
+
+        return '/logo.png'
+
+      }
+
+
+      // ==================================
+      // CLOUDINARY / EXTERNAL URL
+      // ==================================
+
+      if (
+
+        image.startsWith(
+          'http://'
+        ) ||
+
+        image.startsWith(
+          'https://'
+        )
+
+      ) {
+
+        return image
+
+      }
+
+
+      // ==================================
+      // OLD LOCAL UPLOAD
+      // ==================================
+
+      return `${API_BASE_URL}${
+
+        image.startsWith('/')
+
+          ? image
+
+          : `/${image}`
+
+      }`
+
+    }
+
 
   return (
 
@@ -66,18 +147,28 @@ function Achievements() {
 
         <div className="container">
 
-          {/* Heading */}
+
+          {/* ======================================
+              HEADING
+          ====================================== */}
+
           <div className="text-center mb-5">
 
             <h2 className="fw-bold">
+
               Our Achievements
+
             </h2>
 
+
             <p className="text-muted">
+
               Celebrating the success of our students.
+
             </p>
 
           </div>
+
 
           {/* ====================================== */}
           {/* STATS */}
@@ -91,20 +182,29 @@ function Achievements() {
             <div className="col-md-4 mb-3">
 
               <h3 className="fw-bold text-primary">
+
                 1200+
+
               </h3>
 
+
               <p className="text-muted mb-0">
+
                 Students Trained
+
               </p>
 
             </div>
 
+
             <div className="col-md-4 mb-3">
 
               <h3 className="fw-bold text-success">
+
                 650+
+
               </h3>
+
 
               <p className="text-muted mb-0">
 
@@ -114,11 +214,15 @@ function Achievements() {
 
             </div>
 
+
             <div className="col-md-4 mb-3">
 
               <h3 className="fw-bold text-warning">
+
                 35+
+
               </h3>
+
 
               <p className="text-muted mb-0">
 
@@ -130,73 +234,139 @@ function Achievements() {
 
           </div>
 
+
           {/* ====================================== */}
           {/* ACHIEVEMENT CARDS */}
           {/* ====================================== */}
 
           <div className="row g-4">
 
-            {achievementData.map((item, index) => (
+            {achievementData.map(
+              (item, index) => (
 
-              <div
-                className="col-md-4"
-                key={item._id}
-                data-aos="zoom-in"
-                data-aos-delay={index * 100}
-              >
+                <div
 
-                <div className="card h-100 shadow-sm achievement-card">
+                  className="col-md-4"
 
-                  {/* Achievement Image */}
-                  <img
-                    src={`https://eduportal-backend-m5t1.onrender.com${item.image}`}
-                    className="card-img-top"
-                    alt={item.studentName}
-                  />
+                  key={
+                    item._id
+                  }
 
-                  <div className="card-body">
+                  data-aos="zoom-in"
 
-                    {/* Student Name */}
-                    <h5 className="card-title fw-bold">
+                  data-aos-delay={
+                    index * 100
+                  }
 
-                      {item.studentName}
+                >
 
-                    </h5>
+                  <div className="card h-100 shadow-sm achievement-card">
 
-                    {/* Course + Rank */}
-                    <p className="text-muted mb-2">
 
-                      {item.course}
-                      {' | '}
-                      {item.rank}
+                    {/* ==================================
+                        ACHIEVEMENT IMAGE
+                    ================================== */}
 
-                    </p>
+                    <img
 
-                    {/* Marks */}
-                    <p className="fw-semibold text-success">
+                      src={
+                        getImageUrl(
+                          item.image
+                        )
+                      }
 
-                      Marks:
-                      {' '}
-                      {item.marks}
+                      className="card-img-top"
 
-                    </p>
+                      alt={
+                        item.studentName
+                      }
 
-                    {/* Description */}
-                    <p className="card-text text-muted">
+                      onError={(e) => {
 
-                      {item.description}
+                        e.currentTarget.src =
+                          '/logo.png'
 
-                    </p>
+                      }}
+
+                    />
+
+
+                    <div className="card-body">
+
+
+                      {/* ==================================
+                          STUDENT NAME
+                      ================================== */}
+
+                      <h5 className="card-title fw-bold">
+
+                        {
+                          item.studentName
+                        }
+
+                      </h5>
+
+
+                      {/* ==================================
+                          COURSE + RANK
+                      ================================== */}
+
+                      <p className="text-muted mb-2">
+
+                        {
+                          item.course
+                        }
+
+                        {' | '}
+
+                        {
+                          item.rank
+                        }
+
+                      </p>
+
+
+                      {/* ==================================
+                          MARKS
+                      ================================== */}
+
+                      <p className="fw-semibold text-success">
+
+                        Marks:
+
+                        {' '}
+
+                        {
+                          item.marks
+                        }
+
+                      </p>
+
+
+                      {/* ==================================
+                          DESCRIPTION
+                      ================================== */}
+
+                      <p className="card-text text-muted">
+
+                        {
+                          item.description
+                        }
+
+                      </p>
+
+                    </div>
 
                   </div>
 
                 </div>
 
-              </div>
+              )
 
-            ))}
+            )}
 
           </div>
+
 
           {/* ====================================== */}
           {/* SUCCESS QUOTES */}
@@ -213,7 +383,9 @@ function Achievements() {
 
             </h4>
 
+
             <div className="row g-4">
+
 
               <div className="col-md-6">
 
@@ -221,10 +393,12 @@ function Achievements() {
 
                   <p className="mb-1">
 
-                    " Prerna Institute Of Excellence helped me build a strong foundation
+                    " Prerna Institute Of Excellence
+                    helped me build a strong foundation
                     and gave me the confidence to crack NEET."
 
                   </p>
+
 
                   <small className="text-muted d-block text-end">
 
@@ -236,6 +410,7 @@ function Achievements() {
 
               </div>
 
+
               <div className="col-md-6">
 
                 <div className="bg-light p-4 rounded shadow-sm">
@@ -246,6 +421,7 @@ function Achievements() {
                     I owe my UPSC success to them."
 
                   </p>
+
 
                   <small className="text-muted d-block text-end">
 
@@ -265,16 +441,21 @@ function Achievements() {
 
       </section>
 
+
       {/* ====================================== */}
       {/* CTA SECTION */}
       {/* ====================================== */}
 
       <section
+
         className="py-5 text-center text-white"
+
         style={{
           backgroundColor: '#198754',
         }}
+
         data-aos="zoom-in"
+
       >
 
         <div className="container">
@@ -285,15 +466,21 @@ function Achievements() {
 
           </h3>
 
+
           <p>
 
-            Join Prerna Institute Of Excellence and turn your dreams into achievements.
+            Join Prerna Institute Of Excellence
+            and turn your dreams into achievements.
 
           </p>
 
+
           <Link
+
             to="/apply"
+
             className="btn btn-light px-4 mt-2"
+
           >
 
             Apply Today
@@ -309,5 +496,6 @@ function Achievements() {
   )
 
 }
+
 
 export default Achievements

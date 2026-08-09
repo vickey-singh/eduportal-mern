@@ -24,12 +24,22 @@ router.get(
       let settings =
         await Setting.findOne()
 
+
+      // ==================================
+      // CREATE DEFAULT SETTINGS
+      // ==================================
+
       if (!settings) {
 
         settings =
           await Setting.create({})
 
       }
+
+
+      // ==================================
+      // RESPONSE
+      // ==================================
 
       res.status(200).json(
         settings
@@ -39,7 +49,11 @@ router.get(
 
     catch (error) {
 
-      console.log(error)
+      console.log(
+        'Get Settings Error:',
+        error
+      )
+
 
       res.status(500).json({
 
@@ -71,8 +85,17 @@ router.put(
 
     try {
 
+      // ==================================
+      // FIND SETTINGS
+      // ==================================
+
       let settings =
         await Setting.findOne()
+
+
+      // ==================================
+      // CREATE SETTINGS IF NOT EXISTS
+      // ==================================
 
       if (!settings) {
 
@@ -81,44 +104,96 @@ router.put(
 
       }
 
+
+      // ==================================
+      // LOGO
+      // ==================================
+      //
+      // Cloudinary upload middleware:
+      //
+      // req.file.path
+      //     ↓
+      // Cloudinary secure URL
+      //
+      // If no new logo is selected,
+      // existing logo remains unchanged.
+      // ==================================
+
       const logo =
+
         req.file
 
-          ? `/uploads/${req.file.filename}`
+          ? req.file.path
 
           : settings.logo
 
+
+      // ==================================
+      // BASIC INFORMATION
+      // ==================================
+
       settings.instituteName =
-        req.body.instituteName
+        req.body.instituteName || ''
+
 
       settings.phone =
-        req.body.phone
+        req.body.phone || ''
+
 
       settings.email =
-        req.body.email
+        req.body.email || ''
+
 
       settings.address =
-        req.body.address
+        req.body.address || ''
+
+
+      // ==================================
+      // GOOGLE MAP
+      // ==================================
 
       settings.googleMapUrl =
-        req.body.googleMapUrl
+        req.body.googleMapUrl || ''
+
+
+      // ==================================
+      // SOCIAL LINKS
+      // ==================================
 
       settings.instagram =
-        req.body.instagram
+        req.body.instagram || ''
+
 
       settings.youtube =
-        req.body.youtube
+        req.body.youtube || ''
+
 
       settings.linkedin =
-        req.body.linkedin
+        req.body.linkedin || ''
+
 
       settings.twitter =
-        req.body.twitter
+        req.body.twitter || ''
+
+
+      // ==================================
+      // LOGO
+      // ==================================
 
       settings.logo =
         logo
 
+
+      // ==================================
+      // SAVE
+      // ==================================
+
       await settings.save()
+
+
+      // ==================================
+      // RESPONSE
+      // ==================================
 
       res.status(200).json({
 
@@ -135,7 +210,11 @@ router.put(
 
     catch (error) {
 
-      console.log(error)
+      console.log(
+        'Update Settings Error:',
+        error
+      )
+
 
       res.status(500).json({
 
@@ -151,5 +230,6 @@ router.put(
   }
 
 )
+
 
 module.exports = router

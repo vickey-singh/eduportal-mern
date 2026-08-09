@@ -4,14 +4,23 @@ import axios from 'axios'
 
 import '../../assets/styles/admin.css'
 
+
+// ======================================
+// API BASE URL
+// ======================================
+
+const API_BASE_URL =
+  'https://eduportal-backend-m5t1.onrender.com'
+
+
 function GalleryAdmin() {
 
   // ======================================
   // STATE
   // ======================================
 
-  const [formData, setFormData]
-    = useState({
+  const [formData, setFormData] =
+    useState({
 
       title: '',
 
@@ -19,13 +28,14 @@ function GalleryAdmin() {
 
     })
 
-  const [galleryData,
-    setGalleryData]
 
-    = useState([])
+  const [galleryData, setGalleryData] =
+    useState([])
 
-  const [editId, setEditId]
-    = useState(null)
+
+  const [editId, setEditId] =
+    useState(null)
+
 
   // ======================================
   // HANDLE INPUT
@@ -44,6 +54,7 @@ function GalleryAdmin() {
 
   }
 
+
   // ======================================
   // HANDLE SUBMIT
   // ======================================
@@ -53,21 +64,30 @@ function GalleryAdmin() {
 
       e.preventDefault()
 
+
       try {
 
-        // ======================================
+        // ==================================
         // FORMDATA
-        // ======================================
+        // ==================================
 
         const galleryFormData =
           new FormData()
+
 
         galleryFormData.append(
           'title',
           formData.title
         )
 
-        if (formData.image) {
+
+        // ==================================
+        // IMAGE
+        // ==================================
+
+        if (
+          formData.image
+        ) {
 
           galleryFormData.append(
             'image',
@@ -76,74 +96,98 @@ function GalleryAdmin() {
 
         }
 
+
         let response
 
-        // ======================================
+
+        // ==================================
         // UPDATE GALLERY
-        // ======================================
+        // ==================================
 
         if (editId) {
 
           response =
             await axios.put(
 
-              `https://eduportal-backend-m5t1.onrender.com/api/gallery/${editId}`,
+              `${API_BASE_URL}/api/gallery/${editId}`,
 
               galleryFormData,
 
               {
+
                 headers: {
+
                   'Content-Type':
                     'multipart/form-data',
+
                 },
+
               }
 
             )
 
-          // Update UI
+
+          // ==================================
+          // UPDATE UI
+          // ==================================
+
           setGalleryData(
 
-            galleryData.map((item) =>
+            galleryData.map(
+              (item) =>
 
-              item._id === editId
-                ? response.data.gallery
-                : item
+                item._id === editId
+
+                  ? response.data.gallery
+
+                  : item
 
             )
 
           )
+
 
           alert(
             'Gallery Updated Successfully'
           )
 
+
           setEditId(null)
 
         }
 
-        // ======================================
+
+        // ==================================
         // ADD GALLERY
-        // ======================================
+        // ==================================
 
         else {
 
           response =
             await axios.post(
 
-              'https://eduportal-backend-m5t1.onrender.com/api/gallery',
+              `${API_BASE_URL}/api/gallery`,
 
               galleryFormData,
 
               {
+
                 headers: {
+
                   'Content-Type':
                     'multipart/form-data',
+
                 },
+
               }
 
             )
 
-          // Add New Gallery
+
+          // ==================================
+          // ADD NEW GALLERY
+          // ==================================
+
           setGalleryData([
 
             response.data.gallery,
@@ -152,15 +196,21 @@ function GalleryAdmin() {
 
           ])
 
+
           alert(
-            response.data.message
+
+            response.data.message ||
+
+            'Gallery Added Successfully'
+
           )
 
         }
 
-        // ======================================
+
+        // ==================================
         // RESET FORM
-        // ======================================
+        // ==================================
 
         setFormData({
 
@@ -170,15 +220,28 @@ function GalleryAdmin() {
 
         })
 
-      } catch (error) {
+      }
 
-        console.log(error)
+      catch (error) {
 
-        alert('Gallery Operation Failed')
+        console.log(
+          'Gallery Operation Error:',
+          error
+        )
+
+
+        alert(
+
+          error?.response?.data?.message ||
+
+          'Gallery Operation Failed'
+
+        )
 
       }
 
     }
+
 
   // ======================================
   // FETCH GALLERY
@@ -193,24 +256,34 @@ function GalleryAdmin() {
 
           const response =
             await axios.get(
-              'https://eduportal-backend-m5t1.onrender.com/api/gallery'
+
+              `${API_BASE_URL}/api/gallery`
+
             )
+
 
           setGalleryData(
             response.data
           )
 
-        } catch (error) {
+        }
 
-          console.log(error)
+        catch (error) {
+
+          console.log(
+            'Fetch Gallery Error:',
+            error
+          )
 
         }
 
       }
 
+
     fetchGallery()
 
   }, [])
+
 
   // ======================================
   // DELETE GALLERY
@@ -222,30 +295,46 @@ function GalleryAdmin() {
       try {
 
         await axios.delete(
-          `https://eduportal-backend-m5t1.onrender.com/api/gallery/${id}`
+
+          `${API_BASE_URL}/api/gallery/${id}`
+
         )
+
 
         setGalleryData(
 
           galleryData.filter(
-            (item) => item._id !== id
+
+            (item) =>
+              item._id !== id
+
           )
 
         )
+
 
         alert(
           'Gallery Deleted Successfully'
         )
 
-      } catch (error) {
+      }
 
-        console.log(error)
+      catch (error) {
 
-        alert('Delete Failed')
+        console.log(
+          'Delete Gallery Error:',
+          error
+        )
+
+
+        alert(
+          'Delete Failed'
+        )
 
       }
 
     }
+
 
   // ======================================
   // EDIT GALLERY
@@ -257,19 +346,99 @@ function GalleryAdmin() {
       setFormData({
 
         title:
-          item.title,
+          item.title || '',
+
+        // ==================================
+        // IMPORTANT
+        // Don't put existing image URL here
+        // ==================================
 
         image: '',
 
       })
 
-      setEditId(item._id)
+
+      setEditId(
+        item._id
+      )
+
+
+      window.scrollTo({
+
+        top: 0,
+
+        behavior: 'smooth',
+
+      })
 
     }
+
+
+  // ======================================
+  // IMAGE URL
+  // ======================================
+  //
+  // Cloudinary:
+  //     complete URL
+  //
+  // Old records:
+  //     /uploads/filename.jpg
+  //
+  // Supports both.
+  // ======================================
+
+  const getImageUrl =
+    (image) => {
+
+      if (!image) {
+
+        return '/logo.png'
+
+      }
+
+
+      // ==================================
+      // CLOUDINARY / EXTERNAL URL
+      // ==================================
+
+      if (
+
+        image.startsWith(
+          'http://'
+        ) ||
+
+        image.startsWith(
+          'https://'
+        )
+
+      ) {
+
+        return image
+
+      }
+
+
+      // ==================================
+      // OLD LOCAL UPLOAD
+      // ==================================
+
+      return `${API_BASE_URL}${
+
+        image.startsWith('/')
+
+          ? image
+
+          : `/${image}`
+
+      }`
+
+    }
+
 
   return (
 
     <div className="applications-section">
+
 
       {/* ====================================== */}
       {/* PAGE HEADER */}
@@ -281,11 +450,13 @@ function GalleryAdmin() {
           Gallery Management
         </h2>
 
+
         <p>
           Add and manage gallery images.
         </p>
 
       </div>
+
 
       {/* ====================================== */}
       {/* FORM */}
@@ -293,72 +464,167 @@ function GalleryAdmin() {
 
       <div className="admin-form-wrapper">
 
-        <form onSubmit={handleSubmit}>
+        <form
+          onSubmit={handleSubmit}
+        >
 
           <div className="row">
 
-            {/* Title */}
+
+            {/* ==================================
+                TITLE
+            ================================== */}
+
             <div className="col-12 mb-3">
 
               <label className="form-label">
+
                 Image Title
+
               </label>
 
+
               <input
+
                 type="text"
+
                 className="form-control"
+
                 placeholder="Enter image title"
+
                 name="title"
-                value={formData.title}
-                onChange={handleChange}
+
+                value={
+                  formData.title
+                }
+
+                onChange={
+                  handleChange
+                }
+
+                required
+
               />
 
             </div>
 
-            {/* Image */}
+
+            {/* ==================================
+                IMAGE
+            ================================== */}
+
             <div className="col-12 mb-4">
 
               <label className="form-label">
+
                 Upload Image
+
               </label>
 
+
               <input
+
                 type="file"
+
                 className="form-control"
+
                 name="image"
-                onChange={(e) =>
+
+                accept="image/jpeg,image/png,image/jpg,image/webp"
+
+                onChange={(e) => {
 
                   setFormData({
 
                     ...formData,
 
                     image:
-                      e.target.files[0],
+                      e.target.files[0] || '',
 
                   })
 
-                }
+                }}
+
               />
+
+
+              {editId && (
+
+                <small className="text-muted">
+
+                  Leave this empty to keep the
+                  existing image.
+
+                </small>
+
+              )}
 
             </div>
 
           </div>
 
-          {/* Submit */}
+
+          {/* ======================================
+              SUBMIT
+          ====================================== */}
+
           <button
+
             type="submit"
+
             className="table-btn approve-btn"
+
           >
 
             {editId
+
               ? 'Update Image'
-              : 'Add Image'}
+
+              : 'Add Image'
+
+            }
 
           </button>
+
+
+          {/* ======================================
+              CANCEL EDIT
+          ====================================== */}
+
+          {editId && (
+
+            <button
+
+              type="button"
+
+              className="table-btn reject-btn ms-2"
+
+              onClick={() => {
+
+                setEditId(null)
+
+                setFormData({
+
+                  title: '',
+
+                  image: '',
+
+                })
+
+              }}
+
+            >
+
+              Cancel
+
+            </button>
+
+          )}
 
         </form>
 
       </div>
+
 
       {/* ====================================== */}
       {/* GALLERY TABLE */}
@@ -368,81 +634,171 @@ function GalleryAdmin() {
 
         <table className="table applications-table">
 
+
           <thead>
 
             <tr>
 
-              <th>Image</th>
+              <th>
+                Image
+              </th>
 
-              <th>Title</th>
+              <th>
+                Title
+              </th>
 
-              <th>Action</th>
+              <th>
+                Action
+              </th>
 
             </tr>
 
           </thead>
 
+
           <tbody>
 
-            {galleryData.map((item) => (
+            {galleryData.length === 0 ? (
 
-              <tr key={item._id}>
+              <tr>
 
-                {/* Image */}
-                <td>
+                <td
+                  colSpan="3"
+                  className="text-center"
+                >
 
-                  <img
-                    src={`https://eduportal-backend-m5t1.onrender.com${item.image}`}
-                    alt={item.title}
-                    width="80"
-                    height="60"
-                    style={{
-                      objectFit: 'cover',
-                      borderRadius: '8px',
-                    }}
-                  />
-
-                </td>
-
-                {/* Title */}
-                <td>
-                  {item.title}
-                </td>
-
-                {/* Actions */}
-                <td>
-
-                  <div className="d-flex gap-2">
-
-                    <button
-                      className="table-btn approve-btn"
-                      onClick={() =>
-                        editGallery(item)
-                      }
-                    >
-
-                      Edit
-
-                    </button>
-
-                    <button
-                      className="table-btn reject-btn"
-                      onClick={() =>
-                        deleteGallery(item._id)
-                      }
-                    >
-
-                      Delete
-
-                    </button>
-
-                  </div>
+                  No gallery images found.
 
                 </td>
 
               </tr>
 
-            ))}
+            ) : (
+
+              galleryData.map(
+                (item) => (
+
+                  <tr
+                    key={
+                      item._id
+                    }
+                  >
+
+
+                    {/* ==================================
+                        IMAGE
+                    ================================== */}
+
+                    <td>
+
+                      <img
+
+                        src={
+                          getImageUrl(
+                            item.image
+                          )
+                        }
+
+                        alt={
+                          item.title
+                        }
+
+                        width="80"
+
+                        height="60"
+
+                        style={{
+
+                          objectFit:
+                            'cover',
+
+                          borderRadius:
+                            '8px',
+
+                        }}
+
+                        onError={(e) => {
+
+                          e.currentTarget.src =
+                            '/logo.png'
+
+                        }}
+
+                      />
+
+                    </td>
+
+
+                    {/* ==================================
+                        TITLE
+                    ================================== */}
+
+                    <td>
+
+                      {
+                        item.title
+                      }
+
+                    </td>
+
+
+                    {/* ==================================
+                        ACTIONS
+                    ================================== */}
+
+                    <td>
+
+                      <div className="d-flex gap-2">
+
+
+                        <button
+
+                          type="button"
+
+                          className="table-btn approve-btn"
+
+                          onClick={() =>
+                            editGallery(
+                              item
+                            )
+                          }
+
+                        >
+
+                          Edit
+
+                        </button>
+
+
+                        <button
+
+                          type="button"
+
+                          className="table-btn reject-btn"
+
+                          onClick={() =>
+                            deleteGallery(
+                              item._id
+                            )
+                          }
+
+                        >
+
+                          Delete
+
+                        </button>
+
+                      </div>
+
+                    </td>
+
+                  </tr>
+
+                )
+
+              )
+
+            )}
 
           </tbody>
 
@@ -455,5 +811,6 @@ function GalleryAdmin() {
   )
 
 }
+
 
 export default GalleryAdmin

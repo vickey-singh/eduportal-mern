@@ -54,8 +54,11 @@ const calculateFeesStatus = (
 
 
   return {
+
     remaining,
+
     status,
+
   }
 
 }
@@ -66,8 +69,11 @@ const calculateFeesStatus = (
 // ======================================
 
 router.post(
+
   '/students',
+
   upload.single('image'),
+
   async (req, res) => {
 
     try {
@@ -79,35 +85,49 @@ router.post(
         // ==================================
 
         name,
+
         dob,
+
         aadharNumber,
+
         admissionNumber,
+
         course,
+
         batchTime,
 
         contact,
+
         email,
+
         admissionDate,
+
 
         // ==================================
         // PARENTS
         // ==================================
 
         fatherName,
+
         motherName,
 
         fatherOccupation,
+
         motherOccupation,
 
         fatherMobile,
+
         motherMobile,
+
 
         // ==================================
         // ADDRESS
         // ==================================
 
         permanentAddress,
+
         currentAddress,
+
 
         // ==================================
         // EDUCATION
@@ -115,18 +135,22 @@ router.post(
 
         schoolCollegeName,
 
+
         // ==================================
         // ADMISSION
         // ==================================
 
         admissionType,
 
+
         // ==================================
         // REGISTRATION FEE
         // ==================================
 
         registrationFee,
+
         registrationFeePaid,
+
 
         // ==================================
         // COURSE FEE
@@ -135,11 +159,15 @@ router.post(
         totalFees,
 
         monthlyInstallment,
+
         threeMonthInstallment,
+
         sixMonthInstallment,
+
         fullPaymentFee,
 
         paidFees,
+
 
         // ==================================
         // PAYMENT PLAN
@@ -153,12 +181,12 @@ router.post(
 
 
       // ======================================
-      // IMAGE
+      // CLOUDINARY IMAGE
       // ======================================
 
       const image =
         req.file
-          ? `/uploads/${req.file.filename}`
+          ? req.file.path
           : ''
 
 
@@ -170,6 +198,7 @@ router.post(
         Number(
           totalFees || 0
         )
+
 
       const paidFee =
         Number(
@@ -219,12 +248,18 @@ router.post(
       // ======================================
 
       const {
+
         remaining,
+
         status,
+
       } =
         calculateFeesStatus(
+
           totalFee,
+
           paidFee
+
         )
 
 
@@ -278,8 +313,11 @@ router.post(
 
 
       const registrationStatus =
+
         registration > 0 &&
-        registrationPaid >= registration
+
+        registrationPaid >=
+          registration
 
           ? 'Paid'
 
@@ -461,7 +499,7 @@ router.post(
 
 
       // ======================================
-      // OFFLINE INITIAL PAYMENT HISTORY
+      // OFFLINE INITIAL REGISTRATION PAYMENT
       // ======================================
 
       if (
@@ -493,6 +531,7 @@ router.post(
 
           paymentDate:
             admissionDate ||
+
             new Date()
               .toISOString()
               .split('T')[0],
@@ -501,6 +540,10 @@ router.post(
 
       }
 
+
+      // ======================================
+      // OFFLINE INITIAL COURSE PAYMENT
+      // ======================================
 
       if (
         paidFee > 0
@@ -518,8 +561,11 @@ router.post(
             'Cash',
 
           paymentType:
+
             paymentPlan === 'full'
+
               ? 'Full'
+
               : 'Installment',
 
           paymentPlan:
@@ -533,6 +579,7 @@ router.post(
 
           paymentDate:
             admissionDate ||
+
             new Date()
               .toISOString()
               .split('T')[0],
@@ -570,7 +617,10 @@ router.post(
 
     catch (error) {
 
-      console.log(error)
+      console.log(
+        'Add Student Error:',
+        error
+      )
 
       res.status(500).json({
 
@@ -584,6 +634,7 @@ router.post(
     }
 
   }
+
 )
 
 
@@ -592,13 +643,16 @@ router.post(
 // ======================================
 
 router.get(
+
   '/students',
+
   async (req, res) => {
 
     try {
 
       const students =
         await Student.find()
+
           .sort({
             createdAt: -1,
           })
@@ -612,7 +666,10 @@ router.get(
 
     catch (error) {
 
-      console.log(error)
+      console.log(
+        'Get Students Error:',
+        error
+      )
 
       res.status(500).json({
 
@@ -626,6 +683,7 @@ router.get(
     }
 
   }
+
 )
 
 
@@ -634,7 +692,9 @@ router.get(
 // ======================================
 
 router.delete(
+
   '/students/:id',
+
   async (req, res) => {
 
     try {
@@ -672,7 +732,10 @@ router.delete(
 
     catch (error) {
 
-      console.log(error)
+      console.log(
+        'Delete Student Error:',
+        error
+      )
 
       res.status(500).json({
 
@@ -686,6 +749,7 @@ router.delete(
     }
 
   }
+
 )
 
 
@@ -694,8 +758,11 @@ router.delete(
 // ======================================
 
 router.put(
+
   '/students/:id',
+
   upload.single('image'),
+
   async (req, res) => {
 
     try {
@@ -707,35 +774,49 @@ router.put(
         // ==================================
 
         name,
+
         dob,
+
         aadharNumber,
+
         admissionNumber,
+
         course,
+
         batchTime,
 
         contact,
+
         email,
+
         admissionDate,
+
 
         // ==================================
         // PARENTS
         // ==================================
 
         fatherName,
+
         motherName,
 
         fatherOccupation,
+
         motherOccupation,
 
         fatherMobile,
+
         motherMobile,
+
 
         // ==================================
         // ADDRESS
         // ==================================
 
         permanentAddress,
+
         currentAddress,
+
 
         // ==================================
         // EDUCATION
@@ -743,18 +824,22 @@ router.put(
 
         schoolCollegeName,
 
+
         // ==================================
         // ADMISSION
         // ==================================
 
         admissionType,
 
+
         // ==================================
         // REGISTRATION
         // ==================================
 
         registrationFee,
+
         registrationFeePaid,
+
 
         // ==================================
         // COURSE FEE
@@ -763,11 +848,15 @@ router.put(
         totalFees,
 
         monthlyInstallment,
+
         threeMonthInstallment,
+
         sixMonthInstallment,
+
         fullPaymentFee,
 
         paidFees,
+
 
         // ==================================
         // PAYMENT PLAN
@@ -805,12 +894,22 @@ router.put(
 
 
       // ======================================
-      // IMAGE
+      // CLOUDINARY IMAGE
+      // ======================================
+      //
+      // New image:
+      //     Cloudinary URL
+      //
+      // No new image:
+      //     Existing image retained
       // ======================================
 
       const image =
+
         req.file
-          ? `/uploads/${req.file.filename}`
+
+          ? req.file.path
+
           : existingStudent.image
 
 
@@ -820,27 +919,29 @@ router.put(
 
       const newTotalFees =
         Number(
+
           totalFees ??
+
           existingStudent.totalFees ??
+
           0
+
         )
 
 
       // ======================================
       // PAID COURSE FEE
       // ======================================
-      // IMPORTANT:
-      //
-      // Admin can manually change paidFees.
-      // This is required for offline admission
-      // and fee correction.
-      // ======================================
 
       const newPaidFees =
         Number(
+
           paidFees ??
+
           existingStudent.paidFees ??
+
           0
+
         )
 
 
@@ -886,6 +987,7 @@ router.put(
       // ======================================
 
       const {
+
         remaining:
           newRemainingFees,
 
@@ -894,8 +996,11 @@ router.put(
 
       } =
         calculateFeesStatus(
+
           newTotalFees,
+
           newPaidFees
+
         )
 
 
@@ -905,23 +1010,30 @@ router.put(
 
       const newRegistrationFee =
         Number(
+
           registrationFee ??
+
           existingStudent.registrationFee ??
+
           0
+
         )
 
 
       const newRegistrationPaid =
         Number(
+
           registrationFeePaid ??
+
           existingStudent.registrationFeePaid ??
+
           0
+
         )
 
 
       if (
-        newRegistrationPaid <
-        0
+        newRegistrationPaid < 0
       ) {
 
         return res.status(400).json({
@@ -1104,30 +1216,46 @@ router.put(
 
             monthlyInstallment:
               Number(
+
                 monthlyInstallment ??
+
                 existingStudent.monthlyInstallment ??
+
                 0
+
               ),
 
             threeMonthInstallment:
               Number(
+
                 threeMonthInstallment ??
+
                 existingStudent.threeMonthInstallment ??
+
                 0
+
               ),
 
             sixMonthInstallment:
               Number(
+
                 sixMonthInstallment ??
+
                 existingStudent.sixMonthInstallment ??
+
                 0
+
               ),
 
             fullPaymentFee:
               Number(
+
                 fullPaymentFee ??
+
                 existingStudent.fullPaymentFee ??
+
                 0
+
               ),
 
 
@@ -1137,7 +1265,9 @@ router.put(
 
             paymentPlan:
               paymentPlan ??
+
               existingStudent.paymentPlan ??
+
               '',
 
 
@@ -1147,6 +1277,7 @@ router.put(
 
             dueDate:
               dueDate ??
+
               existingStudent.dueDate,
 
           },
@@ -1182,7 +1313,10 @@ router.put(
 
     catch (error) {
 
-      console.log(error)
+      console.log(
+        'Update Student Error:',
+        error
+      )
 
       res.status(500).json({
 
@@ -1196,6 +1330,7 @@ router.put(
     }
 
   }
+
 )
 
 
@@ -1204,7 +1339,9 @@ router.put(
 // ======================================
 
 router.put(
+
   '/students/add-payment/:id',
+
   async (req, res) => {
 
     try {
@@ -1397,10 +1534,14 @@ router.put(
       // ======================================
 
       if (
+
         student.paymentPlan &&
+
         paymentPlan &&
+
         paymentPlan !==
           student.paymentPlan
+
       ) {
 
         return res.status(400).json({
@@ -1431,8 +1572,11 @@ router.put(
 
           minimumAmount =
             Number(
+
               student.monthlyInstallment ||
+
               0
+
             )
 
           break
@@ -1442,8 +1586,11 @@ router.put(
 
           minimumAmount =
             Number(
+
               student.threeMonthInstallment ||
+
               0
+
             )
 
           break
@@ -1453,8 +1600,11 @@ router.put(
 
           minimumAmount =
             Number(
+
               student.sixMonthInstallment ||
+
               0
+
             )
 
           break
@@ -1464,8 +1614,11 @@ router.put(
 
           minimumAmount =
             Number(
+
               student.fullPaymentFee ||
+
               0
+
             )
 
           break
@@ -1476,16 +1629,14 @@ router.put(
       // ======================================
       // FINAL PAYMENT
       // ======================================
-      //
-      // If remaining fee is less than the
-      // normal installment amount, student
-      // can pay only the remaining amount.
-      // ======================================
 
       const payableMinimum =
         Math.min(
+
           minimumAmount,
+
           remainingFee
+
         )
 
 
@@ -1494,10 +1645,14 @@ router.put(
       // ======================================
 
       if (
+
         finalPaymentPlan !== 'full' &&
+
         payableMinimum > 0 &&
+
         paymentAmount <
           payableMinimum
+
       ) {
 
         return res.status(400).json({
@@ -1547,6 +1702,7 @@ router.put(
 
       const finalPaymentDate =
         paymentDate ||
+
         new Date()
           .toISOString()
           .split('T')[0]
@@ -1568,8 +1724,11 @@ router.put(
           paymentMethod || 'Cash',
 
         paymentType:
+
           finalPaymentPlan === 'full'
+
             ? 'Full'
+
             : 'Installment',
 
         paymentPlan:
@@ -1685,7 +1844,10 @@ router.put(
 
     catch (error) {
 
-      console.log(error)
+      console.log(
+        'Add Payment Error:',
+        error
+      )
 
       res.status(500).json({
 
@@ -1699,7 +1861,13 @@ router.put(
     }
 
   }
+
 )
 
 
-module.exports = router
+// ======================================
+// EXPORT ROUTER
+// ======================================
+
+module.exports =
+  router

@@ -1,9 +1,9 @@
-const upload =
-  require('../middleware/upload')
-
 const express = require('express')
 
 const router = express.Router()
+
+const upload =
+  require('../middleware/upload')
 
 const Faculty =
   require('../models/Faculty')
@@ -39,12 +39,12 @@ router.post(
 
 
       // ======================================
-      // UPLOADED IMAGE
+      // CLOUDINARY IMAGE
       // ======================================
 
       const image =
         req.file
-          ? `/uploads/${req.file.filename}`
+          ? req.file.path
           : ''
 
 
@@ -89,19 +89,26 @@ router.post(
         message:
           'Faculty Added Successfully',
 
-        faculty: savedFaculty,
+        faculty:
+          savedFaculty,
 
       })
 
-    } catch (error) {
+    }
 
-      console.log(error)
+    catch (error) {
+
+      console.log(
+        'Add Faculty Error:',
+        error
+      )
 
       res.status(500).json({
 
         success: false,
 
-        message: 'Server Error',
+        message:
+          'Server Error',
 
       })
 
@@ -116,68 +123,134 @@ router.post(
 // GET ALL FACULTY
 // ======================================
 
-router.get('/faculty', async (req, res) => {
+router.get(
 
-  try {
+  '/faculty',
 
-    const faculty =
-      await Faculty.find()
+  async (req, res) => {
 
-    res.status(200).json(faculty)
+    try {
 
-  } catch (error) {
+      const faculty =
+        await Faculty.find()
 
-    console.log(error)
+          .sort({
+            createdAt: -1,
+          })
 
-    res.status(500).json({
 
-      success: false,
+      res.status(200).json(
+        faculty
+      )
 
-      message: 'Server Error',
+    }
 
-    })
+    catch (error) {
+
+      console.log(
+        'Get Faculty Error:',
+        error
+      )
+
+      res.status(500).json({
+
+        success: false,
+
+        message:
+          'Server Error',
+
+      })
+
+    }
 
   }
 
-})
+)
 
 
 // ======================================
 // DELETE FACULTY
 // ======================================
 
-router.delete('/faculty/:id', async (req, res) => {
+router.delete(
 
-  try {
+  '/faculty/:id',
 
-    await Faculty.findByIdAndDelete(
-      req.params.id
-    )
+  async (req, res) => {
 
-    res.status(200).json({
+    try {
 
-      success: true,
+      const faculty =
+        await Faculty.findById(
+          req.params.id
+        )
 
-      message:
-        'Faculty Deleted Successfully',
 
-    })
+      // ======================================
+      // CHECK FACULTY
+      // ======================================
 
-  } catch (error) {
+      if (!faculty) {
 
-    console.log(error)
+        return res.status(404).json({
 
-    res.status(500).json({
+          success: false,
 
-      success: false,
+          message:
+            'Faculty Not Found',
 
-      message: 'Server Error',
+        })
 
-    })
+      }
+
+
+      // ======================================
+      // DELETE DATABASE RECORD
+      // ======================================
+
+      await Faculty.findByIdAndDelete(
+
+        req.params.id
+
+      )
+
+
+      // ======================================
+      // RESPONSE
+      // ======================================
+
+      res.status(200).json({
+
+        success: true,
+
+        message:
+          'Faculty Deleted Successfully',
+
+      })
+
+    }
+
+    catch (error) {
+
+      console.log(
+        'Delete Faculty Error:',
+        error
+      )
+
+      res.status(500).json({
+
+        success: false,
+
+        message:
+          'Server Error',
+
+      })
+
+    }
 
   }
 
-})
+)
 
 
 // ======================================
@@ -220,12 +293,40 @@ router.put(
 
 
       // ======================================
+      // CHECK FACULTY
+      // ======================================
+
+      if (!existingFaculty) {
+
+        return res.status(404).json({
+
+          success: false,
+
+          message:
+            'Faculty Not Found',
+
+        })
+
+      }
+
+
+      // ======================================
       // IMAGE UPDATE
+      // ======================================
+      //
+      // New image:
+      //     Cloudinary URL
+      //
+      // No new image:
+      //     Keep existing image
       // ======================================
 
       const image =
+
         req.file
-          ? `/uploads/${req.file.filename}`
+
+          ? req.file.path
+
           : existingFaculty.image
 
 
@@ -255,7 +356,11 @@ router.put(
           },
 
           {
+
             new: true,
+
+            runValidators: true,
+
           }
 
         )
@@ -272,19 +377,26 @@ router.put(
         message:
           'Faculty Updated Successfully',
 
-        faculty: updatedFaculty,
+        faculty:
+          updatedFaculty,
 
       })
 
-    } catch (error) {
+    }
 
-      console.log(error)
+    catch (error) {
+
+      console.log(
+        'Update Faculty Error:',
+        error
+      )
 
       res.status(500).json({
 
         success: false,
 
-        message: 'Server Error',
+        message:
+          'Server Error',
 
       })
 
@@ -294,4 +406,10 @@ router.put(
 
 )
 
-module.exports = router
+
+// ======================================
+// EXPORT ROUTER
+// ======================================
+
+module.exports =
+  router

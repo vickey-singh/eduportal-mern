@@ -41,10 +41,13 @@ router.post(
       // ======================================
       // IMAGE
       // ======================================
+      // Cloudinary returns complete URL
+      // in req.file.path
+      // ======================================
 
       const image =
         req.file
-          ? `/uploads/${req.file.filename}`
+          ? req.file.path
           : ''
 
 
@@ -94,15 +97,21 @@ router.post(
 
       })
 
-    } catch (error) {
+    }
 
-      console.log(error)
+    catch (error) {
+
+      console.log(
+        'Add Achievement Error:',
+        error
+      )
 
       res.status(500).json({
 
         success: false,
 
-        message: 'Server Error',
+        message:
+          'Server Error',
 
       })
 
@@ -128,19 +137,30 @@ router.get(
       const achievements =
         await Achievement.find()
 
+          .sort({
+            createdAt: -1,
+          })
+
+
       res.status(200).json(
         achievements
       )
 
-    } catch (error) {
+    }
 
-      console.log(error)
+    catch (error) {
+
+      console.log(
+        'Get Achievements Error:',
+        error
+      )
 
       res.status(500).json({
 
         success: false,
 
-        message: 'Server Error',
+        message:
+          'Server Error',
 
       })
 
@@ -163,9 +183,44 @@ router.delete(
 
     try {
 
+      const achievement =
+        await Achievement.findById(
+          req.params.id
+        )
+
+
+      // ======================================
+      // CHECK EXISTENCE
+      // ======================================
+
+      if (!achievement) {
+
+        return res.status(404).json({
+
+          success: false,
+
+          message:
+            'Achievement Not Found',
+
+        })
+
+      }
+
+
+      // ======================================
+      // DELETE DATABASE RECORD
+      // ======================================
+
       await Achievement.findByIdAndDelete(
+
         req.params.id
+
       )
+
+
+      // ======================================
+      // RESPONSE
+      // ======================================
 
       res.status(200).json({
 
@@ -176,15 +231,21 @@ router.delete(
 
       })
 
-    } catch (error) {
+    }
 
-      console.log(error)
+    catch (error) {
+
+      console.log(
+        'Delete Achievement Error:',
+        error
+      )
 
       res.status(500).json({
 
         success: false,
 
-        message: 'Server Error',
+        message:
+          'Server Error',
 
       })
 
@@ -235,12 +296,40 @@ router.put(
 
 
       // ======================================
+      // CHECK EXISTENCE
+      // ======================================
+
+      if (!existingAchievement) {
+
+        return res.status(404).json({
+
+          success: false,
+
+          message:
+            'Achievement Not Found',
+
+        })
+
+      }
+
+
+      // ======================================
       // IMAGE UPDATE
+      // ======================================
+      //
+      // New image uploaded:
+      //     Cloudinary URL
+      //
+      // No new image:
+      //     Keep old image
       // ======================================
 
       const image =
+
         req.file
-          ? `/uploads/${req.file.filename}`
+
+          ? req.file.path
+
           : existingAchievement.image
 
 
@@ -249,6 +338,7 @@ router.put(
       // ======================================
 
       const updatedAchievement =
+
         await Achievement.findByIdAndUpdate(
 
           req.params.id,
@@ -270,7 +360,11 @@ router.put(
           },
 
           {
+
             new: true,
+
+            runValidators: true,
+
           }
 
         )
@@ -292,15 +386,21 @@ router.put(
 
       })
 
-    } catch (error) {
+    }
 
-      console.log(error)
+    catch (error) {
+
+      console.log(
+        'Update Achievement Error:',
+        error
+      )
 
       res.status(500).json({
 
         success: false,
 
-        message: 'Server Error',
+        message:
+          'Server Error',
 
       })
 
@@ -310,4 +410,10 @@ router.put(
 
 )
 
-module.exports = router
+
+// ======================================
+// EXPORT ROUTER
+// ======================================
+
+module.exports =
+  router

@@ -17,9 +17,7 @@ import '../assets/styles/receipt.css'
 
 function Receipt() {
 
-  const {
-    receiptNumber,
-  } = useParams()
+  const { receiptNumber } = useParams()
 
 
   // ======================================
@@ -56,9 +54,7 @@ function Receipt() {
         settingsRes,
       ] = await Promise.all([
 
-        getReceipt(
-          receiptNumber
-        ),
+        getReceipt(receiptNumber),
 
         getSettings(),
 
@@ -90,37 +86,79 @@ function Receipt() {
 
 
   // ======================================
+  // IMAGE URL
+  // ======================================
+
+  const getImageUrl = (image) => {
+
+    if (!image) {
+
+      return '/logo.png'
+
+    }
+
+
+    // Cloudinary / external URL
+
+    if (
+
+      image.startsWith('http://') ||
+
+      image.startsWith('https://')
+
+    ) {
+
+      return image
+
+    }
+
+
+    // Old local upload
+
+    return `${API_BASE_URL}${
+
+      image.startsWith('/')
+
+        ? image
+
+        : `/${image}`
+
+    }`
+
+  }
+
+
+  // ======================================
   // PAYMENT PLAN LABEL
   // ======================================
 
-  const getPaymentPlanLabel =
-    (plan) => {
+  const getPaymentPlanLabel = (plan) => {
 
-      switch (plan) {
+    switch (plan) {
 
-        case 'monthly':
+      case 'monthly':
 
-          return 'Monthly'
+        return 'Monthly'
 
-        case 'three_month':
+      case 'three_month':
 
-          return 'Every 3 Months'
+        return 'Every 3 Months'
 
-        case 'six_month':
+      case 'six_month':
 
-          return 'Every 6 Months'
+        return 'Every 6 Months'
 
-        case 'full':
+      case 'full':
 
-          return 'Full Payment'
+        return 'Full Payment'
 
-        default:
+      default:
 
-          return 'Not Applicable'
-
-      }
+        return '-'
 
     }
+
+  }
 
 
   // ======================================
@@ -150,76 +188,127 @@ function Receipt() {
 
 
   // ======================================
+  // FORMAT MONEY
+  // ======================================
+
+  const formatMoney = (amount) => {
+
+    return Number(
+      amount || 0
+    ).toLocaleString('en-IN')
+
+  }
+
+
+  // ======================================
   // DOWNLOAD PDF
   // ======================================
 
-  const downloadPDF =
-    async () => {
+  const downloadPDF = async () => {
 
-      const receiptElement =
-        document.getElementById(
-          'receipt-content'
-        )
-
-
-      if (!receiptElement) {
-
-        return
-
-      }
+    const receiptElement =
+      document.getElementById(
+        'receipt-content'
+      )
 
 
-      const canvas =
-        await html2canvas(
-          receiptElement,
-          {
-            scale: 2,
-            useCORS: true,
-          }
-        )
+    if (!receiptElement) {
+
+      return
+
+    }
 
 
-      const imgData =
-        canvas.toDataURL(
-          'image/png'
-        )
+    const canvas =
+      await html2canvas(
+
+        receiptElement,
+
+        {
+
+          scale: 2,
+
+          useCORS: true,
+
+          backgroundColor: '#ffffff',
+
+        }
+
+      )
 
 
-      const pdf =
-        new jsPDF(
-          'p',
-          'mm',
-          'a4'
-        )
+    const imgData =
+      canvas.toDataURL(
+        'image/png'
+      )
 
 
-      const pageWidth =
-        pdf.internal.pageSize
-          .getWidth()
+    const pdf =
+      new jsPDF(
+        'p',
+        'mm',
+        'a4'
+      )
 
 
-      const pageHeight =
-        pdf.internal.pageSize
-          .getHeight()
+    const pageWidth =
+      pdf.internal.pageSize
+        .getWidth()
 
 
-      const imgWidth =
-        pageWidth
+    const pageHeight =
+      pdf.internal.pageSize
+        .getHeight()
 
 
-      const imgHeight =
-        (
-          canvas.height *
-          imgWidth
-        ) /
-        canvas.width
+    const imgWidth =
+      pageWidth
 
 
-      let heightLeft =
+    const imgHeight =
+      (
+        canvas.height *
+        imgWidth
+      ) /
+      canvas.width
+
+
+    let heightLeft =
+      imgHeight
+
+
+    let position = 0
+
+
+    pdf.addImage(
+
+      imgData,
+
+      'PNG',
+
+      0,
+
+      position,
+
+      imgWidth,
+
+      imgHeight
+
+    )
+
+
+    heightLeft -=
+      pageHeight
+
+
+    while (heightLeft > 0) {
+
+      position =
+        heightLeft -
         imgHeight
 
 
-      let position = 0
+      pdf.addPage()
 
 
       pdf.addImage(
@@ -242,49 +331,16 @@ function Receipt() {
       heightLeft -=
         pageHeight
 
-
-      while (
-        heightLeft > 0
-      ) {
-
-        position =
-          heightLeft -
-          imgHeight
-
-
-        pdf.addPage()
-
-
-        pdf.addImage(
-
-          imgData,
-
-          'PNG',
-
-          0,
-
-          position,
-
-          imgWidth,
-
-          imgHeight
-
-        )
-
-
-        heightLeft -=
-          pageHeight
-
-      }
-
-
-      pdf.save(
-
-        `${receipt.receiptNumber}.pdf`
-
-      )
-
     }
+
+
+    pdf.save(
+
+      `${receipt.receiptNumber}.pdf`
+
+    )
+
+  }
 
 
   // ======================================
@@ -295,9 +351,7 @@ function Receipt() {
 
     return (
 
-      <div
-        className="container text-center mt-5"
-      >
+      <div className="container text-center mt-5">
 
         <h3>
           Loading Receipt...
@@ -318,9 +372,7 @@ function Receipt() {
 
     return (
 
-      <div
-        className="container text-center mt-5"
-      >
+      <div className="container text-center mt-5">
 
         <h3>
           Receipt Not Found
@@ -334,7 +386,7 @@ function Receipt() {
 
 
   // ======================================
-  // VALUES
+  // PAYMENT CATEGORY
   // ======================================
 
   const isRegistration =
@@ -345,6 +397,109 @@ function Receipt() {
   const isCourseFee =
     receipt.paymentCategory ===
     'CourseFee'
+
+
+  // ======================================
+  // PAYMENT TYPE
+  // ======================================
+
+  const paymentType =
+    receipt.paymentType || ''
+
+
+  // ======================================
+  // PAYMENT PLAN
+  // ======================================
+
+  const paymentPlan =
+    receipt.paymentPlan || ''
+
+
+  // ======================================
+  // REGISTRATION FEE
+  // ======================================
+
+  const registrationFee =
+    Number(
+      receipt.registrationFee || 0
+    )
+
+
+  /*
+   * Backend me registrationFeePaid
+   * available hai to wahi use hoga.
+   *
+   * Agar registration receipt hai
+   * aur field available nahi hai,
+   * to current payment ko registration
+   * paid maana jayega.
+   */
+
+  const registrationFeePaid =
+    receipt.registrationFeePaid !==
+    undefined
+
+      ? Number(
+          receipt.registrationFeePaid || 0
+        )
+
+      : isRegistration
+
+        ? Number(
+            receipt.amountPaid || 0
+          )
+
+        : 0
+
+
+  // ======================================
+  // COURSE FEE
+  // ======================================
+
+  const courseFee =
+    Number(
+      receipt.courseFee || 0
+    )
+
+
+  // ======================================
+  // CURRENT PAYMENT
+  // ======================================
+
+  const currentPayment =
+    Number(
+      receipt.amountPaid || 0
+    )
+
+
+  // ======================================
+  // TOTAL COURSE PAID
+  // ======================================
+
+  const totalCoursePaid =
+    Number(
+      receipt.totalPaid || 0
+    )
+
+
+  // ======================================
+  // REMAINING COURSE FEE
+  // ======================================
+
+  const remainingCourseFee =
+    Number(
+      receipt.remainingFee || 0
+    )
+
+
+  // ======================================
+  // MINIMUM INSTALLMENT
+  // ======================================
+
+  const minimumInstallment =
+    Number(
+      receipt.minimumInstallment || 0
+    )
 
 
   return (
@@ -361,43 +516,40 @@ function Receipt() {
 
       <div className="receipt-header">
 
-
         <div className="receipt-left">
 
-
           <img
+
             src={
-              settings?.logo
-
-                ? `${API_BASE_URL}${settings.logo}`
-
-                : '/logo.png'
+              getImageUrl(
+                settings?.logo
+              )
             }
 
             alt="Institute Logo"
 
             className="receipt-logo"
+
+            crossOrigin="anonymous"
+
           />
 
 
           <div>
 
-            <h2
-              className="receipt-title"
-            >
+            <h2 className="receipt-title">
 
               {
                 settings?.instituteName ||
 
                 'Prerna Institute Of Excellence'
+
               }
 
             </h2>
 
 
-            <p
-              className="receipt-subtitle"
-            >
+            <p className="receipt-subtitle">
 
               PAYMENT RECEIPT
 
@@ -408,27 +560,32 @@ function Receipt() {
         </div>
 
 
-        <div
-          className="receipt-info-card"
-        >
+        {/* ==================================
+            RECEIPT INFO
+        ================================== */}
+
+        <div className="receipt-info-card">
 
           <table>
 
             <tbody>
 
-
               <tr>
 
                 <td>
+
                   <strong>
                     Receipt No
                   </strong>
+
                 </td>
 
                 <td>
+
                   {
                     receipt.receiptNumber
                   }
+
                 </td>
 
               </tr>
@@ -437,9 +594,11 @@ function Receipt() {
               <tr>
 
                 <td>
+
                   <strong>
                     Date
                   </strong>
+
                 </td>
 
                 <td>
@@ -460,9 +619,11 @@ function Receipt() {
               <tr>
 
                 <td>
+
                   <strong>
                     Category
                   </strong>
+
                 </td>
 
                 <td>
@@ -476,7 +637,6 @@ function Receipt() {
                 </td>
 
               </tr>
-
 
             </tbody>
 
@@ -494,25 +654,18 @@ function Receipt() {
       {/* STUDENT INFORMATION */}
       {/* ====================================== */}
 
-      <div
-        className="receipt-section"
-      >
+      <div className="receipt-section">
 
-        <div
-          className="receipt-section-title"
-        >
+        <div className="receipt-section-title">
 
           Student Information
 
         </div>
 
 
-        <table
-          className="receipt-table"
-        >
+        <table className="receipt-table">
 
           <tbody>
-
 
             <tr>
 
@@ -566,10 +719,12 @@ function Receipt() {
               </td>
 
               <td>
+
                 {
                   receipt.studentPhone ||
                   '-'
                 }
+
               </td>
 
             </tr>
@@ -582,14 +737,15 @@ function Receipt() {
               </td>
 
               <td>
+
                 {
                   receipt.studentEmail ||
                   '-'
                 }
+
               </td>
 
             </tr>
-
 
           </tbody>
 
@@ -602,25 +758,23 @@ function Receipt() {
       {/* PAYMENT INFORMATION */}
       {/* ====================================== */}
 
-      <div
-        className="receipt-section"
-      >
+      <div className="receipt-section">
 
-        <div
-          className="receipt-section-title"
-        >
+        <div className="receipt-section-title">
 
           Payment Information
 
         </div>
 
 
-        <table
-          className="receipt-table"
-        >
+        <table className="receipt-table">
 
           <tbody>
 
+
+            {/* ==================================
+                PAYMENT CATEGORY
+            ================================== */}
 
             <tr>
 
@@ -645,11 +799,15 @@ function Receipt() {
             </tr>
 
 
-            {/* COURSE PAYMENT ONLY */}
+            {/* ==================================
+                COURSE FEE PAYMENT
+            ================================== */}
 
             {isCourseFee && (
 
               <>
+
+                {/* Payment Type */}
 
                 <tr>
 
@@ -660,35 +818,51 @@ function Receipt() {
                   <td>
 
                     {
-                      receipt.paymentType
+                      paymentType === 'Full'
+
+                        ? 'Full Payment'
+
+                        : 'Installment'
+
                     }
 
                   </td>
 
                 </tr>
 
+
+                {/* Selected Plan */}
 
                 <tr>
 
                   <td>
-                    Payment Plan
+                    Selected Payment Plan
                   </td>
 
                   <td>
 
-                    {
-                      getPaymentPlanLabel(
-                        receipt.paymentPlan
-                      )
-                    }
+                    <strong>
+
+                      {
+                        getPaymentPlanLabel(
+                          paymentPlan
+                        )
+                      }
+
+                    </strong>
 
                   </td>
 
                 </tr>
 
 
-                {receipt.paymentType ===
-                  'Installment' && (
+                {/* Minimum Installment */}
+
+                {paymentType ===
+                  'Installment' &&
+
+                  minimumInstallment >
+                    0 && (
 
                   <tr>
 
@@ -699,11 +873,8 @@ function Receipt() {
                     <td>
 
                       ₹ {
-                        Number(
-                          receipt.minimumInstallment ||
-                          0
-                        ).toLocaleString(
-                          'en-IN'
+                        formatMoney(
+                          minimumInstallment
                         )
                       }
 
@@ -718,7 +889,9 @@ function Receipt() {
             )}
 
 
-            {/* REGISTRATION */}
+            {/* ==================================
+                REGISTRATION PAYMENT
+            ================================== */}
 
             {isRegistration && (
 
@@ -737,6 +910,10 @@ function Receipt() {
             )}
 
 
+            {/* ==================================
+                PAYMENT METHOD
+            ================================== */}
+
             <tr>
 
               <td>
@@ -754,7 +931,6 @@ function Receipt() {
 
             </tr>
 
-
           </tbody>
 
         </table>
@@ -766,73 +942,73 @@ function Receipt() {
       {/* FEE SUMMARY */}
       {/* ====================================== */}
 
-      <div
-        className="receipt-section"
-      >
+      <div className="receipt-section">
 
-        <div
-          className="receipt-section-title"
-        >
+        <div className="receipt-section-title">
 
           Fee Summary
 
         </div>
 
 
-        <table
-          className="receipt-table"
-        >
+        <table className="receipt-table">
 
           <tbody>
 
 
-            {/* REGISTRATION FEE */}
+            {/* ==================================
+                REGISTRATION FEE
+            ================================== */}
 
-            <tr>
+            {registrationFee > 0 && (
 
-              <td>
-                Registration Fee
-              </td>
+              <>
 
-              <td>
+                <tr>
 
-                ₹ {
-                  Number(
-                    receipt.registrationFee ||
-                    0
-                  ).toLocaleString(
-                    'en-IN'
-                  )
-                }
+                  <td>
+                    Registration Fee
+                  </td>
 
-              </td>
+                  <td>
 
-            </tr>
+                    ₹ {
+                      formatMoney(
+                        registrationFee
+                      )
+                    }
 
+                  </td>
 
-            <tr>
-
-              <td>
-                Registration Fee Paid
-              </td>
-
-              <td>
-
-                ₹ {
-                  Number(
-                    receipt.registrationFeePaid ||
-                    0
-                  ).toLocaleString(
-                    'en-IN'
-                  )
-                }
-
-              </td>
-
-            </tr>
+                </tr>
 
 
-            {/* COURSE FEE */}
+                <tr>
+
+                  <td>
+                    Registration Fee Paid
+                  </td>
+
+                  <td>
+
+                    ₹ {
+                      formatMoney(
+                        registrationFeePaid
+                      )
+                    }
+
+                  </td>
+
+                </tr>
+
+              </>
+
+            )}
+
+
+            {/* ==================================
+                COURSE FEE
+            ================================== */}
 
             <tr>
 
@@ -843,11 +1019,8 @@ function Receipt() {
               <td>
 
                 ₹ {
-                  Number(
-                    receipt.courseFee ||
-                    0
-                  ).toLocaleString(
-                    'en-IN'
+                  formatMoney(
+                    courseFee
                   )
                 }
 
@@ -856,7 +1029,9 @@ function Receipt() {
             </tr>
 
 
-            {/* CURRENT PAYMENT */}
+            {/* ==================================
+                CURRENT PAYMENT
+            ================================== */}
 
             <tr>
 
@@ -869,11 +1044,8 @@ function Receipt() {
                 <strong>
 
                   ₹ {
-                    Number(
-                      receipt.amountPaid ||
-                      0
-                    ).toLocaleString(
-                      'en-IN'
+                    formatMoney(
+                      currentPayment
                     )
                   }
 
@@ -884,7 +1056,9 @@ function Receipt() {
             </tr>
 
 
-            {/* COURSE TOTAL PAID */}
+            {/* ==================================
+                TOTAL COURSE PAID
+            ================================== */}
 
             {isCourseFee && (
 
@@ -897,11 +1071,8 @@ function Receipt() {
                 <td>
 
                   ₹ {
-                    Number(
-                      receipt.totalPaid ||
-                      0
-                    ).toLocaleString(
-                      'en-IN'
+                    formatMoney(
+                      totalCoursePaid
                     )
                   }
 
@@ -912,26 +1083,9 @@ function Receipt() {
             )}
 
 
-            {/* REGISTRATION COURSE PAID */}
-
-            {isRegistration && (
-
-              <tr>
-
-                <td>
-                  Total Course Fee Paid
-                </td>
-
-                <td>
-                  ₹ 0
-                </td>
-
-              </tr>
-
-            )}
-
-
-            {/* REMAINING COURSE FEE */}
+            {/* ==================================
+                REMAINING COURSE FEE
+            ================================== */}
 
             <tr>
 
@@ -942,18 +1096,14 @@ function Receipt() {
               <td>
 
                 ₹ {
-                  Number(
-                    receipt.remainingFee ||
-                    0
-                  ).toLocaleString(
-                    'en-IN'
+                  formatMoney(
+                    remainingCourseFee
                   )
                 }
 
               </td>
 
             </tr>
-
 
           </tbody>
 
@@ -966,25 +1116,18 @@ function Receipt() {
       {/* TRANSACTION DETAILS */}
       {/* ====================================== */}
 
-      <div
-        className="receipt-section"
-      >
+      <div className="receipt-section">
 
-        <div
-          className="receipt-section-title"
-        >
+        <div className="receipt-section-title">
 
           Transaction Details
 
         </div>
 
 
-        <table
-          className="receipt-table"
-        >
+        <table className="receipt-table">
 
           <tbody>
-
 
             <tr>
 
@@ -1051,9 +1194,7 @@ function Receipt() {
 
               <td>
 
-                <span
-                  className="badge bg-success"
-                >
+                <span className="badge bg-success">
 
                   {
                     receipt.paymentStatus ||
@@ -1066,7 +1207,6 @@ function Receipt() {
 
             </tr>
 
-
           </tbody>
 
         </table>
@@ -1078,16 +1218,17 @@ function Receipt() {
       {/* FOOTER */}
       {/* ====================================== */}
 
-      <hr
-        className="my-4"
-      />
+      <hr className="my-4" />
 
 
       <div className="row">
 
 
-        <div className="col-md-6">
+        {/* ==================================
+            INSTITUTE DETAILS
+        ================================== */}
 
+        <div className="col-md-6">
 
           <h5>
             Institute Details
@@ -1157,9 +1298,12 @@ function Receipt() {
 
           </p>
 
-
         </div>
 
+
+        {/* ==================================
+            SIGNATURE
+        ================================== */}
 
         <div
           className="col-md-6 text-end d-flex flex-column justify-content-end"
@@ -1181,7 +1325,6 @@ function Receipt() {
 
         </div>
 
-
       </div>
 
 
@@ -1189,19 +1332,19 @@ function Receipt() {
       {/* THANK YOU */}
       {/* ====================================== */}
 
-      <div
-        className="text-center mt-4"
-      >
+      <div className="text-center mt-4">
 
         <strong>
+
           Thank you for choosing us.
+
         </strong>
 
       </div>
 
 
       {/* ====================================== */}
-      {/* ACTION BUTTONS */}
+      {/* BUTTONS */}
       {/* ====================================== */}
 
       <div
@@ -1209,10 +1352,13 @@ function Receipt() {
       >
 
         <button
+
           className="btn btn-primary me-3"
+
           onClick={() =>
             window.print()
           }
+
         >
 
           🖨 Print Receipt
@@ -1221,10 +1367,13 @@ function Receipt() {
 
 
         <button
+
           className="btn btn-success"
+
           onClick={
             downloadPDF
           }
+
         >
 
           ⬇ Download PDF

@@ -4,14 +4,23 @@ import axios from 'axios'
 
 import '../../assets/styles/admin.css'
 
+
+// ======================================
+// API BASE URL
+// ======================================
+
+const API_BASE_URL =
+  'https://eduportal-backend-m5t1.onrender.com'
+
+
 function Faculty() {
 
   // ======================================
   // STATE
   // ======================================
 
-  const [formData, setFormData]
-    = useState({
+  const [formData, setFormData] =
+    useState({
 
       name: '',
 
@@ -27,11 +36,14 @@ function Faculty() {
 
     })
 
-  const [facultyData, setFacultyData]
-    = useState([])
 
-  const [editId, setEditId]
-    = useState(null)
+  const [facultyData, setFacultyData] =
+    useState([])
+
+
+  const [editId, setEditId] =
+    useState(null)
+
 
   // ======================================
   // HANDLE INPUT
@@ -50,6 +62,7 @@ function Faculty() {
 
   }
 
+
   // ======================================
   // HANDLE SUBMIT
   // ======================================
@@ -59,42 +72,54 @@ function Faculty() {
 
       e.preventDefault()
 
+
       try {
 
-        // ======================================
+        // ==================================
         // CREATE FORMDATA
-        // ======================================
+        // ==================================
 
         const facultyFormData =
           new FormData()
+
 
         facultyFormData.append(
           'name',
           formData.name
         )
 
+
         facultyFormData.append(
           'designation',
           formData.designation
         )
+
 
         facultyFormData.append(
           'experience',
           formData.experience
         )
 
+
         facultyFormData.append(
           'subject',
           formData.subject
         )
+
 
         facultyFormData.append(
           'description',
           formData.description
         )
 
-        // Image Optional
-        if (formData.image) {
+
+        // ==================================
+        // IMAGE
+        // ==================================
+
+        if (
+          formData.image
+        ) {
 
           facultyFormData.append(
             'image',
@@ -103,75 +128,98 @@ function Faculty() {
 
         }
 
+
         let response
 
-        // ======================================
+
+        // ==================================
         // UPDATE FACULTY
-        // ======================================
+        // ==================================
 
         if (editId) {
 
           response =
             await axios.put(
 
-              `https://eduportal-backend-m5t1.onrender.com/api/faculty/${editId}`,
+              `${API_BASE_URL}/api/faculty/${editId}`,
 
               facultyFormData,
 
               {
+
                 headers: {
+
                   'Content-Type':
                     'multipart/form-data',
+
                 },
+
               }
 
             )
 
-          // Update UI
+
+          // ==================================
+          // UPDATE UI
+          // ==================================
+
           setFacultyData(
 
-            facultyData.map((item) =>
+            facultyData.map(
+              (item) =>
 
-              item._id === editId
-                ? response.data.faculty
-                : item
+                item._id === editId
+
+                  ? response.data.faculty
+
+                  : item
 
             )
 
           )
+
 
           alert(
             'Faculty Updated Successfully'
           )
 
-          // Reset Edit ID
+
           setEditId(null)
 
         }
 
-        // ======================================
+
+        // ==================================
         // ADD FACULTY
-        // ======================================
+        // ==================================
 
         else {
 
           response =
             await axios.post(
 
-              'https://eduportal-backend-m5t1.onrender.com/api/faculty',
+              `${API_BASE_URL}/api/faculty`,
 
               facultyFormData,
 
               {
+
                 headers: {
+
                   'Content-Type':
                     'multipart/form-data',
+
                 },
+
               }
 
             )
 
-          // Add New Faculty To UI
+
+          // ==================================
+          // ADD NEW FACULTY TO UI
+          // ==================================
+
           setFacultyData([
 
             response.data.faculty,
@@ -180,15 +228,21 @@ function Faculty() {
 
           ])
 
+
           alert(
-            response.data.message
+
+            response.data.message ||
+
+            'Faculty Added Successfully'
+
           )
 
         }
 
-        // ======================================
+
+        // ==================================
         // RESET FORM
-        // ======================================
+        // ==================================
 
         setFormData({
 
@@ -206,15 +260,28 @@ function Faculty() {
 
         })
 
-      } catch (error) {
+      }
 
-        console.log(error)
+      catch (error) {
 
-        alert('Faculty Operation Failed')
+        console.log(
+          'Faculty Operation Error:',
+          error
+        )
+
+
+        alert(
+
+          error?.response?.data?.message ||
+
+          'Faculty Operation Failed'
+
+        )
 
       }
 
     }
+
 
   // ======================================
   // FETCH FACULTY
@@ -229,24 +296,34 @@ function Faculty() {
 
           const response =
             await axios.get(
-              'https://eduportal-backend-m5t1.onrender.com/api/faculty'
+
+              `${API_BASE_URL}/api/faculty`
+
             )
+
 
           setFacultyData(
             response.data
           )
 
-        } catch (error) {
+        }
 
-          console.log(error)
+        catch (error) {
+
+          console.log(
+            'Fetch Faculty Error:',
+            error
+          )
 
         }
 
       }
 
+
     fetchFaculty()
 
   }, [])
+
 
   // ======================================
   // DELETE FACULTY
@@ -258,61 +335,162 @@ function Faculty() {
       try {
 
         await axios.delete(
-          `https://eduportal-backend-m5t1.onrender.com/api/faculty/${id}`
+
+          `${API_BASE_URL}/api/faculty/${id}`
+
         )
 
-        // Remove From UI
+
         setFacultyData(
 
           facultyData.filter(
-            (item) => item._id !== id
+
+            (item) =>
+              item._id !== id
+
           )
 
         )
+
 
         alert(
           'Faculty Deleted Successfully'
         )
 
-      } catch (error) {
+      }
 
-        console.log(error)
+      catch (error) {
 
-        alert('Delete Failed')
+        console.log(
+          'Delete Faculty Error:',
+          error
+        )
+
+
+        alert(
+          'Delete Failed'
+        )
 
       }
 
     }
 
+
   // ======================================
   // EDIT FACULTY
   // ======================================
 
-  const editFaculty = (item) => {
+  const editFaculty =
+    (item) => {
 
-    setFormData({
+      setFormData({
 
-      name: item.name,
+        name:
+          item.name || '',
 
-      designation: item.designation,
+        designation:
+          item.designation || '',
 
-      experience: item.experience,
+        experience:
+          item.experience || '',
 
-      subject: item.subject,
+        subject:
+          item.subject || '',
 
-      image: '',
+        // ==================================
+        // IMPORTANT
+        // Existing image is NOT put here
+        // ==================================
 
-      description: item.description,
+        image: '',
 
-    })
+        description:
+          item.description || '',
 
-    setEditId(item._id)
+      })
 
-  }
+
+      setEditId(
+        item._id
+      )
+
+
+      window.scrollTo({
+
+        top: 0,
+
+        behavior: 'smooth',
+
+      })
+
+    }
+
+
+  // ======================================
+  // IMAGE URL
+  // ======================================
+  //
+  // Cloudinary:
+  //     complete URL
+  //
+  // Old records:
+  //     /uploads/filename.jpg
+  //
+  // Supports both.
+  // ======================================
+
+  const getImageUrl =
+    (image) => {
+
+      if (!image) {
+
+        return '/logo.png'
+
+      }
+
+
+      // ==================================
+      // CLOUDINARY / EXTERNAL URL
+      // ==================================
+
+      if (
+
+        image.startsWith(
+          'http://'
+        ) ||
+
+        image.startsWith(
+          'https://'
+        )
+
+      ) {
+
+        return image
+
+      }
+
+
+      // ==================================
+      // OLD LOCAL UPLOAD
+      // ==================================
+
+      return `${API_BASE_URL}${
+
+        image.startsWith('/')
+
+          ? image
+
+          : `/${image}`
+
+      }`
+
+    }
+
 
   return (
 
     <div className="applications-section">
+
 
       {/* ====================================== */}
       {/* PAGE HEADER */}
@@ -324,11 +502,13 @@ function Faculty() {
           Faculty Management
         </h2>
 
+
         <p>
           Add and manage faculty members.
         </p>
 
       </div>
+
 
       {/* ====================================== */}
       {/* FACULTY FORM */}
@@ -336,143 +516,327 @@ function Faculty() {
 
       <div className="admin-form-wrapper">
 
-        <form onSubmit={handleSubmit}>
+        <form
+          onSubmit={handleSubmit}
+        >
 
           <div className="row">
 
-            {/* Name */}
+
+            {/* ==================================
+                NAME
+            ================================== */}
+
             <div className="col-md-6 mb-3">
 
               <label className="form-label">
+
                 Faculty Name
+
               </label>
 
+
               <input
+
                 type="text"
+
                 className="form-control"
+
                 placeholder="Enter faculty name"
+
                 name="name"
-                value={formData.name}
-                onChange={handleChange}
+
+                value={
+                  formData.name
+                }
+
+                onChange={
+                  handleChange
+                }
+
+                required
+
               />
 
             </div>
 
-            {/* Designation */}
+
+            {/* ==================================
+                DESIGNATION
+            ================================== */}
+
             <div className="col-md-6 mb-3">
 
               <label className="form-label">
+
                 Designation
+
               </label>
 
+
               <input
+
                 type="text"
+
                 className="form-control"
+
                 placeholder="Enter designation"
+
                 name="designation"
-                value={formData.designation}
-                onChange={handleChange}
+
+                value={
+                  formData.designation
+                }
+
+                onChange={
+                  handleChange
+                }
+
+                required
+
               />
 
             </div>
 
-            {/* Experience */}
+
+            {/* ==================================
+                EXPERIENCE
+            ================================== */}
+
             <div className="col-md-6 mb-3">
 
               <label className="form-label">
+
                 Experience
+
               </label>
 
+
               <input
+
                 type="text"
+
                 className="form-control"
+
                 placeholder="Enter experience"
+
                 name="experience"
-                value={formData.experience}
-                onChange={handleChange}
+
+                value={
+                  formData.experience
+                }
+
+                onChange={
+                  handleChange
+                }
+
+                required
+
               />
 
             </div>
 
-            {/* Subject */}
+
+            {/* ==================================
+                SUBJECT
+            ================================== */}
+
             <div className="col-md-6 mb-3">
 
               <label className="form-label">
+
                 Subject
+
               </label>
 
+
               <input
+
                 type="text"
+
                 className="form-control"
+
                 placeholder="Enter subject"
+
                 name="subject"
-                value={formData.subject}
-                onChange={handleChange}
+
+                value={
+                  formData.subject
+                }
+
+                onChange={
+                  handleChange
+                }
+
+                required
+
               />
 
             </div>
 
-            {/* Faculty Image */}
+
+            {/* ==================================
+                FACULTY IMAGE
+            ================================== */}
+
             <div className="col-12 mb-3">
 
               <label className="form-label">
+
                 Upload Faculty Image
+
               </label>
 
+
               <input
+
                 type="file"
+
                 className="form-control"
+
                 name="image"
-                onChange={(e) =>
+
+                accept="image/jpeg,image/png,image/jpg,image/webp"
+
+                onChange={(e) => {
 
                   setFormData({
 
                     ...formData,
 
-                    image: e.target.files[0],
+                    image:
+                      e.target.files[0] || '',
 
                   })
 
-                }
+                }}
+
               />
+
+
+              {editId && (
+
+                <small className="text-muted">
+
+                  Leave this empty to keep the
+                  existing image.
+
+                </small>
+
+              )}
 
             </div>
 
-            {/* Description */}
+
+            {/* ==================================
+                DESCRIPTION
+            ================================== */}
+
             <div className="col-12 mb-4">
 
               <label className="form-label">
+
                 Description
+
               </label>
 
+
               <textarea
+
                 className="form-control"
+
                 rows="5"
+
                 placeholder="Write faculty description"
+
                 name="description"
-                value={formData.description}
-                onChange={handleChange}
+
+                value={
+                  formData.description
+                }
+
+                onChange={
+                  handleChange
+                }
+
+                required
+
               ></textarea>
 
             </div>
 
           </div>
 
-          {/* Submit Button */}
+
+          {/* ======================================
+              SUBMIT
+          ====================================== */}
+
           <button
+
             type="submit"
+
             className="table-btn approve-btn"
+
           >
 
             {editId
+
               ? 'Update Faculty'
-              : 'Add Faculty'}
+
+              : 'Add Faculty'
+
+            }
 
           </button>
+
+
+          {/* ======================================
+              CANCEL EDIT
+          ====================================== */}
+
+          {editId && (
+
+            <button
+
+              type="button"
+
+              className="table-btn reject-btn ms-2"
+
+              onClick={() => {
+
+                setEditId(null)
+
+                setFormData({
+
+                  name: '',
+
+                  designation: '',
+
+                  experience: '',
+
+                  subject: '',
+
+                  image: '',
+
+                  description: '',
+
+                })
+
+              }}
+
+            >
+
+              Cancel
+
+            </button>
+
+          )}
 
         </form>
 
       </div>
+
 
       {/* ====================================== */}
       {/* FACULTY TABLE */}
@@ -482,94 +846,206 @@ function Faculty() {
 
         <table className="table applications-table">
 
+
           <thead>
 
             <tr>
 
-              <th>Image</th>
+              <th>
+                Image
+              </th>
 
-              <th>Name</th>
+              <th>
+                Name
+              </th>
 
-              <th>Subject</th>
+              <th>
+                Subject
+              </th>
 
-              <th>Experience</th>
+              <th>
+                Experience
+              </th>
 
-              <th>Designation</th>
+              <th>
+                Designation
+              </th>
 
-              <th>Action</th>
+              <th>
+                Action
+              </th>
 
             </tr>
 
           </thead>
 
+
           <tbody>
 
-            {facultyData.map((item) => (
+            {facultyData.length === 0 ? (
 
-              <tr key={item._id}>
+              <tr>
 
-                {/* Image */}
-                <td>
+                <td
+                  colSpan="6"
+                  className="text-center"
+                >
 
-                  <img
-                    src={`https://eduportal-backend-m5t1.onrender.com${item.image}`}
-                    alt={item.name}
-                    width="60"
-                    height="60"
-                    style={{
-                      objectFit: 'cover',
-                      borderRadius: '8px',
-                    }}
-                  />
-
-                </td>
-
-                {/* Name */}
-                <td>{item.name}</td>
-
-                {/* Subject */}
-                <td>{item.subject}</td>
-
-                {/* Experience */}
-                <td>{item.experience}</td>
-
-                {/* Designation */}
-                <td>{item.designation}</td>
-
-                {/* Actions */}
-                <td>
-
-                  <div className="d-flex gap-2">
-
-                    <button
-                      className="table-btn approve-btn"
-                      onClick={() =>
-                        editFaculty(item)
-                      }
-                    >
-
-                      Edit
-
-                    </button>
-
-                    <button
-                      className="table-btn reject-btn"
-                      onClick={() =>
-                        deleteFaculty(item._id)
-                      }
-                    >
-
-                      Delete
-
-                    </button>
-
-                  </div>
+                  No faculty found.
 
                 </td>
 
               </tr>
 
-            ))}
+            ) : (
+
+              facultyData.map(
+                (item) => (
+
+                  <tr
+                    key={
+                      item._id
+                    }
+                  >
+
+
+                    {/* ==================================
+                        IMAGE
+                    ================================== */}
+
+                    <td>
+
+                      <img
+
+                        src={
+                          getImageUrl(
+                            item.image
+                          )
+                        }
+
+                        alt={
+                          item.name
+                        }
+
+                        width="60"
+
+                        height="60"
+
+                        style={{
+
+                          objectFit:
+                            'cover',
+
+                          borderRadius:
+                            '8px',
+
+                        }}
+
+                        onError={(e) => {
+
+                          e.currentTarget.src =
+                            '/logo.png'
+
+                        }}
+
+                      />
+
+                    </td>
+
+
+                    {/* ==================================
+                        NAME
+                    ================================== */}
+
+                    <td>
+                      {item.name}
+                    </td>
+
+
+                    {/* ==================================
+                        SUBJECT
+                    ================================== */}
+
+                    <td>
+                      {item.subject}
+                    </td>
+
+
+                    {/* ==================================
+                        EXPERIENCE
+                    ================================== */}
+
+                    <td>
+                      {item.experience}
+                    </td>
+
+
+                    {/* ==================================
+                        DESIGNATION
+                    ================================== */}
+
+                    <td>
+                      {item.designation}
+                    </td>
+
+
+                    {/* ==================================
+                        ACTIONS
+                    ================================== */}
+
+                    <td>
+
+                      <div className="d-flex gap-2">
+
+
+                        <button
+
+                          type="button"
+
+                          className="table-btn approve-btn"
+
+                          onClick={() =>
+                            editFaculty(
+                              item
+                            )
+                          }
+
+                        >
+
+                          Edit
+
+                        </button>
+
+
+                        <button
+
+                          type="button"
+
+                          className="table-btn reject-btn"
+
+                          onClick={() =>
+                            deleteFaculty(
+                              item._id
+                            )
+                          }
+
+                        >
+
+                          Delete
+
+                        </button>
+
+                      </div>
+
+                    </td>
+
+                  </tr>
+
+                )
+
+              )
+
+            )}
 
           </tbody>
 
@@ -582,5 +1058,6 @@ function Faculty() {
   )
 
 }
+
 
 export default Faculty
