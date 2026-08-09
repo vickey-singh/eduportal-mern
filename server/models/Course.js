@@ -2,6 +2,11 @@ const mongoose = require('mongoose')
 
 const courseSchema = new mongoose.Schema(
   {
+
+    // ======================================
+    // BASIC COURSE INFO
+    // ======================================
+
     courseName: {
       type: String,
       required: true,
@@ -25,6 +30,11 @@ const courseSchema = new mongoose.Schema(
       required: true,
     },
 
+
+    // ======================================
+    // COURSE FEE
+    // ======================================
+
     totalFee: {
       type: Number,
       required: true,
@@ -37,10 +47,10 @@ const courseSchema = new mongoose.Schema(
       default: 0,
     },
 
-    installmentAllowed: {
-      type: Boolean,
-      default: true,
-    },
+
+    // ======================================
+    // PAYMENT PLANS
+    // ======================================
 
     monthlyInstallment: {
       type: Number,
@@ -62,15 +72,39 @@ const courseSchema = new mongoose.Schema(
       default: 0,
     },
 
+
+    // ======================================
+    // INSTALLMENT
+    // ======================================
+
+    installmentAllowed: {
+      type: Boolean,
+      default: true,
+    },
+
+
+    // ======================================
+    // STATUS
+    // ======================================
+
     status: {
       type: String,
-      enum: ['Active', 'Inactive'],
+      enum: [
+        'Active',
+        'Inactive',
+      ],
       default: 'Active',
     },
+
   },
+
   {
     timestamps: true,
   }
 )
 
-module.exports = mongoose.model('Course', courseSchema)
+module.exports =
+  mongoose.model(
+    'Course',
+    courseSchema
+  )

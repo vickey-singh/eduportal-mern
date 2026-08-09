@@ -24,15 +24,7 @@ export const createOrder = async (data) => {
 // VERIFY PAYMENT
 // ======================================
 
-export const verifyPayment = async (data) => {
-
-  const formData = new FormData()
-
-  Object.keys(data).forEach((key) => {
-
-    formData.append(key, data[key])
-
-  })
+export const verifyPayment = async (formData) => {
 
   const response = await axios.post(
 
@@ -41,13 +33,9 @@ export const verifyPayment = async (data) => {
     formData,
 
     {
-
       headers: {
-
         'Content-Type': 'multipart/form-data',
-
       },
-
     }
 
   )

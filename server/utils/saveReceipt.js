@@ -5,53 +5,100 @@ const saveReceipt = async ({
   student,
   amountPaid,
   paymentType,
+  paymentCategory,
+  paymentPlan,
   transactionId,
   orderId,
 }) => {
 
-  const receiptNumber = await generateReceiptNumber()
+  const receiptNumber =
+    await generateReceiptNumber()
 
   const receipt = await Receipt.create({
 
+    // ======================================
+    // RECEIPT
+    // ======================================
+
     receiptNumber,
 
-    admissionNumber: student.admissionNumber,
+    // ======================================
+    // STUDENT
+    // ======================================
 
-    studentName: student.name,
+    admissionNumber:
+      student.admissionNumber,
 
-    studentPhone: student.contact,
+    studentName:
+      student.name,
 
-    studentEmail: student.email,
+    studentPhone:
+      student.contact,
 
-    course: student.course,
+    studentEmail:
+      student.email,
 
-    courseFee: student.totalFees,
+    course:
+      student.course,
+
+    // ======================================
+    // FEE
+    // ======================================
+
+    courseFee:
+      student.totalFees,
+
+    registrationFee:
+      student.registrationFee,
+
+    // ======================================
+    // PAYMENT CATEGORY
+    // ======================================
+
+    paymentCategory,
+
+    // ======================================
+    // PAYMENT PLAN
+    // ======================================
+
+    paymentPlan:
+      paymentPlan || '',
+
+    // ======================================
+    // PAYMENT TYPE
+    // ======================================
 
     paymentType,
 
-    minimumInstallment:
-      student.installmentAllowed
-        ? student.minimumInstallment
-        : 0,
+    // ======================================
+    // PAYMENT AMOUNT
+    // ======================================
 
     amountPaid,
 
-    totalPaid: student.paidFees,
+    totalPaid:
+      student.paidFees,
 
-    remainingFee: student.remainingFees,
+    remainingFee:
+      student.remainingFees,
 
-    paymentMethod: 'Razorpay',
+    // ======================================
+    // PAYMENT DETAILS
+    // ======================================
+
+    paymentMethod:
+      'Razorpay',
 
     transactionId,
 
     orderId,
 
-    paymentStatus: 'Success',
+    paymentStatus:
+      'Success',
 
   })
 
   return receipt
-
 }
 
 module.exports = saveReceipt

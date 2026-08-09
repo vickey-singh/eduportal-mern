@@ -4,186 +4,591 @@ const router = express.Router()
 
 const Course = require('../models/Course')
 
+
 // ======================================
 // ADD COURSE
 // ======================================
 
-router.post('/courses', async (req, res) => {
+router.post(
+  '/courses',
+  async (req, res) => {
 
-  try {
+    try {
 
-    const {
-      courseName,
-      courseCode,
-      description,
-      duration,
-      totalFee,
-      registrationFee,
-      installmentAllowed,
-      monthlyInstallment,
-      threeMonthInstallment,
-      sixMonthInstallment,
-      fullPaymentFee,
-      status,
-    } = req.body
+      const {
 
-    const existingCourse = await Course.findOne({
-      courseCode,
-    })
+        courseName,
+        courseCode,
+        description,
+        duration,
 
-    if (existingCourse) {
+        totalFee,
+        registrationFee,
 
-      return res.status(400).json({
-        success: false,
-        message: 'Course Code Already Exists',
+        monthlyInstallment,
+        threeMonthInstallment,
+        sixMonthInstallment,
+        fullPaymentFee,
+
+        installmentAllowed,
+        status,
+
+      } = req.body
+
+
+      // ======================================
+      // CHECK COURSE CODE
+      // ======================================
+
+      const existingCourse =
+        await Course.findOne({
+          courseCode,
+        })
+
+
+      if (existingCourse) {
+
+        return res.status(400).json({
+
+          success: false,
+
+          message:
+            'Course Code Already Exists',
+
+        })
+
+      }
+
+
+      // ======================================
+      // CREATE COURSE
+      // ======================================
+
+      const course =
+        new Course({
+
+          courseName,
+
+          courseCode,
+
+          description,
+
+          duration,
+
+
+          // ==================================
+          // FEES
+          // ==================================
+
+          totalFee:
+            Number(
+              totalFee || 0
+            ),
+
+          registrationFee:
+            Number(
+              registrationFee || 0
+            ),
+
+
+          // ==================================
+          // PAYMENT PLANS
+          // ==================================
+
+          monthlyInstallment:
+            Number(
+              monthlyInstallment || 0
+            ),
+
+          threeMonthInstallment:
+            Number(
+              threeMonthInstallment || 0
+            ),
+
+          sixMonthInstallment:
+            Number(
+              sixMonthInstallment || 0
+            ),
+
+          fullPaymentFee:
+            Number(
+              fullPaymentFee || 0
+            ),
+
+
+          // ==================================
+          // INSTALLMENT
+          // ==================================
+
+          installmentAllowed:
+            installmentAllowed === 'false'
+              ? false
+              : Boolean(
+                  installmentAllowed ??
+                  true
+                ),
+
+
+          // ==================================
+          // STATUS
+          // ==================================
+
+          status:
+            status || 'Active',
+
+        })
+
+
+      // ======================================
+      // SAVE
+      // ======================================
+
+      await course.save()
+
+
+      // ======================================
+      // RESPONSE
+      // ======================================
+
+      res.status(201).json({
+
+        success: true,
+
+        message:
+          'Course Added Successfully',
+
+        course,
+
       })
 
     }
 
-    const course = new Course({
-      courseName,
-      courseCode,
-      description,
-      duration,
-      totalFee,
-      registrationFee,
-      installmentAllowed,
-      monthlyInstallment,
-      threeMonthInstallment,
-      sixMonthInstallment,
-      fullPaymentFee,
-      status,
-    })
+    catch (error) {
 
-    await course.save()
+      console.log(error)
 
-    res.status(201).json({
-      success: true,
-      message: 'Course Added Successfully',
-      course,
-    })
+      // ======================================
+      // DUPLICATE COURSE CODE
+      // ======================================
 
-  } catch (error) {
+      if (
+        error.code === 11000
+      ) {
 
-    console.log(error)
+        return res.status(400).json({
 
-    res.status(500).json({
-      success: false,
-      message: 'Server Error',
-    })
+          success: false,
+
+          message:
+            'Course Code Already Exists',
+
+        })
+
+      }
+
+
+      res.status(500).json({
+
+        success: false,
+
+        message:
+          'Server Error',
+
+      })
+
+    }
 
   }
+)
 
-})
 
 // ======================================
 // GET ALL COURSES
 // ======================================
 
-router.get('/courses', async (req, res) => {
+router.get(
+  '/courses',
+  async (req, res) => {
 
-  try {
+    try {
 
-    const courses = await Course.find().sort({
-      createdAt: -1,
-    })
+      const courses =
+        await Course.find()
+          .sort({
+            createdAt: -1,
+          })
 
-    res.status(200).json(courses)
 
-  } catch (error) {
+      res.status(200).json(
+        courses
+      )
 
-    console.log(error)
+    }
 
-    res.status(500).json({
-      success: false,
-      message: 'Server Error',
-    })
+    catch (error) {
+
+      console.log(error)
+
+      res.status(500).json({
+
+        success: false,
+
+        message:
+          'Server Error',
+
+      })
+
+    }
 
   }
+)
 
-})
+
+// ======================================
+// GET COURSE BY ID
+// ======================================
+
+router.get(
+  '/courses/:id',
+  async (req, res) => {
+
+    try {
+
+      const course =
+        await Course.findById(
+          req.params.id
+        )
+
+
+      if (!course) {
+
+        return res.status(404).json({
+
+          success: false,
+
+          message:
+            'Course Not Found',
+
+        })
+
+      }
+
+
+      res.status(200).json(
+        course
+      )
+
+    }
+
+    catch (error) {
+
+      console.log(error)
+
+      res.status(500).json({
+
+        success: false,
+
+        message:
+          'Server Error',
+
+      })
+
+    }
+
+  }
+)
+
 
 // ======================================
 // UPDATE COURSE
 // ======================================
 
-router.put('/courses/:id', async (req, res) => {
+router.put(
+  '/courses/:id',
+  async (req, res) => {
 
-  try {
+    try {
 
-    const updatedCourse =
-      await Course.findByIdAndUpdate(
+      const {
 
-        req.params.id,
+        courseName,
+        courseCode,
+        description,
+        duration,
 
-        req.body,
+        totalFee,
+        registrationFee,
 
-        {
-          new: true,
-        }
+        monthlyInstallment,
+        threeMonthInstallment,
+        sixMonthInstallment,
+        fullPaymentFee,
 
-      )
+        installmentAllowed,
+        status,
 
-    res.status(200).json({
+      } = req.body
 
-      success: true,
 
-      message: 'Course Updated Successfully',
+      // ======================================
+      // CHECK COURSE
+      // ======================================
 
-      course: updatedCourse,
+      const existingCourse =
+        await Course.findById(
+          req.params.id
+        )
 
-    })
 
-  } catch (error) {
+      if (!existingCourse) {
 
-    console.log(error)
+        return res.status(404).json({
 
-    res.status(500).json({
+          success: false,
 
-      success: false,
+          message:
+            'Course Not Found',
 
-      message: 'Server Error',
+        })
 
-    })
+      }
+
+
+      // ======================================
+      // CHECK DUPLICATE COURSE CODE
+      // ======================================
+
+      const duplicateCourse =
+        await Course.findOne({
+
+          courseCode,
+
+          _id: {
+            $ne:
+              req.params.id,
+          },
+
+        })
+
+
+      if (duplicateCourse) {
+
+        return res.status(400).json({
+
+          success: false,
+
+          message:
+            'Course Code Already Exists',
+
+        })
+
+      }
+
+
+      // ======================================
+      // UPDATE COURSE
+      // ======================================
+
+      const updatedCourse =
+        await Course.findByIdAndUpdate(
+
+          req.params.id,
+
+          {
+
+            courseName,
+
+            courseCode,
+
+            description,
+
+            duration,
+
+
+            // ==================================
+            // FEES
+            // ==================================
+
+            totalFee:
+              Number(
+                totalFee || 0
+              ),
+
+            registrationFee:
+              Number(
+                registrationFee || 0
+              ),
+
+
+            // ==================================
+            // PAYMENT PLANS
+            // ==================================
+
+            monthlyInstallment:
+              Number(
+                monthlyInstallment || 0
+              ),
+
+            threeMonthInstallment:
+              Number(
+                threeMonthInstallment || 0
+              ),
+
+            sixMonthInstallment:
+              Number(
+                sixMonthInstallment || 0
+              ),
+
+            fullPaymentFee:
+              Number(
+                fullPaymentFee || 0
+              ),
+
+
+            // ==================================
+            // INSTALLMENT
+            // ==================================
+
+            installmentAllowed:
+              installmentAllowed === 'false'
+                ? false
+                : Boolean(
+                    installmentAllowed ??
+                    true
+                  ),
+
+
+            // ==================================
+            // STATUS
+            // ==================================
+
+            status:
+              status || 'Active',
+
+          },
+
+          {
+
+            new: true,
+
+            runValidators: true,
+
+          }
+
+        )
+
+
+      // ======================================
+      // RESPONSE
+      // ======================================
+
+      res.status(200).json({
+
+        success: true,
+
+        message:
+          'Course Updated Successfully',
+
+        course:
+          updatedCourse,
+
+      })
+
+    }
+
+    catch (error) {
+
+      console.log(error)
+
+      if (
+        error.code === 11000
+      ) {
+
+        return res.status(400).json({
+
+          success: false,
+
+          message:
+            'Course Code Already Exists',
+
+        })
+
+      }
+
+
+      res.status(500).json({
+
+        success: false,
+
+        message:
+          'Server Error',
+
+      })
+
+    }
 
   }
+)
 
-})
 
 // ======================================
 // DELETE COURSE
 // ======================================
 
-router.delete('/courses/:id', async (req, res) => {
+router.delete(
+  '/courses/:id',
+  async (req, res) => {
 
-  try {
+    try {
 
-    await Course.findByIdAndDelete(
-      req.params.id
-    )
+      const course =
+        await Course.findByIdAndDelete(
+          req.params.id
+        )
 
-    res.status(200).json({
 
-      success: true,
+      if (!course) {
 
-      message: 'Course Deleted Successfully',
+        return res.status(404).json({
 
-    })
+          success: false,
 
-  } catch (error) {
+          message:
+            'Course Not Found',
 
-    console.log(error)
+        })
 
-    res.status(500).json({
+      }
 
-      success: false,
 
-      message: 'Server Error',
+      res.status(200).json({
 
-    })
+        success: true,
+
+        message:
+          'Course Deleted Successfully',
+
+      })
+
+    }
+
+    catch (error) {
+
+      console.log(error)
+
+      res.status(500).json({
+
+        success: false,
+
+        message:
+          'Server Error',
+
+      })
+
+    }
 
   }
+)
 
-})
 
 module.exports = router

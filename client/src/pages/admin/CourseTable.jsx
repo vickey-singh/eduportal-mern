@@ -1,53 +1,71 @@
 function CourseTable({
-
   courseData,
-
   setFormData,
-
   setEditId,
-
   handleDelete,
-
 }) {
 
-    const handleEdit = (course) => {
+  // ======================================
+  // EDIT COURSE
+  // ======================================
 
-  setEditId(course._id)
+  const handleEdit = (course) => {
 
-  setFormData({
+    setEditId(
+      course._id
+    )
 
-    courseName: course.courseName,
+    setFormData({
 
-    courseCode: course.courseCode,
+      courseName:
+        course.courseName || '',
 
-    description: course.description,
+      courseCode:
+        course.courseCode || '',
 
-    duration: course.duration,
+      description:
+        course.description || '',
 
-    totalFee: course.totalFee,
+      duration:
+        course.duration || '',
 
-    registrationFee: course.registrationFee,
+      totalFee:
+        course.totalFee || '',
 
-    installmentAllowed:
-      course.installmentAllowed,
-    
-    monthlyInstallment:
-      course.monthlyInstallment || '',
-    
-    threeMonthInstallment:
-      course.threeMonthInstallment || '',
-    
-    sixMonthInstallment:
-      course.sixMonthInstallment || '',
-    
-    fullPaymentFee:
-      course.fullPaymentFee || '',
-    
-    status: course.status,
+      registrationFee:
+        course.registrationFee || '',
 
-  })
+      monthlyInstallment:
+        course.monthlyInstallment || '',
 
-}
+      threeMonthInstallment:
+        course.threeMonthInstallment || '',
+
+      sixMonthInstallment:
+        course.sixMonthInstallment || '',
+
+      fullPaymentFee:
+        course.fullPaymentFee || '',
+
+      installmentAllowed:
+        course.installmentAllowed ?? true,
+
+      status:
+        course.status || 'Active',
+
+    })
+
+    // Scroll to form
+    window.scrollTo({
+
+      top: 0,
+
+      behavior: 'smooth',
+
+    })
+
+  }
+
 
   return (
 
@@ -55,13 +73,14 @@ function CourseTable({
       className="table-responsive mt-4"
       style={{
         overflowX: 'auto',
+        width: '100%',
       }}
     >
 
       <table
         className="table applications-table"
         style={{
-          minWidth: '1300px',
+          minWidth: '1600px',
         }}
       >
 
@@ -69,141 +88,329 @@ function CourseTable({
 
           <tr>
 
-            <th>Course</th>
+            <th>
+              Course
+            </th>
 
-            <th>Code</th>
+            <th>
+              Code
+            </th>
 
-            <th>Duration</th>
+            <th>
+              Duration
+            </th>
 
-            <th>Total Fee</th>
+            <th>
+              Total Fee
+            </th>
 
-            <th>Registration Fee</th>
-            
-            <th>Monthly</th>
-            
-            <th>3 Months</th>
-            
-            <th>6 Months</th>
-            
-            <th>Full Payment</th>
-            
-            <th>Installment</th>
-            
-            <th>Status</th>
-            
-            <th>Action</th>
+            <th>
+              Registration Fee
+            </th>
+
+            <th>
+              Monthly
+            </th>
+
+            <th>
+              3 Months
+            </th>
+
+            <th>
+              6 Months
+            </th>
+
+            <th>
+              Full Payment
+            </th>
+
+            <th>
+              Installment
+            </th>
+
+            <th>
+              Status
+            </th>
+
+            <th>
+              Action
+            </th>
 
           </tr>
 
         </thead>
 
+
         <tbody>
-        
+
           {courseData.length === 0 ? (
-        
+
             <tr>
-        
+
               <td
                 colSpan="12"
                 className="text-center"
               >
-        
+
                 No Courses Found
-        
+
               </td>
-        
+
             </tr>
-        
+
           ) : (
-        
-            courseData.map((course) => (
-        
-              <tr key={course._id}>
-        
-                <td>{course.courseName}</td>
-        
-                <td>{course.courseCode}</td>
-        
-                <td>{course.duration}</td>
-        
-                <td>
-                  ₹ {course.totalFee}
-                </td>
-                
-                <td>
-                  ₹ {course.registrationFee}
-                </td>
-                
-                <td>
-                  ₹ {course.monthlyInstallment || 0}
-                </td>
-                
-                <td>
-                  ₹ {course.threeMonthInstallment || 0}
-                </td>
-                
-                <td>
-                  ₹ {course.sixMonthInstallment || 0}
-                </td>
-                
-                <td>
-                  ₹ {course.fullPaymentFee || 0}
-                </td>
-                
-                <td>
-                  {course.installmentAllowed
-                    ? 'Yes'
-                    : 'No'}
-                </td>
-        
-                <td>
-        
-                  <span
-                    className={
-                      course.status === 'Active'
-                        ? 'badge bg-success'
-                        : 'badge bg-danger'
-                    }
+
+            courseData.map(
+              (course) => (
+
+                <tr
+                  key={
+                    course._id
+                  }
+                >
+
+
+                  {/* COURSE */}
+
+                  <td
+                    style={{
+                      whiteSpace:
+                        'nowrap',
+                    }}
                   >
-        
-                    {course.status}
-        
-                  </span>
-        
-                </td>
-        
-                <td>
-        
-                  <button
-                    className="btn btn-sm btn-primary me-2"
-                  
-                    onClick={() =>
-                      handleEdit(course)
+
+                    {
+                      course.courseName
                     }
-                  
+
+                  </td>
+
+
+                  {/* CODE */}
+
+                  <td
+                    style={{
+                      whiteSpace:
+                        'nowrap',
+                    }}
                   >
-                  
-                    Edit
-                  
-                  </button>
-        
-                  <button
-                    className="btn btn-sm btn-danger"
-                    onClick={() =>
-                      handleDelete(course._id)
+
+                    {
+                      course.courseCode
                     }
+
+                  </td>
+
+
+                  {/* DURATION */}
+
+                  <td
+                    style={{
+                      whiteSpace:
+                        'nowrap',
+                    }}
                   >
-                    Delete
-                  </button>
-        
-                </td>
-        
-              </tr>
-        
-            ))
-        
+
+                    {
+                      course.duration
+                    }
+
+                  </td>
+
+
+                  {/* TOTAL FEE */}
+
+                  <td
+                    style={{
+                      whiteSpace:
+                        'nowrap',
+                    }}
+                  >
+
+                    ₹ {
+                      course.totalFee
+                    }
+
+                  </td>
+
+
+                  {/* REGISTRATION FEE */}
+
+                  <td
+                    style={{
+                      whiteSpace:
+                        'nowrap',
+                    }}
+                  >
+
+                    ₹ {
+                      course.registrationFee
+                    }
+
+                  </td>
+
+
+                  {/* MONTHLY */}
+
+                  <td
+                    style={{
+                      whiteSpace:
+                        'nowrap',
+                    }}
+                  >
+
+                    ₹ {
+                      course.monthlyInstallment ||
+                      0
+                    }
+
+                  </td>
+
+
+                  {/* 3 MONTH */}
+
+                  <td
+                    style={{
+                      whiteSpace:
+                        'nowrap',
+                    }}
+                  >
+
+                    ₹ {
+                      course.threeMonthInstallment ||
+                      0
+                    }
+
+                  </td>
+
+
+                  {/* 6 MONTH */}
+
+                  <td
+                    style={{
+                      whiteSpace:
+                        'nowrap',
+                    }}
+                  >
+
+                    ₹ {
+                      course.sixMonthInstallment ||
+                      0
+                    }
+
+                  </td>
+
+
+                  {/* FULL PAYMENT */}
+
+                  <td
+                    style={{
+                      whiteSpace:
+                        'nowrap',
+                    }}
+                  >
+
+                    ₹ {
+                      course.fullPaymentFee ||
+                      0
+                    }
+
+                  </td>
+
+
+                  {/* INSTALLMENT */}
+
+                  <td
+                    style={{
+                      whiteSpace:
+                        'nowrap',
+                    }}
+                  >
+
+                    {course.installmentAllowed
+                      ? 'Yes'
+                      : 'No'}
+
+                  </td>
+
+
+                  {/* STATUS */}
+
+                  <td
+                    style={{
+                      whiteSpace:
+                        'nowrap',
+                    }}
+                  >
+
+                    <span
+                      className={
+                        course.status ===
+                        'Active'
+
+                          ? 'badge bg-success'
+
+                          : 'badge bg-danger'
+                      }
+                    >
+
+                      {
+                        course.status
+                      }
+
+                    </span>
+
+                  </td>
+
+
+                  {/* ACTION */}
+
+                  <td
+                    style={{
+                      whiteSpace:
+                        'nowrap',
+                    }}
+                  >
+
+                    <button
+                      type="button"
+                      className="btn btn-sm btn-primary me-2"
+                      onClick={() =>
+                        handleEdit(
+                          course
+                        )
+                      }
+                    >
+
+                      Edit
+
+                    </button>
+
+
+                    <button
+                      type="button"
+                      className="btn btn-sm btn-danger"
+                      onClick={() =>
+                        handleDelete(
+                          course._id
+                        )
+                      }
+                    >
+
+                      Delete
+
+                    </button>
+
+                  </td>
+
+
+                </tr>
+
+              )
+            )
+
           )}
-        
+
         </tbody>
 
       </table>

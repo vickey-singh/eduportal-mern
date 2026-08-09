@@ -14,268 +14,669 @@ import { API_URL } from '../config/api'
 
 import '../assets/styles/apply.css'
 
+
 function Apply() {
 
   const navigate = useNavigate()
 
 
   // ======================================
-  // FORM STATE
+  // COURSES
   // ======================================
+
   const [courses, setCourses] = useState([])
 
-  const [selectedCourse, setSelectedCourse] = useState(null)
+  const [selectedCourse, setSelectedCourse] =
+    useState(null)
+
+
+  // ======================================
+  // PAYMENT LOADING
+  // ======================================
+
+  const [paymentLoading, setPaymentLoading] =
+    useState(false)
+
+
+  // ======================================
+  // FORM DATA
+  // ======================================
 
   const [formData, setFormData] = useState({
 
+    // Student
     name: '',
+    dob: '',
+    aadharNumber: '',
 
+    // Parents
+    fatherName: '',
+    motherName: '',
+    fatherOccupation: '',
+    motherOccupation: '',
+    fatherMobile: '',
+    motherMobile: '',
+
+    // Contact
     email: '',
-
     phone: '',
 
+    // Education
+    schoolCollegeName: '',
+
+    // Address
+    permanentAddress: '',
+    currentAddress: '',
+
+    // Course
     course: '',
 
-    address: '',
-
-    message: '',
-
-    paymentType: 'full',
-
+    // Photo
     image: null,
 
   })
 
+
   // ======================================
-  // HANDLE INPUT CHANGE
+  // FETCH COURSES
   // ======================================
 
   const fetchCourses = async () => {
 
-  try {
+    try {
 
-    const response = await axios.get(
-        `${API_URL}/courses`
+      const response =
+        await axios.get(
+          `${API_URL}/courses`
+        )
+
+      setCourses(
+        response.data
       )
 
-    console.log(response.data)
+    } catch (error) {
 
-    setCourses(response.data)
+      console.log(error)
 
-  } catch (error) {
-
-    console.log(error)
+    }
 
   }
 
-}
 
-useEffect(() => {
+  useEffect(() => {
 
-  fetchCourses()
+    fetchCourses()
 
-}, [])
+  }, [])
+
+
+  // ======================================
+  // HANDLE INPUT
+  // ======================================
 
   const handleChange = (e) => {
 
-  const { name, value } = e.target
+    const {
+      name,
+      value,
+    } = e.target
 
-  // ==============================
-  // COURSE SELECT
-  // ==============================
 
-  if (name === 'course') {
+    // ==================================
+    // COURSE SELECT
+    // ==================================
 
-    const course = courses.find(
+    if (name === 'course') {
 
-      (item) => item.courseName === value
+      const course =
+        courses.find(
+          (item) =>
+            item.courseName === value
+        )
 
+      setSelectedCourse(
+        course || null
+      )
+
+    }
+
+
+    setFormData(
+      (previousData) => ({
+
+        ...previousData,
+
+        [name]: value,
+
+      })
     )
 
-    setSelectedCourse(course)
+  }
+
+
+  // ======================================
+  // HANDLE IMAGE
+  // ======================================
+
+  const handleImageChange = (e) => {
+
+    const file =
+      e.target.files?.[0] || null
+
+
+    setFormData(
+      (previousData) => ({
+
+        ...previousData,
+
+        image: file,
+
+      })
+    )
 
   }
 
-  setFormData({
 
-    ...formData,
+  // ======================================
+  // OPEN RAZORPAY
+  // ======================================
 
-    [name]: value,
+  const openRazorpay = (order) => {
 
-  })
+    if (!window.Razorpay) {
 
-}
+      alert(
+        'Razorpay is not loaded. Please refresh the page and try again.'
+      )
 
-const openRazorpay = (order) => {
+      setPaymentLoading(false)
 
-  const options = {
+      return
 
-    key: import.meta.env.VITE_RAZORPAY_KEY_ID,
+    }
 
-    amount: order.amount,
 
-    currency: order.currency,
+    const options = {
 
-    name: ' Prerna Institute Of Excellence',
+      key:
+        import.meta.env
+          .VITE_RAZORPAY_KEY_ID,
 
-    description: 'Admission Fee',
+      amount:
+        order.amount,
 
-    order_id: order.id,
+      currency:
+        order.currency,
 
-    prefill: {
+      name:
+        'Prerna Institute',
 
-      name: formData.name,
+      description:
+        'Admission Registration Fee',
 
-      email: formData.email,
+      order_id:
+        order.id,
 
-      contact: formData.phone,
+      prefill: {
 
-    },
+        name:
+          formData.name,
 
-    theme: {
+        email:
+          formData.email,
 
-      color: '#0d6efd',
+        contact:
+          formData.phone,
 
-    },
+      },
 
-    handler: async function (response) {
-    
-      try {
-    
-        const paymentData = {
-    
-          ...response,
-    
-          studentName: formData.name,
-    
-          email: formData.email,
-    
-          phone: formData.phone,
+      theme: {
 
-          image: formData.image,
-    
-          course: formData.course,
-    
-          totalFee: selectedCourse.totalFee,
-    
-          registrationFee:
-            selectedCourse.registrationFee,
-    
-          minimumInstallment:
-            selectedCourse.minimumInstallment,
-    
-          paymentType:
+        color:
+          '#0d6efd',
 
-            formData.paymentType === 'full'
-          
-              ? 'Full'
-          
-              : 'Installment',
-    
-          amountPaid:
-    
-            formData.paymentType === 'full'
-    
-              ? selectedCourse.totalFee
-    
-              : selectedCourse.minimumInstallment,
-    
-        }
-    
-        const verifyResponse =
-          await verifyPayment(paymentData)
-    
-        console.log(verifyResponse)
-    
-        alert(verifyResponse.message)
+      },
 
-        if (verifyResponse.receiptNumber) {
 
-          navigate(`/receipt/${verifyResponse.receiptNumber}`)
+      // ==================================
+      // PAYMENT SUCCESS
+      // ==================================
 
-}
-    
-      } catch (error) {
-    
-        console.log(error)
-    
-        alert('Payment Verification Failed')
-    
+      handler:
+        async function (response) {
+
+          try {
+
+            setPaymentLoading(true)
+
+
+            // ==================================
+            // FORM DATA
+            // ==================================
+
+            const paymentData =
+              new FormData()
+
+
+            // ==================================
+            // RAZORPAY RESPONSE
+            // ==================================
+
+            paymentData.append(
+              'razorpay_order_id',
+              response.razorpay_order_id
+            )
+
+            paymentData.append(
+              'razorpay_payment_id',
+              response.razorpay_payment_id
+            )
+
+            paymentData.append(
+              'razorpay_signature',
+              response.razorpay_signature
+            )
+
+
+            // ==================================
+            // STUDENT DETAILS
+            // ==================================
+
+            paymentData.append(
+              'studentName',
+              formData.name
+            )
+
+            paymentData.append(
+              'dob',
+              formData.dob
+            )
+
+            paymentData.append(
+              'aadharNumber',
+              formData.aadharNumber
+            )
+
+
+            // ==================================
+            // PARENTS
+            // ==================================
+
+            paymentData.append(
+              'fatherName',
+              formData.fatherName
+            )
+
+            paymentData.append(
+              'motherName',
+              formData.motherName
+            )
+
+            paymentData.append(
+              'fatherOccupation',
+              formData.fatherOccupation
+            )
+
+            paymentData.append(
+              'motherOccupation',
+              formData.motherOccupation
+            )
+
+            paymentData.append(
+              'fatherMobile',
+              formData.fatherMobile
+            )
+
+            paymentData.append(
+              'motherMobile',
+              formData.motherMobile
+            )
+
+
+            // ==================================
+            // CONTACT
+            // ==================================
+
+            paymentData.append(
+              'email',
+              formData.email
+            )
+
+            paymentData.append(
+              'phone',
+              formData.phone
+            )
+
+
+            // ==================================
+            // EDUCATION
+            // ==================================
+
+            paymentData.append(
+              'schoolCollegeName',
+              formData.schoolCollegeName
+            )
+
+
+            // ==================================
+            // ADDRESS
+            // ==================================
+
+            paymentData.append(
+              'permanentAddress',
+              formData.permanentAddress
+            )
+
+            paymentData.append(
+              'currentAddress',
+              formData.currentAddress
+            )
+
+
+            // ==================================
+            // COURSE
+            // ==================================
+
+            paymentData.append(
+              'course',
+              formData.course
+            )
+
+
+            // ==================================
+            // REGISTRATION PAYMENT
+            // ==================================
+
+            paymentData.append(
+              'paymentCategory',
+              'Registration'
+            )
+
+            paymentData.append(
+              'paymentType',
+              'Full'
+            )
+
+            paymentData.append(
+              'amountPaid',
+              String(
+                selectedCourse.registrationFee
+              )
+            )
+
+
+            // ==================================
+            // IMAGE
+            // ==================================
+
+            if (formData.image) {
+
+              paymentData.append(
+                'image',
+                formData.image
+              )
+
+            }
+
+
+            // ==================================
+            // VERIFY PAYMENT
+            // ==================================
+
+            const verifyResponse =
+              await verifyPayment(
+                paymentData
+              )
+
+
+            console.log(
+              'Payment verification:',
+              verifyResponse
+            )
+
+
+            if (
+              !verifyResponse.success
+            ) {
+
+              alert(
+                verifyResponse.message ||
+                'Payment Verification Failed'
+              )
+
+              return
+
+            }
+
+
+            // ==================================
+            // SUCCESS MESSAGE
+            // ==================================
+
+            alert(
+              verifyResponse.message ||
+              'Admission Successful'
+            )
+
+
+            // ==================================
+            // RECEIPT
+            // ==================================
+
+            if (
+              verifyResponse.receiptNumber
+            ) {
+
+              navigate(
+                `/receipt/${verifyResponse.receiptNumber}`
+              )
+
+            }
+
+          } catch (error) {
+
+            console.log(error)
+
+            alert(
+
+              error.response?.data?.message ||
+
+              'Payment Verification Failed'
+
+            )
+
+          } finally {
+
+            setPaymentLoading(false)
+
+          }
+
+        },
+
+      modal: {
+
+        ondismiss:
+          function () {
+
+            setPaymentLoading(false)
+
+          },
+
+      },
+
+    }
+
+
+    const razorpay =
+      new window.Razorpay(
+        options
+      )
+
+
+    razorpay.on(
+      'payment.failed',
+      function () {
+
+        setPaymentLoading(false)
+
+        alert(
+          'Payment Failed. Please try again.'
+        )
+
       }
-    
-    },
+    )
+
+
+    razorpay.open()
 
   }
 
-  const razorpay = new window.Razorpay(options)
-
-  razorpay.open()
-
-}
 
   // ======================================
   // HANDLE FORM SUBMIT
   // ======================================
 
-  const handleSubmit = async (e) => {
+  const handleSubmit =
+    async (e) => {
 
-  e.preventDefault()
+      e.preventDefault()
 
-  try {
 
-    const amount =
+      // ==================================
+      // COURSE VALIDATION
+      // ==================================
 
-      formData.paymentType === 'full'
+      if (!selectedCourse) {
 
-        ? selectedCourse.totalFee
+        alert(
+          'Please select a course.'
+        )
 
-        : selectedCourse.minimumInstallment
+        return
 
-        const check = await checkStudent({
+      }
 
-          email: formData.email,
-        
-          phone: formData.phone,
-        
-        })
-        
+
+      // ==================================
+      // REGISTRATION FEE
+      // ==================================
+
+      const registrationFee =
+        Number(
+          selectedCourse.registrationFee
+        )
+
+
+      if (
+        !registrationFee ||
+        registrationFee <= 0
+      ) {
+
+        alert(
+          'Registration fee is not available for this course.'
+        )
+
+        return
+
+      }
+
+
+      // ==================================
+      // PREVENT DOUBLE CLICK
+      // ==================================
+
+      if (paymentLoading) {
+
+        return
+
+      }
+
+
+      try {
+
+        setPaymentLoading(true)
+
+
+        // ==================================
+        // CHECK EXISTING STUDENT
+        // ==================================
+
+        const check =
+          await checkStudent({
+
+            email:
+              formData.email,
+
+            phone:
+              formData.phone,
+
+          })
+
+
         if (check.exists) {
-        
+
           alert(
-        
             'Student already exists.\n\nPlease use Existing Student Payment.'
-        
           )
-        
+
+          setPaymentLoading(false)
+
           return
-        
+
         }
 
-    const order = await createOrder({
 
-        amount,
-      
-      })
+        // ==================================
+        // CREATE RAZORPAY ORDER
+        // ==================================
 
-    openRazorpay(order.order)
+        const order =
+          await createOrder({
 
-  } 
-  
-  catch (error) {
+            amount:
+              registrationFee,
 
-    console.log(error)
-  
-    alert(
-  
-      error.response?.data?.message ||
-  
-      'Something went wrong'
-  
-    )
-  
-  }
+          })
 
-}
+
+        if (
+          !order?.order
+        ) {
+
+          throw new Error(
+            'Unable to create payment order.'
+          )
+
+        }
+
+
+        // ==================================
+        // OPEN RAZORPAY
+        // ==================================
+
+        openRazorpay(
+          order.order
+        )
+
+      } catch (error) {
+
+        console.log(error)
+
+        setPaymentLoading(false)
+
+        alert(
+
+          error.response?.data?.message ||
+
+          error.message ||
+
+          'Something went wrong'
+
+        )
+
+      }
+
+    }
 
 
   return (
@@ -283,6 +684,7 @@ const openRazorpay = (order) => {
     <section className="apply-page">
 
       <div className="container">
+
 
         {/* ====================================== */}
         {/* HEADING */}
@@ -300,57 +702,139 @@ const openRazorpay = (order) => {
 
         </div>
 
+
         {/* ====================================== */}
         {/* FORM */}
         {/* ====================================== */}
 
         <div className="apply-form-wrapper">
 
-          <form onSubmit={handleSubmit}>
+          <form
+            onSubmit={
+              handleSubmit
+            }
+          >
 
             <div className="row">
 
-              {/* Name */}
+
+              {/* ================================== */}
+              {/* STUDENT NAME */}
+              {/* ================================== */}
+
               <div className="col-md-6 mb-4">
 
                 <label className="form-label">
-                  Full Name
+                  Student Name
                 </label>
 
                 <input
                   type="text"
                   className="form-control"
-                  placeholder="Enter your name"
+                  placeholder="Enter student name"
                   name="name"
-                  value={formData.name}
-                  onChange={handleChange}
+                  value={
+                    formData.name
+                  }
+                  onChange={
+                    handleChange
+                  }
+                  required
                 />
 
               </div>
 
-              {/* Phone */}
+
+              {/* ================================== */}
+              {/* DOB */}
+              {/* ================================== */}
+
               <div className="col-md-6 mb-4">
 
                 <label className="form-label">
-                  Phone Number
+                  Date of Birth
+                </label>
+
+                <input
+                  type="date"
+                  className="form-control"
+                  name="dob"
+                  value={
+                    formData.dob
+                  }
+                  onChange={
+                    handleChange
+                  }
+                  required
+                />
+
+              </div>
+
+
+              {/* ================================== */}
+              {/* AADHAAR */}
+              {/* ================================== */}
+
+              <div className="col-md-6 mb-4">
+
+                <label className="form-label">
+                  Aadhaar Number
                 </label>
 
                 <input
                   type="text"
                   className="form-control"
-                  placeholder="Enter phone number"
-                  name="phone"
-                  value={formData.phone}
-                  onChange={handleChange}
+                  placeholder="Enter Aadhaar number"
+                  name="aadharNumber"
+                  value={
+                    formData.aadharNumber
+                  }
+                  onChange={
+                    handleChange
+                  }
+                  maxLength="12"
+                  pattern="[0-9]{12}"
+                  required
                 />
 
               </div>
 
-              {/* Email */}
+
+              {/* ================================== */}
+              {/* PHONE */}
+              {/* ================================== */}
+
               <div className="col-md-6 mb-4">
 
                 <label className="form-label">
-                  Email Address
+                  Student Mobile Number
+                </label>
+
+                <input
+                  type="tel"
+                  className="form-control"
+                  placeholder="Enter mobile number"
+                  name="phone"
+                  value={
+                    formData.phone
+                  }
+                  onChange={
+                    handleChange
+                  }
+                  required
+                />
+
+              </div>
+
+
+              {/* ================================== */}
+              {/* EMAIL */}
+              {/* ================================== */}
+
+              <div className="col-md-6 mb-4">
+
+                <label className="form-label">
+                  Gmail / Email
                 </label>
 
                 <input
@@ -358,53 +842,233 @@ const openRazorpay = (order) => {
                   className="form-control"
                   placeholder="Enter email"
                   name="email"
-                  value={formData.email}
-                  onChange={handleChange}
+                  value={
+                    formData.email
+                  }
+                  onChange={
+                    handleChange
+                  }
+                  required
                 />
 
               </div>
 
-              {/* Student Photo */}
+
+              {/* ================================== */}
+              {/* PHOTO */}
+              {/* ================================== */}
+
               <div className="col-md-6 mb-4">
-              
+
                 <label className="form-label">
-                  Upload Passport Size Photo
+                  Student Photo
                 </label>
-              
+
                 <input
                   type="file"
                   className="form-control"
                   accept="image/*"
-                  onChange={(e) =>
-                    setFormData({
-                      ...formData,
-                      image: e.target.files[0],
-                    })
+                  onChange={
+                    handleImageChange
                   }
                 />
-              
+
               </div>
 
-              {formData.image && (
 
-                <div className="col-md-6 mb-4">
-              
-                  <img
-                    src={URL.createObjectURL(formData.image)}
-                    alt="Preview"
-                    width="120"
-                    height="120"
-                    style={{
-                      objectFit: 'cover',
-                      borderRadius: '10px',
-                    }}
-                  />
-              
-                </div>
-              
-              )}
+              {/* ================================== */}
+              {/* FATHER NAME */}
+              {/* ================================== */}
 
-              {/* Course */}
+              <div className="col-md-6 mb-4">
+
+                <label className="form-label">
+                  Father's Name
+                </label>
+
+                <input
+                  type="text"
+                  className="form-control"
+                  placeholder="Enter father's name"
+                  name="fatherName"
+                  value={
+                    formData.fatherName
+                  }
+                  onChange={
+                    handleChange
+                  }
+                  required
+                />
+
+              </div>
+
+
+              {/* ================================== */}
+              {/* MOTHER NAME */}
+              {/* ================================== */}
+
+              <div className="col-md-6 mb-4">
+
+                <label className="form-label">
+                  Mother's Name
+                </label>
+
+                <input
+                  type="text"
+                  className="form-control"
+                  placeholder="Enter mother's name"
+                  name="motherName"
+                  value={
+                    formData.motherName
+                  }
+                  onChange={
+                    handleChange
+                  }
+                  required
+                />
+
+              </div>
+
+
+              {/* ================================== */}
+              {/* FATHER OCCUPATION */}
+              {/* ================================== */}
+
+              <div className="col-md-6 mb-4">
+
+                <label className="form-label">
+                  Father's Occupation
+                </label>
+
+                <input
+                  type="text"
+                  className="form-control"
+                  placeholder="Enter father's occupation"
+                  name="fatherOccupation"
+                  value={
+                    formData.fatherOccupation
+                  }
+                  onChange={
+                    handleChange
+                  }
+                  required
+                />
+
+              </div>
+
+
+              {/* ================================== */}
+              {/* MOTHER OCCUPATION */}
+              {/* ================================== */}
+
+              <div className="col-md-6 mb-4">
+
+                <label className="form-label">
+                  Mother's Occupation
+                </label>
+
+                <input
+                  type="text"
+                  className="form-control"
+                  placeholder="Enter mother's occupation"
+                  name="motherOccupation"
+                  value={
+                    formData.motherOccupation
+                  }
+                  onChange={
+                    handleChange
+                  }
+                  required
+                />
+
+              </div>
+
+
+              {/* ================================== */}
+              {/* FATHER MOBILE */}
+              {/* ================================== */}
+
+              <div className="col-md-6 mb-4">
+
+                <label className="form-label">
+                  Father's Mobile Number
+                </label>
+
+                <input
+                  type="tel"
+                  className="form-control"
+                  placeholder="Enter father's mobile"
+                  name="fatherMobile"
+                  value={
+                    formData.fatherMobile
+                  }
+                  onChange={
+                    handleChange
+                  }
+                  required
+                />
+
+              </div>
+
+
+              {/* ================================== */}
+              {/* MOTHER MOBILE */}
+              {/* ================================== */}
+
+              <div className="col-md-6 mb-4">
+
+                <label className="form-label">
+                  Mother's Mobile Number
+                </label>
+
+                <input
+                  type="tel"
+                  className="form-control"
+                  placeholder="Enter mother's mobile"
+                  name="motherMobile"
+                  value={
+                    formData.motherMobile
+                  }
+                  onChange={
+                    handleChange
+                  }
+                  required
+                />
+
+              </div>
+
+
+              {/* ================================== */}
+              {/* SCHOOL / COLLEGE */}
+              {/* ================================== */}
+
+              <div className="col-12 mb-4">
+
+                <label className="form-label">
+                  School / College Name
+                </label>
+
+                <input
+                  type="text"
+                  className="form-control"
+                  placeholder="Enter school or college name"
+                  name="schoolCollegeName"
+                  value={
+                    formData.schoolCollegeName
+                  }
+                  onChange={
+                    handleChange
+                  }
+                  required
+                />
+
+              </div>
+
+
+              {/* ================================== */}
+              {/* COURSE */}
+              {/* ================================== */}
+
               <div className="col-md-6 mb-4">
 
                 <label className="form-label">
@@ -414,280 +1078,277 @@ const openRazorpay = (order) => {
                 <select
                   className="form-select"
                   name="course"
-                  value={formData.course}
-                  onChange={handleChange}
+                  value={
+                    formData.course
+                  }
+                  onChange={
+                    handleChange
+                  }
+                  required
                 >
 
                   <option value="">
                     Choose Course
                   </option>
 
-                  {courses.map((course) => (
+                  {courses.map(
+                    (course) => (
 
-                  <option
-                    key={course._id}
-                    value={course.courseName}
-                  >
-                
-                    {course.courseName}
-                
-                  </option>
-                
-                ))}
+                      <option
+                        key={
+                          course._id
+                        }
+                        value={
+                          course.courseName
+                        }
+                      >
+
+                        {
+                          course.courseName
+                        }
+
+                      </option>
+
+                    )
+                  )}
 
                 </select>
 
               </div>
 
-              {/* Address */}
+
+              {/* ================================== */}
+              {/* PERMANENT ADDRESS */}
+              {/* ================================== */}
+
               <div className="col-12 mb-4">
 
                 <label className="form-label">
-                  Address
+                  Permanent Address
                 </label>
 
                 <textarea
                   className="form-control"
                   rows="4"
-                  placeholder="Enter address"
-                  name="address"
-                  value={formData.address}
-                  onChange={handleChange}
+                  placeholder="Enter permanent address"
+                  name="permanentAddress"
+                  value={
+                    formData.permanentAddress
+                  }
+                  onChange={
+                    handleChange
+                  }
+                  required
                 ></textarea>
 
               </div>
 
-              {/* Message */}
+
+              {/* ================================== */}
+              {/* CURRENT ADDRESS */}
+              {/* ================================== */}
+
               <div className="col-12 mb-4">
 
                 <label className="form-label">
-                  Additional Message
+                  Current Address
                 </label>
 
                 <textarea
                   className="form-control"
                   rows="4"
-                  placeholder="Write your message"
-                  name="message"
-                  value={formData.message}
-                  onChange={handleChange}
+                  placeholder="Enter current address"
+                  name="currentAddress"
+                  value={
+                    formData.currentAddress
+                  }
+                  onChange={
+                    handleChange
+                  }
+                  required
                 ></textarea>
 
               </div>
+
 
             </div>
 
-            {/* Submit Button */}
+
+            {/* ====================================== */}
+            {/* COURSE DETAILS */}
+            {/* ====================================== */}
+
+            {selectedCourse && (
+
+              <div className="col-12 mb-4">
+
+                <div className="card border-success shadow-sm">
+
+                  <div className="card-body">
+
+                    <h5 className="mb-3">
+                      Course Details
+                    </h5>
+
+                    <div className="row">
+
+
+                      <div className="col-md-6">
+
+                        <p>
+
+                          <strong>
+                            Duration:
+                          </strong>{' '}
+
+                          {
+                            selectedCourse.duration
+                          }
+
+                        </p>
+
+                      </div>
+
+
+                      <div className="col-md-6">
+
+                        <p>
+
+                          <strong>
+                            Total Course Fee:
+                          </strong>{' '}
+
+                          ₹{
+                            selectedCourse.totalFee
+                          }
+
+                        </p>
+
+                      </div>
+
+
+                      <div className="col-md-6">
+
+                        <p>
+
+                          <strong>
+                            Registration Fee:
+                          </strong>{' '}
+
+                          ₹{
+                            selectedCourse.registrationFee
+                          }
+
+                        </p>
+
+                      </div>
+
+
+                      <div className="col-md-6">
+
+                        <p>
+
+                          <strong>
+                            Course Fee After Admission:
+                          </strong>{' '}
+
+                          ₹{
+                            selectedCourse.totalFee
+                          }
+
+                        </p>
+
+                      </div>
+
+                    </div>
+
+                  </div>
+
+                </div>
+
+              </div>
+
+            )}
+
+
+            {/* ====================================== */}
+            {/* PAYMENT SUMMARY */}
+            {/* ====================================== */}
+
+            {selectedCourse && (
+
+              <div className="col-12 mb-4">
+
+                <div className="alert alert-primary">
+
+                  <h5>
+                    Admission Payment
+                  </h5>
+
+                  <hr />
+
+                  <p>
+
+                    <strong>
+                      Registration Fee Payable:
+                    </strong>{' '}
+
+                    ₹{
+                      selectedCourse.registrationFee
+                    }
+
+                  </p>
+
+
+                  <p className="mb-0">
+
+                    <strong>
+                      Course Fee:
+                    </strong>{' '}
+
+                    ₹{
+                      selectedCourse.totalFee
+                    }
+
+                    <br />
+
+                    <small className="text-muted">
+
+                      Course fee will be paid separately
+                      after admission.
+
+                    </small>
+
+                  </p>
+
+                </div>
+
+              </div>
+
+            )}
+
+
+            {/* ====================================== */}
+            {/* SUBMIT */}
+            {/* ====================================== */}
+
             <button
               type="submit"
               className="apply-btn"
+              disabled={
+                !selectedCourse ||
+                paymentLoading
+              }
             >
 
-              Proceed to Payment
+              {paymentLoading
+                ? 'Processing...'
+                : 'Pay Registration Fee'}
 
             </button>
 
+
           </form>
-
-          {selectedCourse && (
-
-            <div className="col-12 mb-4">
-          
-              <div className="card border-success shadow-sm">
-          
-                <div className="card-body">
-          
-                  <h5 className="mb-3">
-          
-                    Course Details
-          
-                  </h5>
-          
-                  <div className="row">
-          
-                    <div className="col-md-6">
-          
-                      <p>
-          
-                        <strong>Duration :</strong>
-          
-                        {selectedCourse.duration}
-          
-                      </p>
-          
-                    </div>
-          
-                    <div className="col-md-6">
-          
-                      <p>
-          
-                        <strong>Total Fee :</strong>
-          
-                        ₹ {selectedCourse.totalFee}
-          
-                      </p>
-          
-                    </div>
-          
-                    <div className="col-md-6">
-          
-                      <p>
-          
-                        <strong>Registration Fee :</strong>
-          
-                        ₹ {selectedCourse.registrationFee}
-          
-                      </p>
-          
-                    </div>
-          
-                    <div className="col-md-6">
-          
-                      <p>
-          
-                        <strong>Minimum Installment :</strong>
-          
-                        ₹ {selectedCourse.minimumInstallment}
-          
-                      </p>
-          
-                    </div>
-          
-                    <div className="col-md-6">
-          
-                      <p>
-          
-                        <strong>Installment :</strong>
-          
-                        {selectedCourse.installmentAllowed
-                          ? 'Available'
-                          : 'Not Available'}
-          
-                      </p>
-          
-                    </div>
-          
-                  </div>
-          
-                </div>
-          
-              </div>
-          
-            </div>
-          
-          )}
-
-          {selectedCourse && (
-
-            <div className="col-12 mb-4">
-          
-              <label className="form-label fw-bold">
-          
-                Select Payment Option
-          
-              </label>
-          
-              <div className="d-flex gap-4">
-          
-                <div className="form-check">
-          
-                  <input
-                    className="form-check-input"
-                    type="radio"
-                    name="paymentType"
-                    value="full"
-                    checked={formData.paymentType === 'full'}
-                    onChange={handleChange}
-                  />
-          
-                  <label className="form-check-label">
-          
-                    Full Payment
-          
-                  </label>
-          
-                </div>
-          
-                <div className="form-check">
-          
-                  <input
-                    className="form-check-input"
-                    type="radio"
-                    name="paymentType"
-                    value="installment"
-                    checked={formData.paymentType === 'installment'}
-                    onChange={handleChange}
-                  />
-          
-                  <label className="form-check-label">
-          
-                    Installment
-          
-                  </label>
-          
-                </div>
-          
-              </div>
-          
-            </div>
-          
-          )}
-
-          {selectedCourse && (
-
-            <div className="col-12 mb-4">
-          
-              <div className="alert alert-primary">
-          
-                <h5>
-          
-                  Payment Summary
-          
-                </h5>
-          
-                <hr />
-          
-                <p>
-          
-                  <strong>
-          
-                    Payment Type :
-          
-                  </strong>
-          
-                  {formData.paymentType === 'full'
-          
-                    ? 'Full Payment'
-          
-                    : 'Installment'}
-          
-                </p>
-          
-                <p>
-          
-                  <strong>
-          
-                    Amount Payable :
-          
-                  </strong>
-          
-                  ₹ {
-          
-                    formData.paymentType === 'full'
-          
-                      ? selectedCourse.totalFee
-          
-                      : selectedCourse.minimumInstallment
-          
-                  }
-          
-                </p>
-          
-              </div>
-          
-            </div>
-          
-          )}
 
         </div>
 
@@ -696,6 +1357,7 @@ const openRazorpay = (order) => {
     </section>
 
   )
+
 }
 
 export default Apply

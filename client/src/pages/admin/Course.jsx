@@ -10,28 +10,78 @@ import {
   deleteCourse,
 } from '../../services/courseService'
 
+
 function Course() {
 
-  const [courseData, setCourseData] = useState([])
+  // ======================================
+  // COURSE DATA
+  // ======================================
 
-  const [editId, setEditId] = useState(null)
+  const [courseData, setCourseData] =
+    useState([])
 
-  const [formData, setFormData] = useState({
 
-    courseName: '',
-    courseCode: '',
-    description: '',
-    duration: '',
-    totalFee: '',
-    registrationFee: '',
-    installmentAllowed: true,
-    monthlyInstallment: '',
-    threeMonthInstallment: '',
-    sixMonthInstallment: '',
-    fullPaymentFee: '',
-    status: 'Active',
+  // ======================================
+  // EDIT ID
+  // ======================================
 
-  })
+  const [editId, setEditId] =
+    useState(null)
+
+
+  // ======================================
+  // FORM DATA
+  // ======================================
+
+  const [formData, setFormData] =
+    useState({
+
+      courseName: '',
+
+      courseCode: '',
+
+      description: '',
+
+      duration: '',
+
+
+      // ==================================
+      // FEES
+      // ==================================
+
+      totalFee: '',
+
+      registrationFee: '',
+
+
+      // ==================================
+      // PAYMENT PLANS
+      // ==================================
+
+      monthlyInstallment: '',
+
+      threeMonthInstallment: '',
+
+      sixMonthInstallment: '',
+
+      fullPaymentFee: '',
+
+
+      // ==================================
+      // INSTALLMENT
+      // ==================================
+
+      installmentAllowed: true,
+
+
+      // ==================================
+      // STATUS
+      // ==================================
+
+      status: 'Active',
+
+    })
+
 
   // ======================================
   // FETCH COURSES
@@ -43,148 +93,306 @@ function Course() {
 
   }, [])
 
+
+  // ======================================
+  // GET COURSES
+  // ======================================
+
   const fetchCourses = async () => {
 
     try {
 
-      const data = await getCourses()
+      const data =
+        await getCourses()
 
-      setCourseData(data)
+      setCourseData(
+        data
+      )
 
-    } catch (error) {
+    }
+
+    catch (error) {
 
       console.log(error)
 
     }
 
   }
+
+
+  // ======================================
+  // RESET FORM
+  // ======================================
+
+  const resetForm = () => {
+
+    setFormData({
+
+      courseName: '',
+
+      courseCode: '',
+
+      description: '',
+
+      duration: '',
+
+
+      totalFee: '',
+
+      registrationFee: '',
+
+
+      monthlyInstallment: '',
+
+      threeMonthInstallment: '',
+
+      sixMonthInstallment: '',
+
+      fullPaymentFee: '',
+
+
+      installmentAllowed: true,
+
+      status: 'Active',
+
+    })
+
+
+    setEditId(null)
+
+  }
+
 
   // ======================================
   // ADD / UPDATE COURSE
   // ======================================
 
-  const handleSubmit = async (e) => {
+  const handleSubmit =
+    async (e) => {
 
-    e.preventDefault()
+      e.preventDefault()
 
-    try {
 
-      let response
+      try {
 
-      if (editId) {
+        let response
 
-        response = await updateCourse(
-          editId,
-          formData
+
+        // ==================================
+        // UPDATE
+        // ==================================
+
+        if (editId) {
+
+          response =
+            await updateCourse(
+
+              editId,
+
+              formData
+
+            )
+
+        }
+
+
+        // ==================================
+        // ADD
+        // ==================================
+
+        else {
+
+          response =
+            await createCourse(
+              formData
+            )
+
+        }
+
+
+        // ==================================
+        // SUCCESS
+        // ==================================
+
+        alert(
+          response.message
         )
 
-      } else {
 
-        response = await createCourse(
-          formData
+        // ==================================
+        // REFRESH
+        // ==================================
+
+        await fetchCourses()
+
+
+        // ==================================
+        // RESET
+        // ==================================
+
+        resetForm()
+
+      }
+
+      catch (error) {
+
+        console.log(error)
+
+        alert(
+
+          error.response?.data?.message ||
+
+          'Something went wrong'
+
         )
 
       }
 
-      alert(response.message)
-
-      await fetchCourses()
-
-      setEditId(null)
-
-      setFormData({
-
-        courseName: '',
-        courseCode: '',
-        description: '',
-        duration: '',
-        totalFee: '',
-        registrationFee: '',
-        installmentAllowed: true,
-        monthlyInstallment: '',
-        threeMonthInstallment: '',
-        sixMonthInstallment: '',
-        fullPaymentFee: '',
-        status: 'Active',
-      })
-
-    } catch (error) {
-
-      console.log(error)
-
-      alert('Something went wrong')
-
     }
 
-  }
 
   // ======================================
   // DELETE COURSE
   // ======================================
 
-  const handleDelete = async (id) => {
+  const handleDelete =
+    async (id) => {
 
-    const confirmDelete = window.confirm(
+      const confirmDelete =
+        window.confirm(
 
-      'Are you sure you want to delete this course?'
+          'Are you sure you want to delete this course?'
 
-    )
+        )
 
-    if (!confirmDelete) return
 
-    try {
+      if (!confirmDelete)
+        return
 
-      const response = await deleteCourse(id)
 
-      alert(response.message)
+      try {
 
-      await fetchCourses()
+        const response =
+          await deleteCourse(
+            id
+          )
 
-    } catch (error) {
 
-      console.log(error)
+        alert(
+          response.message
+        )
 
-      alert('Something went wrong')
+
+        await fetchCourses()
+
+      }
+
+      catch (error) {
+
+        console.log(error)
+
+        alert(
+
+          error.response?.data?.message ||
+
+          'Something went wrong'
+
+        )
+
+      }
 
     }
 
-  }
 
   return (
 
     <div className="applications-section">
 
+
+      {/* ================================== */}
+      {/* HEADER */}
+      {/* ================================== */}
+
       <div className="applications-header">
 
         <h2>
-
           Course Management
-
         </h2>
 
         <p>
-
           Add and manage all institute courses.
-
         </p>
 
       </div>
 
+
+      {/* ================================== */}
+      {/* COURSE FORM */}
+      {/* ================================== */}
+
       <CourseForm
 
-        formData={formData}
-        setFormData={setFormData}
-        editId={editId}
-        handleSubmit={handleSubmit}
+        formData={
+          formData
+        }
+
+        setFormData={
+          setFormData
+        }
+
+        editId={
+          editId
+        }
+
+        handleSubmit={
+          handleSubmit
+        }
 
       />
 
+
+      {/* ================================== */}
+      {/* CANCEL EDIT */}
+      {/* ================================== */}
+
+      {editId && (
+
+        <button
+          type="button"
+          className="table-btn reject-btn mt-2"
+          onClick={
+            resetForm
+          }
+        >
+
+          Cancel Edit
+
+        </button>
+
+      )}
+
+
+      {/* ================================== */}
+      {/* COURSE TABLE */}
+      {/* ================================== */}
+
       <CourseTable
 
-        courseData={courseData}
-        setFormData={setFormData}
-        setEditId={setEditId}
-        handleDelete={handleDelete}
+        courseData={
+          courseData
+        }
+
+        setFormData={
+          setFormData
+        }
+
+        setEditId={
+          setEditId
+        }
+
+        handleDelete={
+          handleDelete
+        }
 
       />
 
