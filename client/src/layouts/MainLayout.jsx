@@ -5,20 +5,49 @@ import { Outlet } from 'react-router-dom'
 import Navbar from '../components/Navbar'
 import Footer from '../components/Footer'
 
+
 function MainLayout() {
+
   return (
+
     <>
-  <Navbar />
 
-  <ScrollToTop />
+      {/* ====================================== */}
+      {/* NAVBAR */}
+      {/* ====================================== */}
 
-  <main className="pt-5 mt-5">
-    <Outlet />
-  </main>
+      <Navbar />
 
-  <Footer />
-</>
+
+      {/* ====================================== */}
+      {/* SCROLL TO TOP */}
+      {/* ====================================== */}
+
+      <ScrollToTop />
+
+
+      {/* ====================================== */}
+      {/* PAGE CONTENT */}
+      {/* ====================================== */}
+
+      <main>
+
+        <Outlet />
+
+      </main>
+
+
+      {/* ====================================== */}
+      {/* FOOTER */}
+      {/* ====================================== */}
+
+      <Footer />
+
+    </>
+
   )
+
 }
+
 
 export default MainLayout
