@@ -15,6 +15,7 @@ function CourseTable({
       course._id
     )
 
+
     setFormData({
 
       courseName:
@@ -29,33 +30,60 @@ function CourseTable({
       duration:
         course.duration || '',
 
+      batchTime:
+        course.batchTime || '',
+
+
+      // ==================================
+      // FEES
+      // ==================================
+
       totalFee:
-        course.totalFee || '',
+        course.totalFee ?? '',
 
       registrationFee:
-        course.registrationFee || '',
+        course.registrationFee ?? '',
+
+
+      // ==================================
+      // PAYMENT PLANS
+      // ==================================
 
       monthlyInstallment:
-        course.monthlyInstallment || '',
+        course.monthlyInstallment ?? '',
 
       threeMonthInstallment:
-        course.threeMonthInstallment || '',
+        course.threeMonthInstallment ?? '',
 
       sixMonthInstallment:
-        course.sixMonthInstallment || '',
+        course.sixMonthInstallment ?? '',
 
       fullPaymentFee:
-        course.fullPaymentFee || '',
+        course.fullPaymentFee ?? '',
+
+
+      // ==================================
+      // INSTALLMENT
+      // ==================================
 
       installmentAllowed:
         course.installmentAllowed ?? true,
+
+
+      // ==================================
+      // STATUS
+      // ==================================
 
       status:
         course.status || 'Active',
 
     })
 
-    // Scroll to form
+
+    // ======================================
+    // SCROLL TO FORM
+    // ======================================
+
     window.scrollTo({
 
       top: 0,
@@ -80,7 +108,7 @@ function CourseTable({
       <table
         className="table applications-table"
         style={{
-          minWidth: '1600px',
+          minWidth: '1750px',
         }}
       >
 
@@ -98,6 +126,10 @@ function CourseTable({
 
             <th>
               Duration
+            </th>
+
+            <th>
+              Batch Time
             </th>
 
             <th>
@@ -148,7 +180,7 @@ function CourseTable({
             <tr>
 
               <td
-                colSpan="12"
+                colSpan="13"
                 className="text-center"
               >
 
@@ -170,7 +202,9 @@ function CourseTable({
                 >
 
 
-                  {/* COURSE */}
+                  {/* ==================================
+                      COURSE
+                  ================================== */}
 
                   <td
                     style={{
@@ -186,7 +220,9 @@ function CourseTable({
                   </td>
 
 
-                  {/* CODE */}
+                  {/* ==================================
+                      CODE
+                  ================================== */}
 
                   <td
                     style={{
@@ -202,7 +238,9 @@ function CourseTable({
                   </td>
 
 
-                  {/* DURATION */}
+                  {/* ==================================
+                      DURATION
+                  ================================== */}
 
                   <td
                     style={{
@@ -218,7 +256,29 @@ function CourseTable({
                   </td>
 
 
-                  {/* TOTAL FEE */}
+                  {/* ==================================
+                      BATCH TIME
+                  ================================== */}
+
+                  <td
+                    style={{
+                      whiteSpace:
+                        'nowrap',
+                    }}
+                  >
+
+                    {
+                      course.batchTime
+                        ? course.batchTime
+                        : 'Not Set'
+                    }
+
+                  </td>
+
+
+                  {/* ==================================
+                      TOTAL FEE
+                  ================================== */}
 
                   <td
                     style={{
@@ -234,7 +294,9 @@ function CourseTable({
                   </td>
 
 
-                  {/* REGISTRATION FEE */}
+                  {/* ==================================
+                      REGISTRATION FEE
+                  ================================== */}
 
                   <td
                     style={{
@@ -250,7 +312,9 @@ function CourseTable({
                   </td>
 
 
-                  {/* MONTHLY */}
+                  {/* ==================================
+                      MONTHLY
+                  ================================== */}
 
                   <td
                     style={{
@@ -267,7 +331,9 @@ function CourseTable({
                   </td>
 
 
-                  {/* 3 MONTH */}
+                  {/* ==================================
+                      3 MONTH
+                  ================================== */}
 
                   <td
                     style={{
@@ -284,7 +350,9 @@ function CourseTable({
                   </td>
 
 
-                  {/* 6 MONTH */}
+                  {/* ==================================
+                      6 MONTH
+                  ================================== */}
 
                   <td
                     style={{
@@ -301,7 +369,9 @@ function CourseTable({
                   </td>
 
 
-                  {/* FULL PAYMENT */}
+                  {/* ==================================
+                      FULL PAYMENT
+                  ================================== */}
 
                   <td
                     style={{
@@ -318,7 +388,9 @@ function CourseTable({
                   </td>
 
 
-                  {/* INSTALLMENT */}
+                  {/* ==================================
+                      INSTALLMENT
+                  ================================== */}
 
                   <td
                     style={{
@@ -327,14 +399,18 @@ function CourseTable({
                     }}
                   >
 
-                    {course.installmentAllowed
-                      ? 'Yes'
-                      : 'No'}
+                    {
+                      course.installmentAllowed
+                        ? 'Yes'
+                        : 'No'
+                    }
 
                   </td>
 
 
-                  {/* STATUS */}
+                  {/* ==================================
+                      STATUS
+                  ================================== */}
 
                   <td
                     style={{
@@ -345,12 +421,14 @@ function CourseTable({
 
                     <span
                       className={
+
                         course.status ===
                         'Active'
 
                           ? 'badge bg-success'
 
                           : 'badge bg-danger'
+
                       }
                     >
 
@@ -363,7 +441,9 @@ function CourseTable({
                   </td>
 
 
-                  {/* ACTION */}
+                  {/* ==================================
+                      ACTION
+                  ================================== */}
 
                   <td
                     style={{
@@ -374,7 +454,12 @@ function CourseTable({
 
                     <button
                       type="button"
-                      className="btn btn-sm btn-primary me-2"
+                      className="
+                        btn
+                        btn-sm
+                        btn-primary
+                        me-2
+                      "
                       onClick={() =>
                         handleEdit(
                           course
@@ -389,7 +474,11 @@ function CourseTable({
 
                     <button
                       type="button"
-                      className="btn btn-sm btn-danger"
+                      className="
+                        btn
+                        btn-sm
+                        btn-danger
+                      "
                       onClick={() =>
                         handleDelete(
                           course._id

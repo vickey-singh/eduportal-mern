@@ -4,12 +4,14 @@ const express = require('express')
 const path = require('path')
 const cors = require('cors')
 
-const connectDB = require('./config/db')
+const connectDB =
+  require('./config/db')
+
 
 const paymentRoutes =
   require('./routes/paymentRoutes')
 
-const testMailRoutes = 
+const testMailRoutes =
   require('./routes/testMailRoutes')
 
 const courseRoutes =
@@ -26,6 +28,9 @@ const downloadRoutes =
 
 const dashboardRoutes =
   require('./routes/dashboardRoutes')
+
+const attendanceRoutes =
+  require('./routes/attendanceRoutes')
 
 const studentRoutes =
   require('./routes/studentRoutes')
@@ -57,80 +62,203 @@ const receiptRoutes =
 const noticeRoutes =
   require('./routes/noticeRoutes')
 
-const applicationRoutes = require('./routes/applicationRoutes')
+const applicationRoutes =
+  require('./routes/applicationRoutes')
 
-// Create App
+
+// ======================================
+// NOTIFICATION ROUTES
+// ======================================
+
+const notificationRoutes =
+  require('./routes/notificationRoutes')
+
+
+// ======================================
+// CREATE APP
+// ======================================
+
 const app = express()
 
-// Connect Database
+
+// ======================================
+// CONNECT DATABASE
+// ======================================
+
 connectDB()
 
-// Middleware
+
+// ======================================
+// MIDDLEWARE
+// ======================================
+
 app.use(cors())
 
-app.use(express.json())
-
-// STATIC UPLOADS FOLDER
 app.use(
-
-  '/uploads',
-
-  express.static(
-    path.join(__dirname, 'uploads')
-  )
-
+  express.json()
 )
 
-// Routes
-app.use('/api', courseRoutes)
 
-app.use('/api', applicationRoutes)
+// ======================================
+// STATIC UPLOADS
+// ======================================
 
-app.use('/api', adminRoutes)
+app.use(
+  '/uploads',
+  express.static(
+    path.join(
+      __dirname,
+      'uploads'
+    )
+  )
+)
 
-app.use('/api', facultyRoutes)
 
-app.use('/api', achievementRoutes)
+// ======================================
+// ROUTES
+// ======================================
 
-app.use('/api', galleryRoutes)
+app.use(
+  '/api',
+  courseRoutes
+)
 
-app.use('/api', testimonialRoutes)
+app.use(
+  '/api',
+  applicationRoutes
+)
 
-app.use('/api', feedbackRoutes)
+app.use(
+  '/api',
+  adminRoutes
+)
 
-app.use('/api', messageRoutes)
+app.use(
+  '/api',
+  facultyRoutes
+)
 
-app.use('/api', studentRoutes)
+app.use(
+  '/api',
+  achievementRoutes
+)
 
-app.use('/api', dashboardRoutes)
+app.use(
+  '/api',
+  galleryRoutes
+)
 
-app.use('/api', paymentRoutes)
+app.use(
+  '/api',
+  testimonialRoutes
+)
 
-app.use('/api', testMailRoutes)
+app.use(
+  '/api',
+  feedbackRoutes
+)
 
-app.use('/api', receiptRoutes)
+app.use(
+  '/api',
+  messageRoutes
+)
 
-app.use('/api', noticeRoutes)
+app.use(
+  '/api',
+  studentRoutes
+)
 
-app.use('/api', downloadRoutes)
+app.use(
+  '/api',
+  dashboardRoutes
+)
 
-app.use('/api', settingsRoutes)
+app.use(
+  '/api',
+  attendanceRoutes
+)
 
-app.use('/api', accountRoutes)
+app.use(
+  '/api',
+  paymentRoutes
+)
 
-// Test Route
-app.get('/', (req, res) => {
+app.use(
+  '/api',
+  testMailRoutes
+)
 
-  res.send('Prerna Institute Backend Running 🚀')
+app.use(
+  '/api',
+  receiptRoutes
+)
 
-})
+app.use(
+  '/api',
+  noticeRoutes
+)
 
-// Port
-const PORT = process.env.PORT || 8000
+app.use(
+  '/api',
+  downloadRoutes
+)
 
-// Start Server
-app.listen(PORT, () => {
+app.use(
+  '/api',
+  settingsRoutes
+)
 
-  console.log(`Server running on port ${PORT}`)
+app.use(
+  '/api',
+  accountRoutes
+)
 
-})
+
+// ======================================
+// NOTIFICATION ROUTES
+// ======================================
+
+app.use(
+  '/api',
+  notificationRoutes
+)
+
+
+// ======================================
+// TEST ROUTE
+// ======================================
+
+app.get(
+  '/',
+  (req, res) => {
+
+    res.send(
+      'Prerna Institute Backend Running 🚀'
+    )
+
+  }
+)
+
+
+// ======================================
+// PORT
+// ======================================
+
+const PORT =
+  process.env.PORT || 8000
+
+
+// ======================================
+// START SERVER
+// ======================================
+
+app.listen(
+  PORT,
+  () => {
+
+    console.log(
+      `Server running on port ${PORT}`
+    )
+
+  }
+)

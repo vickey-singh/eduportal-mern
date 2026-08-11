@@ -79,6 +79,10 @@ import Gallery from '../pages/Gallery'
 
 import Achievements from '../pages/Achievements'
 
+import Attendance from '../pages/admin/Attendance'
+
+import StudentAttendance from '../pages/admin/StudentAttendance'
+
 import Contact from '../pages/Contact'
 
 import Services from '../pages/Services'
@@ -200,6 +204,16 @@ function AppRoutes() {
           <Route
             path="courses"
             element={<Course />}
+          />
+
+          <Route
+            path="attendance"
+            element={<Attendance />}
+          />
+
+          <Route
+            path="attendance/student/:studentId"
+            element={<StudentAttendance />}
           />
 
           <Route

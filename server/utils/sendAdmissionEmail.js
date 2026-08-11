@@ -93,12 +93,23 @@ const sendAdmissionEmail = async ({
 
 
   // ======================================
+  // BATCH TIME
+  // ======================================
+
+  const batchTime =
+    student.batchTime ||
+    receipt.batchTime ||
+    '-'
+
+
+  // ======================================
   // SEND EMAIL
   // ======================================
 
   await sendEmail({
 
-    to: student.email,
+    to:
+      student.email,
 
     subject:
       `🎉 Admission Confirmed - ${student.admissionNumber}`,
@@ -162,33 +173,111 @@ const sendAdmissionEmail = async ({
         >
 
           <tr>
-            <td><strong>Admission Number</strong></td>
-            <td>${student.admissionNumber}</td>
+
+            <td>
+              <strong>
+                Admission Number
+              </strong>
+            </td>
+
+            <td>
+              ${student.admissionNumber}
+            </td>
+
           </tr>
 
-          <tr>
-            <td><strong>Student Name</strong></td>
-            <td>${student.name}</td>
-          </tr>
 
           <tr>
-            <td><strong>Course</strong></td>
-            <td>${student.course}</td>
+
+            <td>
+              <strong>
+                Student Name
+              </strong>
+            </td>
+
+            <td>
+              ${student.name}
+            </td>
+
           </tr>
 
-          <tr>
-            <td><strong>Mobile</strong></td>
-            <td>${student.contact}</td>
-          </tr>
 
           <tr>
-            <td><strong>Email</strong></td>
-            <td>${student.email}</td>
+
+            <td>
+              <strong>
+                Course
+              </strong>
+            </td>
+
+            <td>
+              ${student.course}
+            </td>
+
           </tr>
 
+
+          <!-- ==================================
+              BATCH TIME
+          ================================== -->
+
           <tr>
-            <td><strong>Admission Date</strong></td>
-            <td>${student.admissionDate}</td>
+
+            <td>
+              <strong>
+                Batch Time
+              </strong>
+            </td>
+
+            <td>
+              ${batchTime}
+            </td>
+
+          </tr>
+
+
+          <tr>
+
+            <td>
+              <strong>
+                Mobile
+              </strong>
+            </td>
+
+            <td>
+              ${student.contact}
+            </td>
+
+          </tr>
+
+
+          <tr>
+
+            <td>
+              <strong>
+                Email
+              </strong>
+            </td>
+
+            <td>
+              ${student.email}
+            </td>
+
+          </tr>
+
+
+          <tr>
+
+            <td>
+              <strong>
+                Admission Date
+              </strong>
+            </td>
+
+            <td>
+              ${student.admissionDate}
+            </td>
+
           </tr>
 
         </table>
@@ -219,88 +308,204 @@ const sendAdmissionEmail = async ({
         >
 
           <tr>
-            <td><strong>Payment Category</strong></td>
-            <td>${paymentCategory}</td>
-          </tr>
 
-          <tr>
-            <td><strong>Payment Type</strong></td>
-            <td>${paymentType}</td>
-          </tr>
-
-          <tr>
-            <td><strong>Payment Plan</strong></td>
-            <td>${paymentPlan}</td>
-          </tr>
-
-          <tr>
-            <td><strong>Registration Fee</strong></td>
             <td>
+              <strong>
+                Payment Category
+              </strong>
+            </td>
+
+            <td>
+              ${paymentCategory}
+            </td>
+
+          </tr>
+
+
+          <tr>
+
+            <td>
+              <strong>
+                Payment Type
+              </strong>
+            </td>
+
+            <td>
+              ${paymentType}
+            </td>
+
+          </tr>
+
+
+          <tr>
+
+            <td>
+              <strong>
+                Payment Plan
+              </strong>
+            </td>
+
+            <td>
+              ${paymentPlan}
+            </td>
+
+          </tr>
+
+
+          <tr>
+
+            <td>
+              <strong>
+                Registration Fee
+              </strong>
+            </td>
+
+            <td>
+
               ₹ ${Number(
                 receipt.registrationFee || 0
               ).toLocaleString('en-IN')}
+
             </td>
+
           </tr>
 
+
           <tr>
-            <td><strong>Registration Fee Paid</strong></td>
+
             <td>
+              <strong>
+                Registration Fee Paid
+              </strong>
+            </td>
+
+            <td>
+
               ₹ ${Number(
                 receipt.registrationFeePaid || 0
               ).toLocaleString('en-IN')}
+
             </td>
+
           </tr>
 
+
           <tr>
-            <td><strong>Total Course Fee</strong></td>
+
             <td>
+              <strong>
+                Total Course Fee
+              </strong>
+            </td>
+
+            <td>
+
               ₹ ${Number(
                 receipt.courseFee || 0
               ).toLocaleString('en-IN')}
+
             </td>
+
           </tr>
 
+
           <tr>
-            <td><strong>Current Payment</strong></td>
+
             <td>
               <strong>
+                Current Payment
+              </strong>
+            </td>
+
+            <td>
+
+              <strong>
+
                 ₹ ${Number(
                   amountPaid || 0
                 ).toLocaleString('en-IN')}
+
               </strong>
+
             </td>
+
           </tr>
 
+
           <tr>
-            <td><strong>Total Course Fee Paid</strong></td>
+
             <td>
+              <strong>
+                Total Course Fee Paid
+              </strong>
+            </td>
+
+            <td>
+
               ₹ ${Number(
                 receipt.totalPaid || 0
               ).toLocaleString('en-IN')}
+
             </td>
+
           </tr>
 
+
           <tr>
-            <td><strong>Remaining Course Fee</strong></td>
+
             <td>
+              <strong>
+                Remaining Course Fee
+              </strong>
+            </td>
+
+            <td>
+
               ₹ ${Number(
                 receipt.remainingFee || 0
               ).toLocaleString('en-IN')}
+
             </td>
+
           </tr>
 
-          <tr>
-            <td><strong>Payment Method</strong></td>
-            <td>${paymentMethod}</td>
-          </tr>
 
           <tr>
-            <td><strong>Payment Status</strong></td>
+
             <td>
-              <strong style="color: green;">
-                ${receipt.paymentStatus || 'Success'}
+              <strong>
+                Payment Method
               </strong>
             </td>
+
+            <td>
+              ${paymentMethod}
+            </td>
+
+          </tr>
+
+
+          <tr>
+
+            <td>
+              <strong>
+                Payment Status
+              </strong>
+            </td>
+
+            <td>
+
+              <strong style="color: green;">
+
+                ${
+                  receipt.paymentStatus ||
+                  'Success'
+                }
+
+              </strong>
+
+            </td>
+
           </tr>
 
         </table>
@@ -331,24 +536,57 @@ const sendAdmissionEmail = async ({
         >
 
           <tr>
-            <td><strong>Receipt Number</strong></td>
-            <td>${receipt.receiptNumber}</td>
-          </tr>
 
-          <tr>
-            <td><strong>Transaction ID</strong></td>
             <td>
-              ${transactionId || receipt.transactionId || '-'}
+              <strong>
+                Receipt Number
+              </strong>
             </td>
+
+            <td>
+              ${receipt.receiptNumber}
+            </td>
+
           </tr>
 
+
           <tr>
-            <td><strong>Payment Date</strong></td>
+
             <td>
+              <strong>
+                Transaction ID
+              </strong>
+            </td>
+
+            <td>
+
+              ${
+                transactionId ||
+                receipt.transactionId ||
+                '-'
+              }
+
+            </td>
+
+          </tr>
+
+
+          <tr>
+
+            <td>
+              <strong>
+                Payment Date
+              </strong>
+            </td>
+
+            <td>
+
               ${new Date(
                 receipt.paymentDate
               ).toLocaleString('en-IN')}
+
             </td>
+
           </tr>
 
         </table>
@@ -362,7 +600,9 @@ const sendAdmissionEmail = async ({
 
         <p>
           Thank you for choosing
-          <strong>Prerna Institute Of Excellence</strong>.
+          <strong>
+            Prerna Institute Of Excellence
+          </strong>.
         </p>
 
 
@@ -375,10 +615,13 @@ const sendAdmissionEmail = async ({
 
 
         <p>
+
           Regards,<br />
+
           <strong>
             Prerna Institute Of Excellence
           </strong>
+
         </p>
 
       </div>

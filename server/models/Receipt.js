@@ -1,10 +1,12 @@
 const mongoose = require('mongoose')
 
+
 const receiptSchema = new mongoose.Schema({
 
-  // ======================================
-  // RECEIPT
-  // ======================================
+
+// ======================================
+// RECEIPT
+// ======================================
 
   receiptNumber: {
     type: String,
@@ -13,9 +15,9 @@ const receiptSchema = new mongoose.Schema({
   },
 
 
-  // ======================================
-  // STUDENT
-  // ======================================
+// ======================================
+// STUDENT
+// ======================================
 
   admissionNumber: {
     type: String,
@@ -42,10 +44,15 @@ const receiptSchema = new mongoose.Schema({
     required: true,
   },
 
+  batchTime: {
+    type: String,
+    default: '',
+  },
 
-  // ======================================
-  // FEE DETAILS
-  // ======================================
+
+// ======================================
+// FEE DETAILS
+// ======================================
 
   courseFee: {
     type: Number,
@@ -63,9 +70,9 @@ const receiptSchema = new mongoose.Schema({
   },
 
 
-  // ======================================
-  // PAYMENT CATEGORY
-  // ======================================
+// ======================================
+// PAYMENT CATEGORY
+// ======================================
 
   paymentCategory: {
     type: String,
@@ -79,9 +86,9 @@ const receiptSchema = new mongoose.Schema({
   },
 
 
-  // ======================================
-  // PAYMENT PLAN
-  // ======================================
+// ======================================
+// PAYMENT PLAN
+// ======================================
 
   paymentPlan: {
     type: String,
@@ -98,9 +105,9 @@ const receiptSchema = new mongoose.Schema({
   },
 
 
-  // ======================================
-  // MINIMUM INSTALLMENT
-  // ======================================
+// ======================================
+// MINIMUM INSTALLMENT
+// ======================================
 
   minimumInstallment: {
     type: Number,
@@ -108,9 +115,9 @@ const receiptSchema = new mongoose.Schema({
   },
 
 
-  // ======================================
-  // PAYMENT TYPE
-  // ======================================
+// ======================================
+// PAYMENT TYPE
+// ======================================
 
   paymentType: {
     type: String,
@@ -124,9 +131,9 @@ const receiptSchema = new mongoose.Schema({
   },
 
 
-  // ======================================
-  // PAYMENT AMOUNT
-  // ======================================
+// ======================================
+// PAYMENT AMOUNT
+// ======================================
 
   amountPaid: {
     type: Number,
@@ -144,9 +151,9 @@ const receiptSchema = new mongoose.Schema({
   },
 
 
-  // ======================================
-  // PAYMENT DETAILS
-  // ======================================
+// ======================================
+// PAYMENT DETAILS
+// ======================================
 
   paymentMethod: {
     type: String,
@@ -188,7 +195,8 @@ const receiptSchema = new mongoose.Schema({
 })
 
 
-module.exports = mongoose.model(
-  'Receipt',
-  receiptSchema
-)
+module.exports =
+  mongoose.model(
+    'Receipt',
+    receiptSchema
+  )

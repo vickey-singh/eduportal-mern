@@ -616,7 +616,7 @@ router.post(
             course.courseName,
 
           batchTime:
-            req.body.batchTime || '',
+            course.batchTime || '',
 
           contact:
             req.body.phone || '',

@@ -2,270 +2,447 @@ const express = require('express')
 
 const router = express.Router()
 
-const Student = require('../models/Student')
+const Student =
+  require('../models/Student')
 
-const Application = require('../models/Application')
+const Application =
+  require('../models/Application')
+
+const createNotification =
+  require('../utils/createNotification')
 
 
 // ======================================
 // APPLY ROUTE
 // ======================================
 
-router.post('/apply', async (req, res) => {
+router.post(
+  '/apply',
+  async (req, res) => {
 
-  try {
+    try {
 
-    console.log(req.body)
+      console.log(req.body)
 
-    const {
-      name,
-      email,
-      phone,
-      course,
-      address,
-      message,
-    } = req.body
 
-    // ======================================
-    // CHECK EXISTING STUDENT
-    // ======================================
-    
-    const existingStudent = await Student.findOne({
-    
-      $or: [
-    
-        { contact: phone },
-    
-        { email: email }
-    
-      ]
-    
-    })
-    
-    if (existingStudent) {
-    
-      return res.status(409).json({
-    
-        success: false,
-    
+      const {
+        name,
+        email,
+        phone,
+        course,
+        address,
+        message,
+      } = req.body
+
+
+      // ======================================
+      // CHECK EXISTING STUDENT
+      // ======================================
+
+      const existingStudent =
+        await Student.findOne({
+
+          $or: [
+
+            {
+              contact: phone,
+            },
+
+            {
+              email: email,
+            },
+
+          ],
+
+        })
+
+
+      if (existingStudent) {
+
+        return res.status(409).json({
+
+          success: false,
+
+          message:
+            'Student already exists. Please use the Existing Student Payment option.',
+
+        })
+
+      }
+
+
+      // ======================================
+      // CREATE APPLICATION
+      // ======================================
+
+      const newApplication =
+        new Application({
+
+          name,
+
+          email,
+
+          phone,
+
+          course,
+
+          address,
+
+          message,
+
+        })
+
+
+      // ======================================
+      // SAVE APPLICATION
+      // ======================================
+
+      const savedApplication =
+        await newApplication.save()
+
+
+      // ======================================
+      // CREATE ADMIN NOTIFICATION
+      // ======================================
+
+      await createNotification({
+
+        type:
+          'Admission',
+
+        title:
+          'New Admission Application',
+
         message:
-          'Student already exists. Please use the Existing Student Payment option.',
-    
+          `${name} has submitted an admission application for ${course}`,
+
+        link:
+          '/admin/applications',
+
+        relatedId:
+          savedApplication._id.toString(),
+
       })
-    
+
+
+      // ======================================
+      // RESPONSE
+      // ======================================
+
+      res.status(201).json({
+
+        success: true,
+
+        message:
+          'Application Submitted Successfully',
+
+      })
+
     }
 
-    // Create Application
-    const newApplication = new Application({
-      name,
-      email,
-      phone,
-      course,
-      address,
-      message,
-    })
+    catch (error) {
 
-    // Save To MongoDB
-    await newApplication.save()
+      console.log(
+        'APPLICATION ERROR ❌'
+      )
 
-    res.status(201).json({
-      success: true,
-      message: 'Application Submitted Successfully',
-    })
+      console.log(error)
 
-  } catch (error) {
 
-    console.log('APPLICATION ERROR ❌')
+      res.status(500).json({
 
-    console.log(error)
+        success: false,
 
-    res.status(500).json({
-      success: false,
-      message: 'Server Error',
-    })
+        message:
+          'Server Error',
+
+      })
+
+    }
 
   }
-
-})
+)
 
 
 // ======================================
 // GET ALL APPLICATIONS
 // ======================================
 
-router.get('/applications', async (req, res) => {
+router.get(
+  '/applications',
+  async (req, res) => {
 
-  try {
+    try {
 
-    const applications = await Application.find()
+      const applications =
+        await Application.find()
 
-    res.status(200).json(applications)
 
-  } catch (error) {
+      res.status(200).json(
+        applications
+      )
 
-    console.log(error)
+    }
 
-    res.status(500).json({
-      success: false,
-      message: 'Server Error',
-    })
+    catch (error) {
+
+      console.log(error)
+
+
+      res.status(500).json({
+
+        success: false,
+
+        message:
+          'Server Error',
+
+      })
+
+    }
 
   }
+)
 
-})
 
 // ======================================
 // DELETE APPLICATION
 // ======================================
 
-router.delete('/applications/:id', async (req, res) => {
+router.delete(
+  '/applications/:id',
+  async (req, res) => {
 
-  try {
+    try {
 
-    await Application.findByIdAndDelete(req.params.id)
+      await Application.findByIdAndDelete(
+        req.params.id
+      )
 
-    res.status(200).json({
-      success: true,
-      message: 'Application Deleted Successfully',
-    })
 
-  } catch (error) {
+      res.status(200).json({
 
-    console.log(error)
+        success: true,
 
-    res.status(500).json({
-      success: false,
-      message: 'Server Error',
-    })
+        message:
+          'Application Deleted Successfully',
+
+      })
+
+    }
+
+    catch (error) {
+
+      console.log(error)
+
+
+      res.status(500).json({
+
+        success: false,
+
+        message:
+          'Server Error',
+
+      })
+
+    }
 
   }
+)
 
-})
 
 // ======================================
 // UPDATE APPLICATION STATUS
 // ======================================
 
-router.put('/applications/:id', async (req, res) => {
+router.put(
+  '/applications/:id',
+  async (req, res) => {
 
-  try {
+    try {
 
-    const updatedApplication =
-      await Application.findByIdAndUpdate(
+      const updatedApplication =
+        await Application.findByIdAndUpdate(
 
-        req.params.id,
+          req.params.id,
 
-        {
-          status: req.body.status,
-        },
+          {
 
-        {
-          new: true,
-        }
+            status:
+              req.body.status,
 
+          },
+
+          {
+
+            new: true,
+
+          }
+
+        )
+
+
+      res.status(200).json(
+        updatedApplication
       )
 
-    res.status(200).json(updatedApplication)
+    }
 
-  } catch (error) {
+    catch (error) {
 
-    console.log(error)
+      console.log(error)
 
-    res.status(500).json({
-      success: false,
-      message: 'Server Error',
-    })
+
+      res.status(500).json({
+
+        success: false,
+
+        message:
+          'Server Error',
+
+      })
+
+    }
 
   }
+)
 
-})
 
 // ======================================
 // DASHBOARD STATS
 // ======================================
 
-router.get('/dashboard-stats', async (req, res) => {
+router.get(
+  '/dashboard-stats',
+  async (req, res) => {
 
-  try {
+    try {
 
-    // Total Applications
-    const totalApplications =
-      await Application.countDocuments()
+      // ==================================
+      // TOTAL APPLICATIONS
+      // ==================================
 
-    // Approved
-    const approvedApplications =
-      await Application.countDocuments({
-        status: 'Approved',
+      const totalApplications =
+        await Application.countDocuments()
+
+
+      // ==================================
+      // APPROVED
+      // ==================================
+
+      const approvedApplications =
+        await Application.countDocuments({
+
+          status:
+            'Approved',
+
+        })
+
+
+      // ==================================
+      // PENDING
+      // ==================================
+
+      const pendingApplications =
+        await Application.countDocuments({
+
+          status:
+            'Pending',
+
+        })
+
+
+      // ==================================
+      // REJECTED
+      // ==================================
+
+      const rejectedApplications =
+        await Application.countDocuments({
+
+          status:
+            'Rejected',
+
+        })
+
+
+      res.status(200).json({
+
+        totalApplications,
+
+        approvedApplications,
+
+        pendingApplications,
+
+        rejectedApplications,
+
       })
 
-    // Pending
-    const pendingApplications =
-      await Application.countDocuments({
-        status: 'Pending',
+    }
+
+    catch (error) {
+
+      console.log(error)
+
+
+      res.status(500).json({
+
+        success: false,
+
+        message:
+          'Server Error',
+
       })
 
-    // Rejected
-    const rejectedApplications =
-      await Application.countDocuments({
-        status: 'Rejected',
-      })
-
-    res.status(200).json({
-
-      totalApplications,
-
-      approvedApplications,
-
-      pendingApplications,
-
-      rejectedApplications,
-
-    })
-
-  } catch (error) {
-
-    console.log(error)
-
-    res.status(500).json({
-      success: false,
-      message: 'Server Error',
-    })
+    }
 
   }
+)
 
-})
 
 // ======================================
 // RECENT APPLICATIONS
 // ======================================
 
-router.get('/recent-applications', async (req, res) => {
+router.get(
+  '/recent-applications',
+  async (req, res) => {
 
-  try {
+    try {
 
-    const recentApplications =
-      await Application.find()
+      const recentApplications =
+        await Application.find()
 
-        .sort({ createdAt: -1 })
+          .sort({
+            createdAt: -1,
+          })
 
-        .limit(5)
+          .limit(5)
 
-    res.status(200).json(
-      recentApplications
-    )
 
-  } catch (error) {
+      res.status(200).json(
+        recentApplications
+      )
 
-    console.log(error)
+    }
 
-    res.status(500).json({
-      success: false,
-      message: 'Server Error',
-    })
+    catch (error) {
+
+      console.log(error)
+
+
+      res.status(500).json({
+
+        success: false,
+
+        message:
+          'Server Error',
+
+      })
+
+    }
 
   }
+)
 
-})
 
-
-module.exports = router
+module.exports =
+  router

@@ -24,7 +24,8 @@ function Apply() {
   // COURSES
   // ======================================
 
-  const [courses, setCourses] = useState([])
+  const [courses, setCourses] =
+    useState([])
 
   const [selectedCourse, setSelectedCourse] =
     useState(null)
@@ -70,6 +71,7 @@ function Apply() {
 
     // Course
     course: '',
+    batchTime: '',
 
     // Photo
     image: null,
@@ -91,12 +93,19 @@ function Apply() {
         )
 
       setCourses(
-        response.data
+        Array.isArray(
+          response.data
+        )
+          ? response.data
+          : []
       )
 
     } catch (error) {
 
-      console.log(error)
+      console.log(
+        'Fetch Courses Error:',
+        error
+      )
 
     }
 
@@ -134,12 +143,38 @@ function Apply() {
             item.courseName === value
         )
 
+
       setSelectedCourse(
         course || null
       )
 
+
+      // ==================================
+      // AUTOMATIC BATCH TIME
+      // ==================================
+
+      setFormData(
+        (previousData) => ({
+
+          ...previousData,
+
+          course: value,
+
+          batchTime:
+            course?.batchTime || '',
+
+        })
+      )
+
+
+      return
+
     }
 
+
+    // ==================================
+    // NORMAL INPUT
+    // ==================================
 
     setFormData(
       (previousData) => ({
@@ -384,6 +419,16 @@ function Apply() {
 
 
             // ==================================
+            // BATCH TIME
+            // ==================================
+
+            paymentData.append(
+              'batchTime',
+              formData.batchTime
+            )
+
+
+            // ==================================
             // REGISTRATION PAYMENT
             // ==================================
 
@@ -475,7 +520,10 @@ function Apply() {
 
           } catch (error) {
 
-            console.log(error)
+            console.log(
+              'Payment Verification Error:',
+              error
+            )
 
             alert(
 
@@ -492,6 +540,11 @@ function Apply() {
           }
 
         },
+
+
+      // ==================================
+      // RAZORPAY MODAL
+      // ==================================
 
       modal: {
 
@@ -515,6 +568,7 @@ function Apply() {
 
     razorpay.on(
       'payment.failed',
+
       function () {
 
         setPaymentLoading(false)
@@ -550,6 +604,23 @@ function Apply() {
 
         alert(
           'Please select a course.'
+        )
+
+        return
+
+      }
+
+
+      // ==================================
+      // BATCH TIME VALIDATION
+      // ==================================
+
+      if (
+        !selectedCourse.batchTime
+      ) {
+
+        alert(
+          'Batch timing is not available for this course. Please contact the institute.'
         )
 
         return
@@ -660,7 +731,10 @@ function Apply() {
 
       } catch (error) {
 
-        console.log(error)
+        console.log(
+          'Admission Payment Error:',
+          error
+        )
 
         setPaymentLoading(false)
 
@@ -686,9 +760,9 @@ function Apply() {
       <div className="container">
 
 
-        {/* ====================================== */}
-        {/* HEADING */}
-        {/* ====================================== */}
+        {/* ======================================
+            HEADING
+        ====================================== */}
 
         <div className="apply-header text-center">
 
@@ -703,9 +777,9 @@ function Apply() {
         </div>
 
 
-        {/* ====================================== */}
-        {/* FORM */}
-        {/* ====================================== */}
+        {/* ======================================
+            FORM
+        ====================================== */}
 
         <div className="apply-form-wrapper">
 
@@ -718,9 +792,9 @@ function Apply() {
             <div className="row">
 
 
-              {/* ================================== */}
-              {/* STUDENT NAME */}
-              {/* ================================== */}
+              {/* ==================================
+                  STUDENT NAME
+              ================================== */}
 
               <div className="col-md-6 mb-4">
 
@@ -745,9 +819,9 @@ function Apply() {
               </div>
 
 
-              {/* ================================== */}
-              {/* DOB */}
-              {/* ================================== */}
+              {/* ==================================
+                  DOB
+              ================================== */}
 
               <div className="col-md-6 mb-4">
 
@@ -771,9 +845,9 @@ function Apply() {
               </div>
 
 
-              {/* ================================== */}
-              {/* AADHAAR */}
-              {/* ================================== */}
+              {/* ==================================
+                  AADHAAR
+              ================================== */}
 
               <div className="col-md-6 mb-4">
 
@@ -800,9 +874,9 @@ function Apply() {
               </div>
 
 
-              {/* ================================== */}
-              {/* PHONE */}
-              {/* ================================== */}
+              {/* ==================================
+                  PHONE
+              ================================== */}
 
               <div className="col-md-6 mb-4">
 
@@ -827,9 +901,9 @@ function Apply() {
               </div>
 
 
-              {/* ================================== */}
-              {/* EMAIL */}
-              {/* ================================== */}
+              {/* ==================================
+                  EMAIL
+              ================================== */}
 
               <div className="col-md-6 mb-4">
 
@@ -854,9 +928,9 @@ function Apply() {
               </div>
 
 
-              {/* ================================== */}
-              {/* PHOTO */}
-              {/* ================================== */}
+              {/* ==================================
+                  PHOTO
+              ================================== */}
 
               <div className="col-md-6 mb-4">
 
@@ -876,9 +950,9 @@ function Apply() {
               </div>
 
 
-              {/* ================================== */}
-              {/* FATHER NAME */}
-              {/* ================================== */}
+              {/* ==================================
+                  FATHER NAME
+              ================================== */}
 
               <div className="col-md-6 mb-4">
 
@@ -903,9 +977,9 @@ function Apply() {
               </div>
 
 
-              {/* ================================== */}
-              {/* MOTHER NAME */}
-              {/* ================================== */}
+              {/* ==================================
+                  MOTHER NAME
+              ================================== */}
 
               <div className="col-md-6 mb-4">
 
@@ -930,9 +1004,9 @@ function Apply() {
               </div>
 
 
-              {/* ================================== */}
-              {/* FATHER OCCUPATION */}
-              {/* ================================== */}
+              {/* ==================================
+                  FATHER OCCUPATION
+              ================================== */}
 
               <div className="col-md-6 mb-4">
 
@@ -957,9 +1031,9 @@ function Apply() {
               </div>
 
 
-              {/* ================================== */}
-              {/* MOTHER OCCUPATION */}
-              {/* ================================== */}
+              {/* ==================================
+                  MOTHER OCCUPATION
+              ================================== */}
 
               <div className="col-md-6 mb-4">
 
@@ -984,9 +1058,9 @@ function Apply() {
               </div>
 
 
-              {/* ================================== */}
-              {/* FATHER MOBILE */}
-              {/* ================================== */}
+              {/* ==================================
+                  FATHER MOBILE
+              ================================== */}
 
               <div className="col-md-6 mb-4">
 
@@ -1011,9 +1085,9 @@ function Apply() {
               </div>
 
 
-              {/* ================================== */}
-              {/* MOTHER MOBILE */}
-              {/* ================================== */}
+              {/* ==================================
+                  MOTHER MOBILE
+              ================================== */}
 
               <div className="col-md-6 mb-4">
 
@@ -1038,9 +1112,9 @@ function Apply() {
               </div>
 
 
-              {/* ================================== */}
-              {/* SCHOOL / COLLEGE */}
-              {/* ================================== */}
+              {/* ==================================
+                  SCHOOL / COLLEGE
+              ================================== */}
 
               <div className="col-12 mb-4">
 
@@ -1065,9 +1139,9 @@ function Apply() {
               </div>
 
 
-              {/* ================================== */}
-              {/* COURSE */}
-              {/* ================================== */}
+              {/* ==================================
+                  COURSE
+              ================================== */}
 
               <div className="col-md-6 mb-4">
 
@@ -1117,9 +1191,40 @@ function Apply() {
               </div>
 
 
-              {/* ================================== */}
-              {/* PERMANENT ADDRESS */}
-              {/* ================================== */}
+              {/* ==================================
+                  BATCH TIME
+              ================================== */}
+
+              <div className="col-md-6 mb-4">
+
+                <label className="form-label">
+                  Batch Time
+                </label>
+
+                <input
+                  type="text"
+                  className="form-control"
+                  name="batchTime"
+                  value={
+                    formData.batchTime
+                  }
+                  placeholder="Select course to see batch time"
+                  readOnly
+                />
+
+                <small className="text-muted">
+
+                  Batch time is automatically assigned
+                  according to the selected course.
+
+                </small>
+
+              </div>
+
+
+              {/* ==================================
+                  PERMANENT ADDRESS
+              ================================== */}
 
               <div className="col-12 mb-4">
 
@@ -1144,9 +1249,9 @@ function Apply() {
               </div>
 
 
-              {/* ================================== */}
-              {/* CURRENT ADDRESS */}
-              {/* ================================== */}
+              {/* ==================================
+                  CURRENT ADDRESS
+              ================================== */}
 
               <div className="col-12 mb-4">
 
@@ -1174,9 +1279,9 @@ function Apply() {
             </div>
 
 
-            {/* ====================================== */}
-            {/* COURSE DETAILS */}
-            {/* ====================================== */}
+            {/* ======================================
+                COURSE DETAILS
+            ====================================== */}
 
             {selectedCourse && (
 
@@ -1203,6 +1308,26 @@ function Apply() {
 
                           {
                             selectedCourse.duration
+                          }
+
+                        </p>
+
+                      </div>
+
+
+                      {/* BATCH TIME */}
+
+                      <div className="col-md-6">
+
+                        <p>
+
+                          <strong>
+                            Batch Time:
+                          </strong>{' '}
+
+                          {
+                            selectedCourse.batchTime ||
+                            'Not Available'
                           }
 
                         </p>
@@ -1271,9 +1396,9 @@ function Apply() {
             )}
 
 
-            {/* ====================================== */}
-            {/* PAYMENT SUMMARY */}
-            {/* ====================================== */}
+            {/* ======================================
+                PAYMENT SUMMARY
+            ====================================== */}
 
             {selectedCourse && (
 
@@ -1295,6 +1420,20 @@ function Apply() {
 
                     ₹{
                       selectedCourse.registrationFee
+                    }
+
+                  </p>
+
+
+                  <p>
+
+                    <strong>
+                      Batch Time:
+                    </strong>{' '}
+
+                    {
+                      selectedCourse.batchTime ||
+                      'Not Available'
                     }
 
                   </p>
@@ -1328,9 +1467,9 @@ function Apply() {
             )}
 
 
-            {/* ====================================== */}
-            {/* SUBMIT */}
-            {/* ====================================== */}
+            {/* ======================================
+                SUBMIT
+            ====================================== */}
 
             <button
               type="submit"

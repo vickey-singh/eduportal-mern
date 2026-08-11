@@ -5,6 +5,9 @@ const router = express.Router()
 const Message =
   require('../models/Message')
 
+const createNotification =
+  require('../utils/createNotification')
+
 
 // ======================================
 // ADD MESSAGE
@@ -58,6 +61,30 @@ router.post(
 
 
       // ======================================
+      // CREATE NOTIFICATION
+      // ======================================
+
+      await createNotification({
+
+        type:
+          'Message',
+
+        title:
+          'New Contact Message',
+
+        message:
+          `${name} sent a new message${subject ? `: ${subject}` : ''}`,
+
+        link:
+          '/admin/messages',
+
+        relatedId:
+          savedMessage._id.toString(),
+
+      })
+
+
+      // ======================================
       // RESPONSE
       // ======================================
 
@@ -73,15 +100,22 @@ router.post(
 
       })
 
-    } catch (error) {
+    }
 
-      console.log(error)
+    catch (error) {
+
+      console.log(
+        'Add Message Error:',
+        error
+      )
+
 
       res.status(500).json({
 
         success: false,
 
-        message: 'Server Error',
+        message:
+          'Server Error',
 
       })
 
@@ -107,19 +141,27 @@ router.get(
       const messages =
         await Message.find()
 
+
       res.status(200).json(
         messages
       )
 
-    } catch (error) {
+    }
 
-      console.log(error)
+    catch (error) {
+
+      console.log(
+        'Get Messages Error:',
+        error
+      )
+
 
       res.status(500).json({
 
         success: false,
 
-        message: 'Server Error',
+        message:
+          'Server Error',
 
       })
 
@@ -146,6 +188,7 @@ router.delete(
         req.params.id
       )
 
+
       res.status(200).json({
 
         success: true,
@@ -155,15 +198,22 @@ router.delete(
 
       })
 
-    } catch (error) {
+    }
 
-      console.log(error)
+    catch (error) {
+
+      console.log(
+        'Delete Message Error:',
+        error
+      )
+
 
       res.status(500).json({
 
         success: false,
 
-        message: 'Server Error',
+        message:
+          'Server Error',
 
       })
 
@@ -173,4 +223,10 @@ router.delete(
 
 )
 
-module.exports = router
+
+// ======================================
+// EXPORT ROUTER
+// ======================================
+
+module.exports =
+  router

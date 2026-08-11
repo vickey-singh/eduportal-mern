@@ -5,6 +5,9 @@ const router = express.Router()
 const Feedback =
   require('../models/Feedback')
 
+const createNotification =
+  require('../utils/createNotification')
+
 
 // ======================================
 // ADD FEEDBACK
@@ -46,7 +49,8 @@ router.post(
 
           rating,
 
-          status: 'pending',
+          status:
+            'pending',
 
         })
 
@@ -57,6 +61,30 @@ router.post(
 
       const savedFeedback =
         await newFeedback.save()
+
+
+      // ======================================
+      // CREATE NOTIFICATION
+      // ======================================
+
+      await createNotification({
+
+        type:
+          'Feedback',
+
+        title:
+          'New Feedback',
+
+        message:
+          `${studentName} submitted a new feedback${course ? ` for ${course}` : ''}`,
+
+        link:
+          '/admin/feedbacks',
+
+        relatedId:
+          savedFeedback._id.toString(),
+
+      })
 
 
       // ======================================
@@ -75,15 +103,22 @@ router.post(
 
       })
 
-    } catch (error) {
+    }
 
-      console.log(error)
+    catch (error) {
+
+      console.log(
+        'Add Feedback Error:',
+        error
+      )
+
 
       res.status(500).json({
 
         success: false,
 
-        message: 'Server Error',
+        message:
+          'Server Error',
 
       })
 
@@ -109,19 +144,27 @@ router.get(
       const feedbacks =
         await Feedback.find()
 
+
       res.status(200).json(
         feedbacks
       )
 
-    } catch (error) {
+    }
 
-      console.log(error)
+    catch (error) {
+
+      console.log(
+        'Get Feedback Error:',
+        error
+      )
+
 
       res.status(500).json({
 
         success: false,
 
-        message: 'Server Error',
+        message:
+          'Server Error',
 
       })
 
@@ -151,15 +194,19 @@ router.put(
 
           {
 
-            status: 'approved',
+            status:
+              'approved',
 
           },
 
           {
+
             new: true,
+
           }
 
         )
+
 
       res.status(200).json({
 
@@ -173,15 +220,22 @@ router.put(
 
       })
 
-    } catch (error) {
+    }
 
-      console.log(error)
+    catch (error) {
+
+      console.log(
+        'Approve Feedback Error:',
+        error
+      )
+
 
       res.status(500).json({
 
         success: false,
 
-        message: 'Server Error',
+        message:
+          'Server Error',
 
       })
 
@@ -211,15 +265,19 @@ router.put(
 
           {
 
-            status: 'rejected',
+            status:
+              'rejected',
 
           },
 
           {
+
             new: true,
+
           }
 
         )
+
 
       res.status(200).json({
 
@@ -233,15 +291,22 @@ router.put(
 
       })
 
-    } catch (error) {
+    }
 
-      console.log(error)
+    catch (error) {
+
+      console.log(
+        'Reject Feedback Error:',
+        error
+      )
+
 
       res.status(500).json({
 
         success: false,
 
-        message: 'Server Error',
+        message:
+          'Server Error',
 
       })
 
@@ -267,23 +332,32 @@ router.get(
       const feedbacks =
         await Feedback.find({
 
-          status: 'approved',
+          status:
+            'approved',
 
         })
+
 
       res.status(200).json(
         feedbacks
       )
 
-    } catch (error) {
+    }
 
-      console.log(error)
+    catch (error) {
+
+      console.log(
+        'Get Approved Feedback Error:',
+        error
+      )
+
 
       res.status(500).json({
 
         success: false,
 
-        message: 'Server Error',
+        message:
+          'Server Error',
 
       })
 
@@ -310,6 +384,7 @@ router.delete(
         req.params.id
       )
 
+
       res.status(200).json({
 
         success: true,
@@ -319,15 +394,22 @@ router.delete(
 
       })
 
-    } catch (error) {
+    }
 
-      console.log(error)
+    catch (error) {
+
+      console.log(
+        'Delete Feedback Error:',
+        error
+      )
+
 
       res.status(500).json({
 
         success: false,
 
-        message: 'Server Error',
+        message:
+          'Server Error',
 
       })
 
@@ -337,4 +419,10 @@ router.delete(
 
 )
 
-module.exports = router
+
+// ======================================
+// EXPORT ROUTER
+// ======================================
+
+module.exports =
+  router

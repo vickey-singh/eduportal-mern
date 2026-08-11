@@ -1,6 +1,14 @@
-import { Outlet, NavLink } from 'react-router-dom'
+import {
+  Outlet,
+  NavLink,
+  useNavigate,
+} from 'react-router-dom'
 
-import { useState } from 'react'
+import {
+  useEffect,
+  useRef,
+  useState,
+} from 'react'
 
 import {
   FaUserGraduate,
@@ -19,16 +27,67 @@ import {
   FaBars,
   FaBook,
   FaMoneyBillWave,
+  FaCalendarCheck,
+  FaBell,
+  FaGraduationCap,
+  FaCheckCircle,
 } from 'react-icons/fa'
+
+import {
+  getNotifications,
+  markNotificationAsRead,
+  markAllNotificationsAsRead,
+} from '../services/notificationService'
 
 import '../assets/styles/admin-layout.css'
 
+
 function AdminLayout() {
 
-  const [sidebarOpen,
-    setSidebarOpen]
+  const navigate = useNavigate()
 
-    = useState(false)
+
+  // ======================================
+  // SIDEBAR
+  // ======================================
+
+  const [
+    sidebarOpen,
+    setSidebarOpen,
+  ] = useState(false)
+
+
+  // ======================================
+  // NOTIFICATIONS
+  // ======================================
+
+  const [
+    notifications,
+    setNotifications,
+  ] = useState([])
+
+
+  // ======================================
+  // NOTIFICATION DROPDOWN
+  // ======================================
+
+  const [
+    notificationOpen,
+    setNotificationOpen,
+  ] = useState(false)
+
+
+  // ======================================
+  // NOTIFICATION REF
+  // ======================================
+
+  const notificationRef =
+    useRef(null)
+
+
+  // ======================================
+  // LOGOUT
+  // ======================================
 
   const handleLogout = () => {
 
@@ -41,17 +100,292 @@ function AdminLayout() {
 
   }
 
+
+  // ======================================
+  // CLOSE SIDEBAR
+  // ======================================
+
   const closeSidebar = () => {
 
     setSidebarOpen(false)
 
   }
 
+
+  // ======================================
+  // FETCH NOTIFICATIONS
+  // ======================================
+
+  const fetchNotifications =
+    async () => {
+
+      try {
+
+        const data =
+          await getNotifications()
+
+
+        setNotifications(
+          data.notifications || []
+        )
+
+      }
+
+      catch (error) {
+
+        console.log(
+          'Fetch Notifications Error:',
+          error
+        )
+
+      }
+
+    }
+
+
+  // ======================================
+  // INITIAL FETCH
+  // ======================================
+
+  useEffect(() => {
+
+    fetchNotifications()
+
+  }, [])
+
+
+  // ======================================
+  // AUTO REFRESH
+  // ======================================
+
+  useEffect(() => {
+
+    const interval =
+      setInterval(() => {
+
+        fetchNotifications()
+
+      }, 10000)
+
+
+    return () => {
+
+      clearInterval(interval)
+
+    }
+
+  }, [])
+
+
+  // ======================================
+  // CLOSE NOTIFICATION DROPDOWN
+  // ======================================
+
+  useEffect(() => {
+
+    const handleOutsideClick =
+      (event) => {
+
+        if (
+
+          notificationRef.current &&
+
+          !notificationRef.current.contains(
+            event.target
+          )
+
+        ) {
+
+          setNotificationOpen(false)
+
+        }
+
+      }
+
+
+    document.addEventListener(
+      'mousedown',
+      handleOutsideClick
+    )
+
+
+    return () => {
+
+      document.removeEventListener(
+        'mousedown',
+        handleOutsideClick
+      )
+
+    }
+
+  }, [])
+
+
+  // ======================================
+  // UNREAD COUNT
+  // ======================================
+
+  const unreadCount =
+    notifications.filter(
+      (notification) =>
+        !notification.isRead
+    ).length
+
+
+  // ======================================
+  // NOTIFICATION ICON
+  // ======================================
+
+  const getNotificationIcon =
+    (type) => {
+
+      switch (type) {
+
+        case 'Admission':
+
+          return (
+            <FaGraduationCap />
+          )
+
+        case 'Payment':
+
+          return (
+            <FaMoneyBillWave />
+          )
+
+        case 'Feedback':
+
+          return (
+            <FaStar />
+          )
+
+        case 'Message':
+
+          return (
+            <FaEnvelope />
+          )
+
+        default:
+
+          return (
+            <FaBell />
+          )
+
+      }
+
+    }
+
+
+  // ======================================
+  // NOTIFICATION CLICK
+  // ======================================
+
+  const handleNotificationClick =
+    async (notification) => {
+
+      try {
+
+        if (!notification.isRead) {
+
+          await markNotificationAsRead(
+            notification._id
+          )
+
+
+          setNotifications(
+            (previous) =>
+
+              previous.map(
+                (item) =>
+
+                  item._id ===
+                  notification._id
+
+                    ? {
+                        ...item,
+                        isRead: true,
+                      }
+
+                    : item
+              )
+          )
+
+        }
+
+
+        setNotificationOpen(false)
+
+
+        if (notification.link) {
+
+          navigate(
+            notification.link
+          )
+
+        }
+
+      }
+
+      catch (error) {
+
+        console.log(
+          'Notification Click Error:',
+          error
+        )
+
+      }
+
+    }
+
+
+  // ======================================
+  // MARK ALL AS READ
+  // ======================================
+
+  const handleMarkAllAsRead =
+    async () => {
+
+      try {
+
+        await markAllNotificationsAsRead()
+
+
+        setNotifications(
+          (previous) =>
+
+            previous.map(
+              (notification) => ({
+
+                ...notification,
+
+                isRead: true,
+
+              })
+            )
+        )
+
+      }
+
+      catch (error) {
+
+        console.log(
+          'Mark All Notifications Error:',
+          error
+        )
+
+      }
+
+    }
+
+
   return (
 
     <section className="admin-dashboard">
 
-      {/* Sidebar */}
+
+      {/* ==================================
+          SIDEBAR
+      ================================== */}
 
       <aside
 
@@ -67,353 +401,442 @@ function AdminLayout() {
 
       >
 
-      
-      <div className="sidebar-header">
+        <div className="sidebar-header">
 
-  <button
 
-    className="close-sidebar-btn"
+          {/* CLOSE SIDEBAR */}
 
-    onClick={() =>
-      setSidebarOpen(false)
-    }
+          <button
 
-  >
+            className="close-sidebar-btn"
 
-    ✕
+            onClick={() =>
+              setSidebarOpen(false)
+            }
 
-  </button>
+          >
 
-</div>
+            ✕
 
+          </button>
 
-        <h2 className="admin-logo">
 
-          <span className="edu">
-            Prerna
-          </span>{' '}
-
-          <span className="portal">
-            Institute Of Excellence
-          </span>
+          {/* LOGO */}
 
-        </h2>
+          <h2 className="admin-logo">
 
-        <ul className="admin-menu">
+            <span className="edu">
+              Prerna
+            </span>{' '}
 
-          <li>
+            <span className="portal">
+              Institute Of Excellence
+            </span>
 
-            <NavLink
-              to="/admin/dashboard"
-              onClick={closeSidebar}
-              className={({ isActive }) =>
-                isActive
-                  ? 'admin-link active-admin-link'
-                  : 'admin-link'
-              }
-            >
+          </h2>
 
-              <FaTachometerAlt />
 
-              Dashboard
+          {/* ==================================
+              MENU
+          ================================== */}
 
-            </NavLink>
+          <ul className="admin-menu">
 
-          </li>
 
-          <li>
+            {/* DASHBOARD */}
 
-            <NavLink
-              to="/admin/students"
-              onClick={closeSidebar}
-              className={({ isActive }) =>
-                isActive
-                  ? 'admin-link active-admin-link'
-                  : 'admin-link'
-              }
-            >
+            <li>
 
-              <FaUserGraduate />
+              <NavLink
+                to="/admin/dashboard"
+                onClick={closeSidebar}
+                className={({ isActive }) =>
+                  isActive
+                    ? 'admin-link active-admin-link'
+                    : 'admin-link'
+                }
+              >
 
-              Students
+                <FaTachometerAlt />
 
-            </NavLink>
+                Dashboard
 
-          </li>
+              </NavLink>
 
-          <li>
+            </li>
 
-            <NavLink
-              to="/admin/courses"
-              onClick={closeSidebar}
-              className={({ isActive }) =>
-                isActive
-                  ? 'admin-link active-admin-link'
-                  : 'admin-link'
-              }
-            >
-          
-              <FaBook />
-          
-              Courses
-          
-            </NavLink>
-          
-          </li>
 
-          <li>
+            {/* STUDENTS */}
 
-            <NavLink
-              to="/admin/payments"
-              onClick={closeSidebar}
-              className={({ isActive }) =>
-                isActive
-                  ? 'admin-link active-admin-link'
-                  : 'admin-link'
-              }
-            >
-          
-              <FaMoneyBillWave />
-          
-              Payments
-          
-            </NavLink>
-          
-          </li>
+            <li>
 
-          <li>
+              <NavLink
+                to="/admin/students"
+                onClick={closeSidebar}
+                className={({ isActive }) =>
+                  isActive
+                    ? 'admin-link active-admin-link'
+                    : 'admin-link'
+                }
+              >
 
-            <NavLink
-              to="/admin/faculty"
-              onClick={closeSidebar}
-              className={({ isActive }) =>
-                isActive
-                  ? 'admin-link active-admin-link'
-                  : 'admin-link'
-              }
-            >
+                <FaUserGraduate />
 
-              <FaChalkboardTeacher />
+                Students
 
-              Faculty
+              </NavLink>
 
-            </NavLink>
+            </li>
 
-          </li>
 
-          <li>
+            {/* COURSES */}
 
-            <NavLink
-              to="/admin/achievements"
-              onClick={closeSidebar}
-              className={({ isActive }) =>
-                isActive
-                  ? 'admin-link active-admin-link'
-                  : 'admin-link'
-              }
-            >
+            <li>
 
-              <FaTrophy />
+              <NavLink
+                to="/admin/courses"
+                onClick={closeSidebar}
+                className={({ isActive }) =>
+                  isActive
+                    ? 'admin-link active-admin-link'
+                    : 'admin-link'
+                }
+              >
 
-              Achievements
+                <FaBook />
 
-            </NavLink>
+                Courses
 
-          </li>
+              </NavLink>
 
-          <li>
+            </li>
 
-            <NavLink
-              to="/admin/applications"
-              onClick={closeSidebar}
-              className={({ isActive }) =>
-                isActive
-                  ? 'admin-link active-admin-link'
-                  : 'admin-link'
-              }
-            >
 
-              <FaClipboardList />
+            {/* ATTENDANCE */}
 
-              Applications
+            <li>
 
-            </NavLink>
+              <NavLink
+                to="/admin/attendance"
+                onClick={closeSidebar}
+                className={({ isActive }) =>
+                  isActive
+                    ? 'admin-link active-admin-link'
+                    : 'admin-link'
+                }
+              >
 
-          </li>
+                <FaCalendarCheck />
 
-          <li>
+                Attendance
 
-            <NavLink
-              to="/admin/testimonials"
-              onClick={closeSidebar}
-              className={({ isActive }) =>
-                isActive
-                  ? 'admin-link active-admin-link'
-                  : 'admin-link'
-              }
-            >
+              </NavLink>
 
-              <FaCommentDots />
+            </li>
 
-              Testimonials
 
-            </NavLink>
+            {/* PAYMENTS */}
 
-          </li>
+            <li>
 
-          <li>
+              <NavLink
+                to="/admin/payments"
+                onClick={closeSidebar}
+                className={({ isActive }) =>
+                  isActive
+                    ? 'admin-link active-admin-link'
+                    : 'admin-link'
+                }
+              >
 
-            <NavLink
-              to="/admin/feedbacks"
-              onClick={closeSidebar}
-              className={({ isActive }) =>
-                isActive
-                  ? 'admin-link active-admin-link'
-                  : 'admin-link'
-              }
-            >
+                <FaMoneyBillWave />
 
-              <FaStar />
+                Payments
 
-              Feedbacks
+              </NavLink>
 
-            </NavLink>
+            </li>
 
-          </li>
 
-          <li>
+            {/* FACULTY */}
 
-            <NavLink
-              to="/admin/notices"
-              onClick={closeSidebar}
-              className={({ isActive }) =>
-                isActive
-                  ? 'admin-link active-admin-link'
-                  : 'admin-link'
-              }
-            >
+            <li>
 
-              <FaBullhorn />
+              <NavLink
+                to="/admin/faculty"
+                onClick={closeSidebar}
+                className={({ isActive }) =>
+                  isActive
+                    ? 'admin-link active-admin-link'
+                    : 'admin-link'
+                }
+              >
 
-              Notices
+                <FaChalkboardTeacher />
 
-            </NavLink>
+                Faculty
 
-          </li>
+              </NavLink>
 
-          <li>
+            </li>
 
-            <NavLink
-              to="/admin/downloads"
-              onClick={closeSidebar}
-              className={({ isActive }) =>
-                isActive
-                  ? 'admin-link active-admin-link'
-                  : 'admin-link'
-              }
-            >
 
-              <FaDownload />
+            {/* ACHIEVEMENTS */}
 
-              Downloads
+            <li>
 
-            </NavLink>
+              <NavLink
+                to="/admin/achievements"
+                onClick={closeSidebar}
+                className={({ isActive }) =>
+                  isActive
+                    ? 'admin-link active-admin-link'
+                    : 'admin-link'
+                }
+              >
 
-          </li>
+                <FaTrophy />
 
-          <li>
+                Achievements
 
-            <NavLink
-              to="/admin/gallery"
-              onClick={closeSidebar}
-              className={({ isActive }) =>
-                isActive
-                  ? 'admin-link active-admin-link'
-                  : 'admin-link'
-              }
-            >
+              </NavLink>
 
-              <FaImages />
+            </li>
 
-              Gallery
 
-            </NavLink>
+            {/* APPLICATIONS */}
 
-          </li>
+            <li>
 
-          <li>
+              <NavLink
+                to="/admin/applications"
+                onClick={closeSidebar}
+                className={({ isActive }) =>
+                  isActive
+                    ? 'admin-link active-admin-link'
+                    : 'admin-link'
+                }
+              >
 
-            <NavLink
-              to="/admin/messages"
-              onClick={closeSidebar}
-              className={({ isActive }) =>
-                isActive
-                  ? 'admin-link active-admin-link'
-                  : 'admin-link'
-              }
-            >
+                <FaClipboardList />
 
-              <FaEnvelope />
+                Applications
 
-              Messages
+              </NavLink>
 
-            </NavLink>
+            </li>
 
-          </li>
 
-          <li>
+            {/* TESTIMONIALS */}
 
-            <NavLink
-              to="/admin/settings"
-              onClick={closeSidebar}
-              className={({ isActive }) =>
-                isActive
-                  ? 'admin-link active-admin-link'
-                  : 'admin-link'
-              }
-            >
+            <li>
 
-              <FaCog />
+              <NavLink
+                to="/admin/testimonials"
+                onClick={closeSidebar}
+                className={({ isActive }) =>
+                  isActive
+                    ? 'admin-link active-admin-link'
+                    : 'admin-link'
+                }
+              >
 
-              Settings
+                <FaCommentDots />
 
-            </NavLink>
+                Testimonials
 
-          </li>
+              </NavLink>
 
-          <li>
+            </li>
 
-            <button
 
-              onClick={() => {
+            {/* FEEDBACKS */}
 
-                closeSidebar()
+            <li>
 
-                handleLogout()
+              <NavLink
+                to="/admin/feedbacks"
+                onClick={closeSidebar}
+                className={({ isActive }) =>
+                  isActive
+                    ? 'admin-link active-admin-link'
+                    : 'admin-link'
+                }
+              >
 
-              }}
+                <FaStar />
 
-              className="admin-link logout-btn"
+                Feedbacks
 
-            >
+              </NavLink>
 
-              <FaSignOutAlt />
+            </li>
 
-              Logout
 
-            </button>
+            {/* NOTICES */}
 
-          </li>
+            <li>
 
-        </ul>
+              <NavLink
+                to="/admin/notices"
+                onClick={closeSidebar}
+                className={({ isActive }) =>
+                  isActive
+                    ? 'admin-link active-admin-link'
+                    : 'admin-link'
+                }
+              >
+
+                <FaBullhorn />
+
+                Notices
+
+              </NavLink>
+
+            </li>
+
+
+            {/* DOWNLOADS */}
+
+            <li>
+
+              <NavLink
+                to="/admin/downloads"
+                onClick={closeSidebar}
+                className={({ isActive }) =>
+                  isActive
+                    ? 'admin-link active-admin-link'
+                    : 'admin-link'
+                }
+              >
+
+                <FaDownload />
+
+                Downloads
+
+              </NavLink>
+
+            </li>
+
+
+            {/* GALLERY */}
+
+            <li>
+
+              <NavLink
+                to="/admin/gallery"
+                onClick={closeSidebar}
+                className={({ isActive }) =>
+                  isActive
+                    ? 'admin-link active-admin-link'
+                    : 'admin-link'
+                }
+              >
+
+                <FaImages />
+
+                Gallery
+
+              </NavLink>
+
+            </li>
+
+
+            {/* MESSAGES */}
+
+            <li>
+
+              <NavLink
+                to="/admin/messages"
+                onClick={closeSidebar}
+                className={({ isActive }) =>
+                  isActive
+                    ? 'admin-link active-admin-link'
+                    : 'admin-link'
+                }
+              >
+
+                <FaEnvelope />
+
+                Messages
+
+              </NavLink>
+
+            </li>
+
+
+            {/* SETTINGS */}
+
+            <li>
+
+              <NavLink
+                to="/admin/settings"
+                onClick={closeSidebar}
+                className={({ isActive }) =>
+                  isActive
+                    ? 'admin-link active-admin-link'
+                    : 'admin-link'
+                }
+              >
+
+                <FaCog />
+
+                Settings
+
+              </NavLink>
+
+            </li>
+
+
+            {/* LOGOUT */}
+
+            <li>
+
+              <button
+
+                onClick={() => {
+
+                  closeSidebar()
+
+                  handleLogout()
+
+                }}
+
+                className="admin-link logout-btn"
+
+              >
+
+                <FaSignOutAlt />
+
+                Logout
+
+              </button>
+
+            </li>
+
+
+          </ul>
+
+        </div>
 
       </aside>
 
-      {/* Main Content */}
+
+      {/* ==================================
+          MAIN CONTENT
+      ================================== */}
 
       <main className="admin-main">
 
+
+        {/* ==================================
+            TOPBAR
+        ================================== */}
+
         <div className="admin-topbar">
+
+
+          {/* MOBILE MENU */}
 
           <button
 
@@ -422,9 +845,7 @@ function AdminLayout() {
             onClick={() =>
 
               setSidebarOpen(
-
                 !sidebarOpen
-
               )
 
             }
@@ -435,19 +856,284 @@ function AdminLayout() {
 
           </button>
 
+
+          {/* TITLE */}
+
           <h3>
 
-            Prerna Institute Of Excellence Admin Panel
+            Prerna Institute Of Excellence
+            Admin Panel
 
           </h3>
 
-          <div className="admin-profile">
 
-            Admin
+          {/* ==================================
+              TOP RIGHT
+          ================================== */}
+
+          <div className="admin-topbar-right">
+
+
+            {/* ==================================
+                NOTIFICATION
+            ================================== */}
+
+            <div
+
+              className="notification-wrapper"
+
+              ref={notificationRef}
+
+            >
+
+
+              {/* BELL */}
+
+              <button
+
+                type="button"
+
+                className="notification-btn"
+
+                onClick={() =>
+
+                  setNotificationOpen(
+                    !notificationOpen
+                  )
+
+                }
+
+              >
+
+                <FaBell />
+
+
+                {/* UNREAD BADGE */}
+
+                {unreadCount > 0 && (
+
+                  <span className="notification-badge">
+
+                    {
+                      unreadCount > 99
+                        ? '99+'
+                        : unreadCount
+                    }
+
+                  </span>
+
+                )}
+
+              </button>
+
+
+              {/* ==================================
+                  DROPDOWN
+              ================================== */}
+
+              {notificationOpen && (
+
+                <div className="notification-dropdown">
+
+
+                  {/* HEADER */}
+
+                  <div className="notification-header">
+
+                    <h5>
+                      Notifications
+                    </h5>
+
+
+                    {unreadCount > 0 && (
+
+                      <button
+
+                        type="button"
+
+                        className="mark-all-btn"
+
+                        onClick={
+                          handleMarkAllAsRead
+                        }
+
+                      >
+
+                        <FaCheckCircle />
+
+                        Mark all as read
+
+                      </button>
+
+                    )}
+
+                  </div>
+
+
+                  {/* ==================================
+                      EMPTY
+                  ================================== */}
+
+                  {notifications.length === 0 ? (
+
+                    <div className="notification-empty">
+
+                      <FaBell />
+
+                      <p>
+                        No notifications
+                      </p>
+
+                    </div>
+
+                  ) : (
+
+                    <div className="notification-list">
+
+                      {notifications.map(
+
+                        (notification) => (
+
+                          <button
+
+                            type="button"
+
+                            key={
+                              notification._id
+                            }
+
+                            className={
+
+                              notification.isRead
+
+                                ? 'notification-item read'
+
+                                : 'notification-item unread'
+
+                            }
+
+                            onClick={() =>
+                              handleNotificationClick(
+                                notification
+                              )
+                            }
+
+                          >
+
+                            {/* ICON */}
+
+                            <div className="notification-icon">
+
+                              {
+                                getNotificationIcon(
+                                  notification.type
+                                )
+                              }
+
+                            </div>
+
+
+                            {/* CONTENT */}
+
+                            <div className="notification-content">
+
+                              <div className="notification-title-row">
+
+                                <strong>
+                                  {
+                                    notification.title
+                                  }
+                                </strong>
+
+
+                                {!notification.isRead && (
+
+                                  <span className="notification-dot">
+                                  </span>
+
+                                )}
+
+                              </div>
+
+
+                              <p>
+                                {
+                                  notification.message
+                                }
+                              </p>
+
+
+                              <small>
+
+                                {
+                                  notification.createdAt
+
+                                    ? new Date(
+                                        notification.createdAt
+                                      ).toLocaleString(
+                                        'en-IN',
+                                        {
+                                          day:
+                                            '2-digit',
+
+                                          month:
+                                            'short',
+
+                                          year:
+                                            'numeric',
+
+                                          hour:
+                                            '2-digit',
+
+                                          minute:
+                                            '2-digit',
+                                        }
+                                      )
+
+                                    : ''
+
+                                }
+
+                              </small>
+
+                            </div>
+
+                          </button>
+
+                        )
+
+                      )}
+
+                    </div>
+
+                  )}
+
+                </div>
+
+              )}
+
+            </div>
+
+
+            {/* ==================================
+                ADMIN
+            ================================== */}
+
+            <div className="admin-profile">
+
+              Admin
+
+            </div>
+
 
           </div>
 
         </div>
+
+
+        {/* ==================================
+            PAGE CONTENT
+        ================================== */}
 
         <Outlet />
 

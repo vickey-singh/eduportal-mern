@@ -711,6 +711,21 @@ function Receipt() {
 
             </tr>
 
+            <tr>
+
+              <td>
+                Batch Time
+              </td>
+            
+              <td>
+                {
+                  receipt.batchTime ||
+                  '-'
+                }
+              </td>
+            
+            </tr>
+            
 
             <tr>
 

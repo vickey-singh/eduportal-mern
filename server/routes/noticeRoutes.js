@@ -2,11 +2,9 @@ const express = require('express')
 
 const router = express.Router()
 
-const upload =
-  require('../middleware/upload')
+const upload = require('../middleware/upload')
 
-const Notice =
-  require('../models/Notice')
+const Notice = require('../models/Notice')
 
 
 // ======================================
@@ -14,9 +12,7 @@ const Notice =
 // ======================================
 
 router.post(
-
   '/notices',
-
   upload.single('image'),
 
   async (req, res) => {
@@ -24,39 +20,83 @@ router.post(
     try {
 
       const {
+        title,
+        description,
+        isImportant,
+        isPinned,
+      } = req.body
+
+
+      // ======================================
+      // DEBUG FILE
+      // ======================================
+
+      console.log('====================================')
+      console.log('NOTICE FILE:')
+      console.log(req.file)
+      console.log('====================================')
+
+
+      // ======================================
+      // IMAGE URL
+      // ======================================
+
+      const image = req.file
+        ? (
+            req.file.path ||
+            req.file.secure_url ||
+            req.file.url ||
+            ''
+          )
+        : ''
+
+
+      console.log(
+        'NOTICE IMAGE URL:',
+        image
+      )
+
+
+      // ======================================
+      // CREATE NOTICE
+      // ======================================
+
+      const newNotice = new Notice({
 
         title,
 
         description,
 
-        isImportant,
+        image,
 
-        isPinned,
+        isImportant:
+          isImportant === 'true' ||
+          isImportant === true,
 
-      } = req.body
+        isPinned:
+          isPinned === 'true' ||
+          isPinned === true,
 
-      const image =
-        req.file
-          ? `/uploads/${req.file.filename}`
-          : ''
+      })
 
-      const newNotice =
-        new Notice({
 
-          title,
-
-          description,
-
-          image,
-
-          isImportant,
-
-          isPinned,
-
-        })
+      // ======================================
+      // SAVE
+      // ======================================
 
       const savedNotice =
         await newNotice.save()
+
+
+      console.log(
+        'NOTICE SAVED:',
+        savedNotice
+      )
+
+
+      // ======================================
+      // RESPONSE
+      // ======================================
 
       res.status(201).json({
 
@@ -70,22 +110,31 @@ router.post(
 
       })
 
-    } catch (error) {
+    }
 
-      console.log(error)
+    catch (error) {
+
+      console.log(
+        'ADD NOTICE ERROR:',
+        error
+      )
+
 
       res.status(500).json({
 
         success: false,
 
-        message: 'Server Error',
+        message:
+          'Server Error',
+
+        error:
+          error.message,
 
       })
 
     }
 
   }
-
 )
 
 
@@ -94,7 +143,6 @@ router.post(
 // ======================================
 
 router.get(
-
   '/notices',
 
   async (req, res) => {
@@ -103,7 +151,6 @@ router.get(
 
       const notices =
         await Notice.find()
-
           .sort({
 
             isPinned: -1,
@@ -112,70 +159,99 @@ router.get(
 
           })
 
+
       res.status(200).json(
         notices
       )
 
-    } catch (error) {
+    }
 
-      console.log(error)
+    catch (error) {
+
+      console.log(
+        'GET NOTICES ERROR:',
+        error
+      )
+
 
       res.status(500).json({
 
         success: false,
 
-        message: 'Server Error',
+        message:
+          'Server Error',
+
+        error:
+          error.message,
 
       })
 
     }
 
   }
-
 )
 
 
 // ======================================
-// DELETE NOTICE
+// GET SINGLE NOTICE
 // ======================================
 
-router.delete(
-
+router.get(
   '/notices/:id',
 
   async (req, res) => {
 
     try {
 
-      await Notice.findByIdAndDelete(
-        req.params.id
+      const notice =
+        await Notice.findById(
+          req.params.id
+        )
+
+
+      if (!notice) {
+
+        return res.status(404).json({
+
+          success: false,
+
+          message:
+            'Notice Not Found',
+
+        })
+
+      }
+
+
+      res.status(200).json(
+        notice
       )
 
-      res.status(200).json({
+    }
 
-        success: true,
+    catch (error) {
 
-        message:
-          'Notice Deleted Successfully',
+      console.log(
+        'GET SINGLE NOTICE ERROR:',
+        error
+      )
 
-      })
-
-    } catch (error) {
-
-      console.log(error)
 
       res.status(500).json({
 
         success: false,
 
-        message: 'Server Error',
+        message:
+          'Server Error',
+
+        error:
+          error.message,
 
       })
 
     }
 
   }
-
 )
 
 
@@ -184,7 +260,6 @@ router.delete(
 // ======================================
 
 router.put(
-
   '/notices/:id',
 
   upload.single('image'),
@@ -194,26 +269,73 @@ router.put(
     try {
 
       const {
-
         title,
-
         description,
-
         isImportant,
-
         isPinned,
-
       } = req.body
+
+
+      // ======================================
+      // FIND EXISTING NOTICE
+      // ======================================
 
       const existingNotice =
         await Notice.findById(
           req.params.id
         )
 
-      const image =
-        req.file
-          ? `/uploads/${req.file.filename}`
-          : existingNotice.image
+
+      if (!existingNotice) {
+
+        return res.status(404).json({
+
+          success: false,
+
+          message:
+            'Notice Not Found',
+
+        })
+
+      }
+
+
+      // ======================================
+      // DEBUG FILE
+      // ======================================
+
+      console.log('====================================')
+      console.log('UPDATE NOTICE FILE:')
+      console.log(req.file)
+      console.log('====================================')
+
+
+      // ======================================
+      // IMAGE
+      // ======================================
+
+      const image = req.file
+
+        ? (
+            req.file.path ||
+            req.file.secure_url ||
+            req.file.url ||
+            existingNotice.image ||
+            ''
+          )
+
+        : existingNotice.image
+
+
+      console.log(
+        'UPDATE NOTICE IMAGE URL:',
+        image
+      )
+
+
+      // ======================================
+      // UPDATE
+      // ======================================
 
       const updatedNotice =
         await Notice.findByIdAndUpdate(
@@ -228,17 +350,28 @@ router.put(
 
             image,
 
-            isImportant,
+            isImportant:
+              isImportant === 'true' ||
+              isImportant === true,
 
-            isPinned,
+            isPinned:
+              isPinned === 'true' ||
+              isPinned === true,
 
           },
 
           {
             new: true,
+
+            runValidators: true,
           }
 
         )
+
+
+      // ======================================
+      // RESPONSE
+      // ======================================
 
       res.status(200).json({
 
@@ -252,22 +385,100 @@ router.put(
 
       })
 
-    } catch (error) {
+    }
 
-      console.log(error)
+    catch (error) {
+
+      console.log(
+        'UPDATE NOTICE ERROR:',
+        error
+      )
+
 
       res.status(500).json({
 
         success: false,
 
-        message: 'Server Error',
+        message:
+          'Server Error',
+
+        error:
+          error.message,
 
       })
 
     }
 
   }
-
 )
+
+
+// ======================================
+// DELETE NOTICE
+// ======================================
+
+router.delete(
+  '/notices/:id',
+
+  async (req, res) => {
+
+    try {
+
+      const deletedNotice =
+        await Notice.findByIdAndDelete(
+          req.params.id
+        )
+
+
+      if (!deletedNotice) {
+
+        return res.status(404).json({
+
+          success: false,
+
+          message:
+            'Notice Not Found',
+
+        })
+
+      }
+
+
+      res.status(200).json({
+
+        success: true,
+
+        message:
+          'Notice Deleted Successfully',
+
+      })
+
+    }
+
+    catch (error) {
+
+      console.log(
+        'DELETE NOTICE ERROR:',
+        error
+      )
+
+
+      res.status(500).json({
+
+        success: false,
+
+        message:
+          'Server Error',
+
+        error:
+          error.message,
+
+      })
+
+    }
+
+  }
+)
+
 
 module.exports = router

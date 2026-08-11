@@ -33,54 +33,59 @@ function Course() {
   // FORM DATA
   // ======================================
 
-  const [formData, setFormData] =
-    useState({
+  const [formData, setFormData] = useState({
 
-      courseName: '',
+    courseName: '',
 
-      courseCode: '',
+    courseCode: '',
 
-      description: '',
+    description: '',
 
-      duration: '',
+    duration: '',
 
+    // ==================================
+    // BATCH TIME
+    // ==================================
 
-      // ==================================
-      // FEES
-      // ==================================
-
-      totalFee: '',
-
-      registrationFee: '',
+    batchTime: '',
 
 
-      // ==================================
-      // PAYMENT PLANS
-      // ==================================
+    // ==================================
+    // FEES
+    // ==================================
 
-      monthlyInstallment: '',
+    totalFee: '',
 
-      threeMonthInstallment: '',
-
-      sixMonthInstallment: '',
-
-      fullPaymentFee: '',
+    registrationFee: '',
 
 
-      // ==================================
-      // INSTALLMENT
-      // ==================================
+    // ==================================
+    // PAYMENT PLANS
+    // ==================================
 
-      installmentAllowed: true,
+    monthlyInstallment: '',
+
+    threeMonthInstallment: '',
+
+    sixMonthInstallment: '',
+
+    fullPaymentFee: '',
 
 
-      // ==================================
-      // STATUS
-      // ==================================
+    // ==================================
+    // INSTALLMENT
+    // ==================================
 
-      status: 'Active',
+    installmentAllowed: true,
 
-    })
+
+    // ==================================
+    // STATUS
+    // ==================================
+
+    status: 'Active',
+
+  })
 
 
   // ======================================
@@ -113,7 +118,10 @@ function Course() {
 
     catch (error) {
 
-      console.log(error)
+      console.log(
+        'Fetch Courses Error:',
+        error
+      )
 
     }
 
@@ -135,6 +143,8 @@ function Course() {
       description: '',
 
       duration: '',
+
+      batchTime: '',
 
 
       totalFee: '',
@@ -236,7 +246,11 @@ function Course() {
 
       catch (error) {
 
-        console.log(error)
+        console.log(
+          'Course Submit Error:',
+          error
+        )
+
 
         alert(
 
@@ -266,8 +280,11 @@ function Course() {
         )
 
 
-      if (!confirmDelete)
+      if (!confirmDelete) {
+
         return
+
+      }
 
 
       try {
@@ -289,7 +306,11 @@ function Course() {
 
       catch (error) {
 
-        console.log(error)
+        console.log(
+          'Delete Course Error:',
+          error
+        )
+
 
         alert(
 
@@ -309,9 +330,9 @@ function Course() {
     <div className="applications-section">
 
 
-      {/* ================================== */}
-      {/* HEADER */}
-      {/* ================================== */}
+      {/* ==================================
+          HEADER
+      ================================== */}
 
       <div className="applications-header">
 
@@ -326,9 +347,9 @@ function Course() {
       </div>
 
 
-      {/* ================================== */}
-      {/* COURSE FORM */}
-      {/* ================================== */}
+      {/* ==================================
+          COURSE FORM
+      ================================== */}
 
       <CourseForm
 
@@ -351,15 +372,19 @@ function Course() {
       />
 
 
-      {/* ================================== */}
-      {/* CANCEL EDIT */}
-      {/* ================================== */}
+      {/* ==================================
+          CANCEL EDIT
+      ================================== */}
 
       {editId && (
 
         <button
           type="button"
-          className="table-btn reject-btn mt-2"
+          className="
+            table-btn
+            reject-btn
+            mt-2
+          "
           onClick={
             resetForm
           }
@@ -372,9 +397,9 @@ function Course() {
       )}
 
 
-      {/* ================================== */}
-      {/* COURSE TABLE */}
-      {/* ================================== */}
+      {/* ==================================
+          COURSE TABLE
+      ================================== */}
 
       <CourseTable
 

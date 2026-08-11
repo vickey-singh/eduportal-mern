@@ -11,6 +11,9 @@ const Student =
 const Payment =
   require('../models/Payment')
 
+const createNotification =
+  require('../utils/createNotification')
+
 
 // ======================================
 // HELPER: CALCULATE FEE STATUS
@@ -621,6 +624,29 @@ router.post(
 
       const savedStudent =
         await newStudent.save()
+
+      // ======================================
+      // CREATE ADMISSION NOTIFICATION
+      // ======================================
+      
+      await createNotification({
+      
+        type:
+          'Admission',
+      
+        title:
+          'New Admission',
+      
+        message:
+          `${savedStudent.name} has taken admission in ${savedStudent.course}`,
+      
+        link:
+          '/admin/students',
+      
+        relatedId:
+          savedStudent._id.toString(),
+      
+      })
 
 
       // ======================================
@@ -1751,6 +1777,29 @@ router.put(
       // ======================================
 
       await payment.save()
+
+      // ======================================
+      // CREATE PAYMENT NOTIFICATION
+      // ======================================
+      
+      await createNotification({
+      
+        type:
+          'Payment',
+      
+        title:
+          'Payment Received',
+      
+        message:
+          `${student.name} paid ₹${paymentAmount} for ${student.course}`,
+      
+        link:
+          '/admin/payments',
+      
+        relatedId:
+          payment._id.toString(),
+      
+      })
 
 
       // ======================================

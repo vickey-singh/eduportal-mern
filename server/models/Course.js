@@ -1,6 +1,8 @@
 const mongoose = require('mongoose')
 
+
 const courseSchema = new mongoose.Schema(
+
   {
 
     // ======================================
@@ -28,6 +30,12 @@ const courseSchema = new mongoose.Schema(
     duration: {
       type: String,
       required: true,
+    },
+
+    batchTime: {
+      type: String,
+      default: '',
+      trim: true,
     },
 
 
@@ -101,7 +109,9 @@ const courseSchema = new mongoose.Schema(
   {
     timestamps: true,
   }
+
 )
+
 
 module.exports =
   mongoose.model(

@@ -4,6 +4,8 @@ const router = express.Router()
 
 const Course = require('../models/Course')
 
+const Student = require('../models/Student')
+
 
 // ======================================
 // ADD COURSE
@@ -11,6 +13,7 @@ const Course = require('../models/Course')
 
 router.post(
   '/courses',
+
   async (req, res) => {
 
     try {
@@ -21,6 +24,8 @@ router.post(
         courseCode,
         description,
         duration,
+
+        batchTime,
 
         totalFee,
         registrationFee,
@@ -74,6 +79,9 @@ router.post(
           description,
 
           duration,
+
+          batchTime:
+            batchTime || '',
 
 
           // ==================================
@@ -165,11 +173,11 @@ router.post(
 
     catch (error) {
 
-      console.log(error)
+      console.log(
+        'ADD COURSE ERROR:',
+        error
+      )
 
-      // ======================================
-      // DUPLICATE COURSE CODE
-      // ======================================
 
       if (
         error.code === 11000
@@ -194,6 +202,9 @@ router.post(
         message:
           'Server Error',
 
+        error:
+          error.message,
+
       })
 
     }
@@ -208,6 +219,7 @@ router.post(
 
 router.get(
   '/courses',
+
   async (req, res) => {
 
     try {
@@ -227,7 +239,11 @@ router.get(
 
     catch (error) {
 
-      console.log(error)
+      console.log(
+        'GET COURSES ERROR:',
+        error
+      )
+
 
       res.status(500).json({
 
@@ -250,6 +266,7 @@ router.get(
 
 router.get(
   '/courses/:id',
+
   async (req, res) => {
 
     try {
@@ -282,7 +299,11 @@ router.get(
 
     catch (error) {
 
-      console.log(error)
+      console.log(
+        'GET COURSE ERROR:',
+        error
+      )
+
 
       res.status(500).json({
 
@@ -305,6 +326,7 @@ router.get(
 
 router.put(
   '/courses/:id',
+
   async (req, res) => {
 
     try {
@@ -315,6 +337,8 @@ router.put(
         courseCode,
         description,
         duration,
+
+        batchTime,
 
         totalFee,
         registrationFee,
@@ -386,6 +410,20 @@ router.put(
 
 
       // ======================================
+      // OLD COURSE INFORMATION
+      // ======================================
+
+      const oldCourseName =
+        existingCourse.courseName
+
+      const oldBatchTime =
+        existingCourse.batchTime || ''
+
+      const newBatchTime =
+        batchTime || ''
+
+
+      // ======================================
       // UPDATE COURSE
       // ======================================
 
@@ -403,6 +441,9 @@ router.put(
             description,
 
             duration,
+
+            batchTime:
+              newBatchTime,
 
 
             // ==================================
@@ -479,6 +520,91 @@ router.put(
 
 
       // ======================================
+      // UPDATE STUDENTS
+      // ======================================
+      //
+      // If batch time changed:
+      // Update all students belonging
+      // to this course.
+      //
+      // ======================================
+
+      if (
+        oldBatchTime !==
+        newBatchTime
+      ) {
+
+        await Student.updateMany(
+
+          {
+            course:
+              oldCourseName,
+          },
+
+          {
+            $set: {
+
+              batchTime:
+                newBatchTime,
+
+            },
+
+          }
+
+        )
+
+        console.log(
+
+          `Batch time updated for all students of course: ${oldCourseName}`
+
+        )
+
+      }
+
+
+      // ======================================
+      // IF COURSE NAME ALSO CHANGED
+      // ======================================
+      //
+      // Existing students should follow
+      // the new course name.
+      //
+      // ======================================
+
+      if (
+        oldCourseName !==
+        courseName
+      ) {
+
+        await Student.updateMany(
+
+          {
+            course:
+              oldCourseName,
+          },
+
+          {
+            $set: {
+
+              course:
+                courseName,
+
+            },
+
+          }
+
+        )
+
+        console.log(
+
+          `Course name updated for all students: ${oldCourseName} → ${courseName}`
+
+        )
+
+      }
+
+
+      // ======================================
       // RESPONSE
       // ======================================
 
@@ -498,7 +624,11 @@ router.put(
 
     catch (error) {
 
-      console.log(error)
+      console.log(
+        'UPDATE COURSE ERROR:',
+        error
+      )
+
 
       if (
         error.code === 11000
@@ -523,6 +653,9 @@ router.put(
         message:
           'Server Error',
 
+        error:
+          error.message,
+
       })
 
     }
@@ -537,6 +670,7 @@ router.put(
 
 router.delete(
   '/courses/:id',
+
   async (req, res) => {
 
     try {
@@ -574,7 +708,11 @@ router.delete(
 
     catch (error) {
 
-      console.log(error)
+      console.log(
+        'DELETE COURSE ERROR:',
+        error
+      )
+
 
       res.status(500).json({
 

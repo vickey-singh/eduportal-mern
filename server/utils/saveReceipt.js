@@ -120,6 +120,9 @@ const saveReceipt = async ({
       course:
         student.course,
 
+      batchTime:
+        student.batchTime || '',
+
 
       // ==================================
       // FEE DETAILS

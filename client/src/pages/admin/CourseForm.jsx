@@ -113,6 +113,32 @@ function CourseForm({
 
 
         {/* ====================================== */}
+        {/* BATCH TIME */}
+        {/* ====================================== */}
+
+        <div className="col-md-6 mb-3">
+
+          <label className="form-label">
+            Batch Time
+          </label>
+
+          <input
+            type="text"
+            className="form-control"
+            placeholder="7:00 AM - 9:00 AM"
+            name="batchTime"
+            value={
+              formData.batchTime
+            }
+            onChange={
+              handleChange
+            }
+          />
+
+        </div>
+
+
+        {/* ====================================== */}
         {/* DESCRIPTION */}
         {/* ====================================== */}
 
