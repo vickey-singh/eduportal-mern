@@ -54,10 +54,12 @@ const paymentSchema = new mongoose.Schema(
 
     paymentCategory: {
       type: String,
+
       enum: [
         'Registration',
         'CourseFee',
       ],
+
       required: true,
     },
 
@@ -68,6 +70,7 @@ const paymentSchema = new mongoose.Schema(
 
     paymentPlan: {
       type: String,
+
       enum: [
         'monthly',
         'three_month',
@@ -75,6 +78,7 @@ const paymentSchema = new mongoose.Schema(
         'full',
         '',
       ],
+
       default: '',
     },
 
@@ -85,10 +89,12 @@ const paymentSchema = new mongoose.Schema(
 
     paymentType: {
       type: String,
+
       enum: [
         'Full',
         'Installment',
       ],
+
       required: true,
     },
 
@@ -109,17 +115,46 @@ const paymentSchema = new mongoose.Schema(
 
     paymentMethod: {
       type: String,
+
       default: 'Online',
     },
 
-    paymentStatus: {
+
+    // ======================================
+    // PAYMENT MODE
+    // ONLINE / OFFLINE
+    // ======================================
+
+    paymentMode: {
+
       type: String,
+
+      enum: [
+        'Online',
+        'Offline',
+      ],
+
+      default: 'Online',
+
+    },
+
+
+    // ======================================
+    // PAYMENT STATUS
+    // ======================================
+
+    paymentStatus: {
+
+      type: String,
+
       enum: [
         'Pending',
         'Success',
         'Failed',
       ],
+
       default: 'Pending',
+
     },
 
 
@@ -152,6 +187,7 @@ const paymentSchema = new mongoose.Schema(
   {
     timestamps: true,
   }
+
 )
 
 module.exports =

@@ -7,16 +7,17 @@ import { API_URL } from '../config/api'
 // GET ALL NOTIFICATIONS
 // ======================================
 
-export const getNotifications = async () => {
+export const getNotifications =
+  async () => {
 
-  const response =
-    await axios.get(
-      `${API_URL}/notifications`
-    )
+    const response =
+      await axios.get(
+        `${API_URL}/notifications`
+      )
 
-  return response.data
+    return response.data
 
-}
+  }
 
 
 // ======================================
@@ -75,7 +76,7 @@ export const markAllNotificationsAsRead =
 
 
 // ======================================
-// DELETE NOTIFICATION
+// DELETE ONE NOTIFICATION
 // ======================================
 
 export const deleteNotification =
@@ -85,6 +86,33 @@ export const deleteNotification =
       await axios.delete(
 
         `${API_URL}/notifications/${id}`
+
+      )
+
+    return response.data
+
+  }
+
+
+// ======================================
+// DELETE ALL NOTIFICATIONS
+// ======================================
+//
+// IMPORTANT:
+// Ye sirf notification records delete
+// karega.
+//
+// Student / Payment / Feedback / Message
+// delete nahi honge.
+// ======================================
+
+export const deleteAllNotifications =
+  async () => {
+
+    const response =
+      await axios.delete(
+
+        `${API_URL}/notifications`
 
       )
 

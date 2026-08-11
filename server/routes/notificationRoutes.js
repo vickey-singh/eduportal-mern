@@ -5,6 +5,7 @@ const router = express.Router()
 const Notification =
   require('../models/Notification')
 
+
 // ======================================
 // GET ALL NOTIFICATIONS
 // ======================================
@@ -20,6 +21,7 @@ router.get(
           .sort({
             createdAt: -1,
           })
+
 
       res.status(200).json({
 
@@ -37,6 +39,7 @@ router.get(
         'Get Notifications Error:',
         error
       )
+
 
       res.status(500).json({
 
@@ -87,6 +90,7 @@ router.get(
         'Unread Count Error:',
         error
       )
+
 
       res.status(500).json({
 
@@ -167,6 +171,7 @@ router.put(
         error
       )
 
+
       res.status(500).json({
 
         success: false,
@@ -225,6 +230,7 @@ router.put(
         error
       )
 
+
       res.status(500).json({
 
         success: false,
@@ -241,7 +247,7 @@ router.put(
 
 
 // ======================================
-// DELETE NOTIFICATION
+// DELETE ONE NOTIFICATION
 // ======================================
 
 router.delete(
@@ -291,6 +297,66 @@ router.delete(
         'Delete Notification Error:',
         error
       )
+
+
+      res.status(500).json({
+
+        success: false,
+
+        message:
+          'Server Error',
+
+      })
+
+    }
+
+  }
+)
+
+
+// ======================================
+// DELETE ALL NOTIFICATIONS
+// ======================================
+//
+// IMPORTANT:
+// Ye sirf Notification collection
+// delete karega.
+//
+// Student / Payment / Feedback / Message
+// delete nahi honge.
+// ======================================
+
+router.delete(
+  '/notifications',
+  async (req, res) => {
+
+    try {
+
+      const result =
+        await Notification.deleteMany({})
+
+
+      res.status(200).json({
+
+        success: true,
+
+        message:
+          'All Notifications Cleared Successfully',
+
+        deletedCount:
+          result.deletedCount,
+
+      })
+
+    }
+
+    catch (error) {
+
+      console.log(
+        'Clear All Notifications Error:',
+        error
+      )
+
 
       res.status(500).json({
 

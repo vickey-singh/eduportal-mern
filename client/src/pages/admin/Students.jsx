@@ -111,6 +111,14 @@ function Students() {
 
 
   // ======================================
+  // SUBMIT LOADING
+  // ======================================
+
+  const [isSubmitting, setIsSubmitting] =
+    useState(false)
+
+
+  // ======================================
   // SEARCH
   // ======================================
 
@@ -424,7 +432,25 @@ function Students() {
       e.preventDefault()
 
 
+      // ==================================
+      // PREVENT DOUBLE SUBMIT
+      // ==================================
+
+      if (isSubmitting) {
+
+        return
+
+      }
+
+
       try {
+
+        // ==================================
+        // START LOADING
+        // ==================================
+
+        setIsSubmitting(true)
+
 
         const totalFees =
           Number(
@@ -533,10 +559,15 @@ function Students() {
           formData.aadharNumber
         )
 
-        data.append(
-          'admissionNumber',
-          formData.admissionNumber
-        )
+        // ==================================
+        // IMPORTANT
+        // ==================================
+        // Admission Number is NOT sent
+        // from frontend.
+        //
+        // Backend will automatically
+        // generate ADM0001, ADM0002, etc.
+        // ==================================
 
         data.append(
           'course',
@@ -826,6 +857,14 @@ function Students() {
           'Student operation failed.'
 
         )
+
+      } finally {
+
+        // ==================================
+        // STOP LOADING
+        // ==================================
+
+        setIsSubmitting(false)
 
       }
 
@@ -1713,26 +1752,10 @@ function Students() {
           <div className="row">
 
 
-            <div className="col-md-6 mb-3">
-
-              <label className="form-label">
-                Admission Number
-              </label>
-
-              <input
-                type="text"
-                className="form-control"
-                name="admissionNumber"
-                value={
-                  formData.admissionNumber
-                }
-                onChange={
-                  handleChange
-                }
-                required
-              />
-
-            </div>
+            {/* ==================================
+                ADMISSION NUMBER REMOVED
+                Backend generates it automatically
+            ================================== */}
 
 
             <div className="col-md-6 mb-3">
@@ -2266,13 +2289,30 @@ function Students() {
             <button
               type="submit"
               className="table-btn approve-btn"
+              disabled={isSubmitting}
+              style={{
+                opacity:
+                  isSubmitting ? 0.7 : 1,
+                cursor:
+                  isSubmitting
+                    ? 'not-allowed'
+                    : 'pointer',
+              }}
             >
 
-              {
+              {isSubmitting ? (
+
+                editId
+                  ? 'Please Wait...'
+                  : 'Please Wait...'
+
+              ) : (
+
                 editId
                   ? 'Update Student'
                   : 'Add Student'
-              }
+
+              )}
 
             </button>
 
@@ -2285,6 +2325,7 @@ function Students() {
                 onClick={
                   resetForm
                 }
+                disabled={isSubmitting}
               >
 
                 Cancel

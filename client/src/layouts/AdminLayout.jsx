@@ -31,12 +31,16 @@ import {
   FaBell,
   FaGraduationCap,
   FaCheckCircle,
+  FaTrash,
+  FaTimes,
 } from 'react-icons/fa'
 
 import {
   getNotifications,
   markNotificationAsRead,
   markAllNotificationsAsRead,
+  deleteNotification,
+  deleteAllNotifications,
 } from '../services/notificationService'
 
 import '../assets/styles/admin-layout.css'
@@ -279,6 +283,13 @@ function AdminLayout() {
   // ======================================
   // NOTIFICATION CLICK
   // ======================================
+  // Click notification:
+  //
+  // 1. Mark as read
+  // 2. Close dropdown
+  // 3. Open related page
+  //
+  // ======================================
 
   const handleNotificationClick =
     async (notification) => {
@@ -343,7 +354,14 @@ function AdminLayout() {
   // ======================================
 
   const handleMarkAllAsRead =
-    async () => {
+    async (event) => {
+
+      // Important:
+      // Parent notification item ka
+      // click trigger na ho.
+
+      event?.stopPropagation()
+
 
       try {
 
@@ -370,6 +388,115 @@ function AdminLayout() {
 
         console.log(
           'Mark All Notifications Error:',
+          error
+        )
+
+      }
+
+    }
+
+
+  // ======================================
+  // DELETE ONE NOTIFICATION
+  // ======================================
+  //
+  // Individual × button
+  //
+  // ======================================
+
+  const handleDeleteNotification =
+    async (
+      event,
+      notificationId
+    ) => {
+
+      event.stopPropagation()
+
+
+      try {
+
+        await deleteNotification(
+          notificationId
+        )
+
+
+        setNotifications(
+          (previous) =>
+
+            previous.filter(
+              (notification) =>
+                notification._id !==
+                notificationId
+            )
+        )
+
+      }
+
+      catch (error) {
+
+        console.log(
+          'Delete Notification Error:',
+          error
+        )
+
+      }
+
+    }
+
+
+  // ======================================
+  // CLEAR ALL NOTIFICATIONS
+  // ======================================
+  //
+  // IMPORTANT:
+  // Sirf notifications delete honge.
+  //
+  // Student / Payment / Feedback /
+  // Message delete nahi honge.
+  //
+  // ======================================
+
+  const handleClearAll =
+    async (event) => {
+
+      event.stopPropagation()
+
+
+      if (
+        notifications.length === 0
+      ) {
+
+        return
+
+      }
+
+
+      const confirmed =
+        window.confirm(
+          'Are you sure you want to clear all notifications?'
+        )
+
+
+      if (!confirmed) {
+
+        return
+
+      }
+
+
+      try {
+
+        await deleteAllNotifications()
+
+
+        setNotifications([])
+
+      }
+
+      catch (error) {
+
+        console.log(
+          'Clear All Notifications Error:',
           error
         )
 
@@ -936,7 +1063,9 @@ function AdminLayout() {
                 <div className="notification-dropdown">
 
 
-                  {/* HEADER */}
+                  {/* ==================================
+                      HEADER
+                  ================================== */}
 
                   <div className="notification-header">
 
@@ -945,27 +1074,59 @@ function AdminLayout() {
                     </h5>
 
 
-                    {unreadCount > 0 && (
+                    <div className="notification-header-actions">
 
-                      <button
 
-                        type="button"
+                      {/* MARK ALL AS READ */}
 
-                        className="mark-all-btn"
+                      {unreadCount > 0 && (
 
-                        onClick={
-                          handleMarkAllAsRead
-                        }
+                        <button
 
-                      >
+                          type="button"
 
-                        <FaCheckCircle />
+                          className="mark-all-btn"
 
-                        Mark all as read
+                          onClick={
+                            handleMarkAllAsRead
+                          }
 
-                      </button>
+                        >
 
-                    )}
+                          <FaCheckCircle />
+
+                          Mark all as read
+
+                        </button>
+
+                      )}
+
+
+                      {/* CLEAR ALL */}
+
+                      {notifications.length > 0 && (
+
+                        <button
+
+                          type="button"
+
+                          className="clear-all-btn"
+
+                          onClick={
+                            handleClearAll
+                          }
+
+                        >
+
+                          <FaTrash />
+
+                          Clear all
+
+                        </button>
+
+                      )}
+
+                    </div>
 
                   </div>
 
@@ -994,9 +1155,7 @@ function AdminLayout() {
 
                         (notification) => (
 
-                          <button
-
-                            type="button"
+                          <div
 
                             key={
                               notification._id
@@ -1012,93 +1171,143 @@ function AdminLayout() {
 
                             }
 
-                            onClick={() =>
-                              handleNotificationClick(
-                                notification
-                              )
-                            }
-
                           >
 
-                            {/* ICON */}
 
-                            <div className="notification-icon">
+                            {/* ==================================
+                                CLICKABLE CONTENT
+                            ================================== */}
 
-                              {
-                                getNotificationIcon(
-                                  notification.type
+                            <button
+
+                              type="button"
+
+                              className="notification-item-content"
+
+                              onClick={() =>
+                                handleNotificationClick(
+                                  notification
                                 )
                               }
 
-                            </div>
+                            >
 
 
-                            {/* CONTENT */}
+                              {/* ICON */}
 
-                            <div className="notification-content">
+                              <div className="notification-icon">
 
-                              <div className="notification-title-row">
-
-                                <strong>
-                                  {
-                                    notification.title
-                                  }
-                                </strong>
-
-
-                                {!notification.isRead && (
-
-                                  <span className="notification-dot">
-                                  </span>
-
-                                )}
+                                {
+                                  getNotificationIcon(
+                                    notification.type
+                                  )
+                                }
 
                               </div>
 
 
-                              <p>
-                                {
-                                  notification.message
-                                }
-                              </p>
+                              {/* CONTENT */}
+
+                              <div className="notification-content">
+
+                                <div className="notification-title-row">
+
+                                  <strong>
+                                    {
+                                      notification.title
+                                    }
+                                  </strong>
 
 
-                              <small>
+                                  {!notification.isRead && (
 
-                                {
-                                  notification.createdAt
+                                    <span className="notification-dot">
+                                    </span>
 
-                                    ? new Date(
-                                        notification.createdAt
-                                      ).toLocaleString(
-                                        'en-IN',
-                                        {
-                                          day:
-                                            '2-digit',
+                                  )}
 
-                                          month:
-                                            'short',
+                                </div>
 
-                                          year:
-                                            'numeric',
 
-                                          hour:
-                                            '2-digit',
+                                <p>
+                                  {
+                                    notification.message
+                                  }
+                                </p>
 
-                                          minute:
-                                            '2-digit',
-                                        }
-                                      )
 
-                                    : ''
+                                <small>
 
-                                }
+                                  {
+                                    notification.createdAt
 
-                              </small>
+                                      ? new Date(
+                                          notification.createdAt
+                                        ).toLocaleString(
+                                          'en-IN',
+                                          {
+                                            day:
+                                              '2-digit',
 
-                            </div>
+                                            month:
+                                              'short',
 
-                          </button>
+                                            year:
+                                              'numeric',
+
+                                            hour:
+                                              '2-digit',
+
+                                            minute:
+                                              '2-digit',
+                                          }
+                                        )
+
+                                      : ''
+
+                                  }
+
+                                </small>
+
+                              </div>
+
+                            </button>
+
+
+                            {/* ==================================
+                                INDIVIDUAL CLEAR
+                            ================================== */}
+
+                            <button
+
+                              type="button"
+
+                              className="notification-delete-btn"
+
+                              title="Clear notification"
+
+                              aria-label="Clear notification"
+
+                              onClick={(event) =>
+
+                                handleDeleteNotification(
+
+                                  event,
+
+                                  notification._id
+
+                                )
+
+                              }
+
+                            >
+
+                              <FaTimes />
+
+                            </button>
+
+
+                          </div>
 
                         )
 
@@ -1144,5 +1353,6 @@ function AdminLayout() {
   )
 
 }
+
 
 export default AdminLayout

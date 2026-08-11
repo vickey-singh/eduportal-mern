@@ -40,9 +40,7 @@ const upload =
 // ======================================
 
 router.get(
-
   '/payments',
-
   async (req, res) => {
 
     try {
@@ -62,7 +60,10 @@ router.get(
 
     catch (error) {
 
-      console.log(error)
+      console.log(
+        'Get Payments Error:',
+        error
+      )
 
       res.status(500).json({
 
@@ -76,32 +77,41 @@ router.get(
     }
 
   }
-
 )
 
 
 // ======================================
 // ADD PAYMENT
 // ======================================
-// NOTE:
-// This route is kept for existing admin/payment
-// functionality.
-// Offline admin payment should normally use
-// /students/add-payment/:id from studentRoutes.
-
+// General payment route.
+//
+// If this route is used manually,
+// paymentMode will be respected.
+//
+// Default:
+// paymentMode = Offline
 // ======================================
 
 router.post(
-
   '/payments',
-
   async (req, res) => {
 
     try {
 
+      const paymentData = {
+
+        ...req.body,
+
+        paymentMode:
+          req.body.paymentMode ||
+          'Offline',
+
+      }
+
+
       const payment =
         new Payment(
-          req.body
+          paymentData
         )
 
 
@@ -123,7 +133,10 @@ router.post(
 
     catch (error) {
 
-      console.log(error)
+      console.log(
+        'Add Payment Error:',
+        error
+      )
 
       res.status(500).json({
 
@@ -137,7 +150,6 @@ router.post(
     }
 
   }
-
 )
 
 
@@ -146,9 +158,7 @@ router.post(
 // ======================================
 
 router.post(
-
   '/payments/create-order',
-
   async (req, res) => {
 
     try {
@@ -242,7 +252,6 @@ router.post(
     }
 
   }
-
 )
 
 
@@ -251,11 +260,8 @@ router.post(
 // ======================================
 
 router.post(
-
   '/payments/verify',
-
   upload.single('image'),
-
   async (req, res) => {
 
     try {
@@ -315,11 +321,8 @@ router.post(
         crypto
 
           .createHmac(
-
             'sha256',
-
             process.env.RAZORPAY_KEY_SECRET
-
           )
 
           .update(
@@ -330,10 +333,8 @@ router.post(
 
 
       if (
-
         expectedSignature !==
         razorpay_signature
-
       ) {
 
         return res.status(400).json({
@@ -511,7 +512,6 @@ router.post(
           success: false,
 
           message:
-
             `Registration payment must be ₹${registrationFee}.`,
 
         })
@@ -521,7 +521,7 @@ router.post(
 
       // ==================================
       // ADMISSION NUMBER
-      // ==================================
+      // ======================================
 
       const lastStudent =
         await Student.findOne()
@@ -567,9 +567,9 @@ router.post(
       }
 
 
-      // ==================================
+      // ======================================
       // DATE
-      // ==================================
+      // ======================================
 
       const today =
         new Date()
@@ -581,16 +581,17 @@ router.post(
           .split('T')[0]
 
 
-      // ==================================
+      // ======================================
       // IMAGE
-      // ==================================
+      // ======================================
 
-      const image = req.file
-        ? req.file.path
-        : ''
+      const image =
+        req.file
+          ? req.file.path
+          : ''
 
 
-      // ==================================
+      // ======================================
       // CREATE STUDENT
       // ======================================
 
@@ -598,7 +599,7 @@ router.post(
         new Student({
 
           // ==================================
-          // BASIC INFORMATION
+          // BASIC
           // ==================================
 
           name:
@@ -712,7 +713,7 @@ router.post(
 
 
           // ==================================
-          // STUDENT-SPECIFIC PLAN AMOUNTS
+          // PAYMENT PLANS
           // ==================================
 
           monthlyInstallment:
@@ -882,6 +883,9 @@ router.post(
           amountPaid,
 
           paymentMethod:
+            'Razorpay',
+
+          paymentMode:
             'Online',
 
           paymentStatus:
@@ -996,7 +1000,6 @@ router.post(
     }
 
   }
-
 )
 
 
@@ -1005,9 +1008,7 @@ router.post(
 // ======================================
 
 router.post(
-
   '/students/verify',
-
   async (req, res) => {
 
     try {
@@ -1108,7 +1109,6 @@ router.post(
     }
 
   }
-
 )
 
 
@@ -1117,9 +1117,7 @@ router.post(
 // ======================================
 
 router.post(
-
   '/students/check',
-
   async (req, res) => {
 
     try {
@@ -1210,7 +1208,6 @@ router.post(
     }
 
   }
-
 )
 
 
@@ -1219,9 +1216,7 @@ router.post(
 // ======================================
 
 router.post(
-
   '/students/pay',
-
   async (req, res) => {
 
     try {
@@ -1235,8 +1230,6 @@ router.post(
         paymentPlan,
 
         paymentMethod,
-
-        paymentMode,
 
         transactionId,
 
@@ -1331,8 +1324,7 @@ router.post(
           $or: [
 
             {
-              transactionId:
-                transactionId,
+              transactionId,
             },
 
             {
@@ -1362,7 +1354,7 @@ router.post(
 
 
       // ==================================
-      // RAZORPAY SIGNATURE VERIFICATION
+      // RAZORPAY SIGNATURE
       // ==================================
 
       const signatureBody =
@@ -1377,11 +1369,8 @@ router.post(
         crypto
 
           .createHmac(
-
             'sha256',
-
             process.env.RAZORPAY_KEY_SECRET
-
           )
 
           .update(
@@ -1392,10 +1381,8 @@ router.post(
 
 
       if (
-
         expectedSignature !==
         signature
-
       ) {
 
         return res.status(400).json({
@@ -1459,7 +1446,6 @@ router.post(
           success: false,
 
           message:
-
             `Payment cannot be greater than remaining fee of ₹${remaining}.`,
 
         })
@@ -1560,10 +1546,11 @@ router.post(
 
 
       // ==================================
-      // GET STUDENT-SPECIFIC PLAN AMOUNT
+      // PLAN AMOUNT
       // ==================================
 
-      let planAmount = 0
+      let planAmount =
+        0
 
 
       switch (
@@ -1656,7 +1643,6 @@ router.post(
             success: false,
 
             message:
-
               `Full payment amount must be ₹${fullPaymentAmount}.`,
 
           })
@@ -1691,7 +1677,6 @@ router.post(
             success: false,
 
             message:
-
               'Selected payment plan amount is not configured.',
 
           })
@@ -1709,7 +1694,6 @@ router.post(
             success: false,
 
             message:
-
               `Minimum payment for this plan is ₹${minimumAmount}.`,
 
           })
@@ -1746,22 +1730,15 @@ router.post(
 
 
       // ==================================
-      // PAYMENT METHOD
+      // ONLINE PAYMENT
       // ==================================
 
       const finalPaymentMethod =
-
         paymentMethod ||
         'Razorpay'
 
 
-      // ==================================
-      // PAYMENT MODE
-      // ==================================
-
       const finalPaymentMode =
-
-        paymentMode ||
         'Online'
 
 
@@ -1779,7 +1756,7 @@ router.post(
 
 
       // ==================================
-      // UPDATE REMAINING FEES
+      // UPDATE REMAINING
       // ==================================
 
       student.remainingFees =
@@ -1829,11 +1806,11 @@ router.post(
 
 
       // ==================================
-      // LAST PAYMENT MODE
+      // PAYMENT MODE
       // ==================================
 
       student.paymentMode =
-        finalPaymentMode
+        'Online'
 
 
       // ==================================
@@ -1906,7 +1883,7 @@ router.post(
 
 
       // ==================================
-      // SAVE PAYMENT RECORD
+      // SAVE PAYMENT
       // ==================================
 
       const payment =
@@ -1946,6 +1923,9 @@ router.post(
 
           paymentMethod:
             finalPaymentMethod,
+
+          paymentMode:
+            'Online',
 
           paymentStatus:
             'Success',
@@ -2008,8 +1988,8 @@ router.post(
     }
 
   }
-
 )
+
 
 // ======================================
 // GET PAYMENT REVENUE
@@ -2030,12 +2010,14 @@ router.get(
 
           {
             $match: {
-              paymentStatus: 'Success',
+              paymentStatus:
+                'Success',
             },
           },
 
           {
             $group: {
+
               _id: null,
 
               totalRevenue: {
@@ -2047,6 +2029,7 @@ router.get(
               },
 
             },
+
           },
 
         ])
@@ -2054,6 +2037,7 @@ router.get(
 
       const totalRevenue =
         totalRevenueResult[0]?.totalRevenue || 0
+
 
       const totalPayments =
         totalRevenueResult[0]?.totalPayments || 0
@@ -2064,12 +2048,24 @@ router.get(
       // INDIA TIMEZONE
       // ==================================
 
+      const todayIST =
+        new Date()
+          .toLocaleDateString(
+            'en-CA',
+            {
+              timeZone:
+                'Asia/Kolkata',
+            }
+          )
+
+
       const todayRevenueResult =
         await Payment.aggregate([
 
           {
             $match: {
-              paymentStatus: 'Success',
+              paymentStatus:
+                'Success',
             },
           },
 
@@ -2080,31 +2076,28 @@ router.get(
 
                 $dateToString: {
 
-                  format: '%Y-%m-%d',
+                  format:
+                    '%Y-%m-%d',
 
-                  date: '$createdAt',
+                  date:
+                    '$createdAt',
 
-                  timezone: 'Asia/Kolkata',
+                  timezone:
+                    'Asia/Kolkata',
 
                 },
 
               },
 
             },
+
           },
 
           {
             $match: {
 
               paymentDateIST:
-                new Date()
-                  .toLocaleDateString(
-                    'en-CA',
-                    {
-                      timeZone:
-                        'Asia/Kolkata',
-                    }
-                  ),
+                todayIST,
 
             },
 
@@ -2133,6 +2126,7 @@ router.get(
       const todayRevenue =
         todayRevenueResult[0]?.revenue || 0
 
+
       const todayPayments =
         todayRevenueResult[0]?.payments || 0
 
@@ -2142,15 +2136,10 @@ router.get(
       // ==================================
 
       const currentMonth =
-        new Date()
-          .toLocaleDateString(
-            'en-CA',
-            {
-              timeZone:
-                'Asia/Kolkata',
-            }
-          )
-          .substring(0, 7)
+        todayIST.substring(
+          0,
+          7
+        )
 
 
       const monthRevenueResult =
@@ -2158,7 +2147,8 @@ router.get(
 
           {
             $match: {
-              paymentStatus: 'Success',
+              paymentStatus:
+                'Success',
             },
           },
 
@@ -2169,9 +2159,11 @@ router.get(
 
                 $dateToString: {
 
-                  format: '%Y-%m',
+                  format:
+                    '%Y-%m',
 
-                  date: '$createdAt',
+                  date:
+                    '$createdAt',
 
                   timezone:
                     'Asia/Kolkata',
@@ -2217,6 +2209,7 @@ router.get(
       const monthlyRevenue =
         monthRevenueResult[0]?.revenue || 0
 
+
       const monthlyPayments =
         monthRevenueResult[0]?.payments || 0
 
@@ -2238,6 +2231,7 @@ router.get(
                 'Registration',
 
             },
+
           },
 
           {
@@ -2277,6 +2271,7 @@ router.get(
                 'CourseFee',
 
             },
+
           },
 
           {
@@ -2312,10 +2307,11 @@ router.get(
               paymentStatus:
                 'Success',
 
-              paymentMethod:
+              paymentMode:
                 'Online',
 
             },
+
           },
 
           {
@@ -2336,6 +2332,46 @@ router.get(
 
       const onlineRevenue =
         onlineRevenueResult[0]?.revenue || 0
+
+
+      // ==================================
+      // OFFLINE REVENUE
+      // ==================================
+
+      const offlineRevenueResult =
+        await Payment.aggregate([
+
+          {
+            $match: {
+
+              paymentStatus:
+                'Success',
+
+              paymentMode:
+                'Offline',
+
+            },
+
+          },
+
+          {
+            $group: {
+
+              _id: null,
+
+              revenue: {
+                $sum: '$amountPaid',
+              },
+
+            },
+
+          },
+
+        ])
+
+
+      const offlineRevenue =
+        offlineRevenueResult[0]?.revenue || 0
 
 
       // ==================================
@@ -2366,6 +2402,8 @@ router.get(
 
           onlineRevenue,
 
+          offlineRevenue,
+
         },
 
       })
@@ -2393,6 +2431,7 @@ router.get(
   }
 )
 
+
 // ======================================
 // GET REVENUE REPORT
 // ======================================
@@ -2404,7 +2443,7 @@ router.get(
     try {
 
       // ==================================
-      // DAILY REVENUE - LAST 30 DAYS
+      // DAILY REVENUE
       // ==================================
 
       const dailyRevenue =
@@ -2412,7 +2451,8 @@ router.get(
 
           {
             $match: {
-              paymentStatus: 'Success',
+              paymentStatus:
+                'Success',
             },
           },
 
@@ -2422,24 +2462,45 @@ router.get(
               _id: {
 
                 year: {
+
                   $year: {
-                    date: '$createdAt',
-                    timezone: 'Asia/Kolkata',
+
+                    date:
+                      '$createdAt',
+
+                    timezone:
+                      'Asia/Kolkata',
+
                   },
+
                 },
 
                 month: {
+
                   $month: {
-                    date: '$createdAt',
-                    timezone: 'Asia/Kolkata',
+
+                    date:
+                      '$createdAt',
+
+                    timezone:
+                      'Asia/Kolkata',
+
                   },
+
                 },
 
                 day: {
+
                   $dayOfMonth: {
-                    date: '$createdAt',
-                    timezone: 'Asia/Kolkata',
+
+                    date:
+                      '$createdAt',
+
+                    timezone:
+                      'Asia/Kolkata',
+
                   },
+
                 },
 
               },
@@ -2458,10 +2519,18 @@ router.get(
 
           {
             $sort: {
-              '_id.year': 1,
-              '_id.month': 1,
-              '_id.day': 1,
+
+              '_id.year':
+                1,
+
+              '_id.month':
+                1,
+
+              '_id.day':
+                1,
+
             },
+
           },
 
         ])
@@ -2476,7 +2545,8 @@ router.get(
 
           {
             $match: {
-              paymentStatus: 'Success',
+              paymentStatus:
+                'Success',
             },
           },
 
@@ -2486,17 +2556,31 @@ router.get(
               _id: {
 
                 year: {
+
                   $year: {
-                    date: '$createdAt',
-                    timezone: 'Asia/Kolkata',
+
+                    date:
+                      '$createdAt',
+
+                    timezone:
+                      'Asia/Kolkata',
+
                   },
+
                 },
 
                 month: {
+
                   $month: {
-                    date: '$createdAt',
-                    timezone: 'Asia/Kolkata',
+
+                    date:
+                      '$createdAt',
+
+                    timezone:
+                      'Asia/Kolkata',
+
                   },
+
                 },
 
               },
@@ -2515,9 +2599,15 @@ router.get(
 
           {
             $sort: {
-              '_id.year': 1,
-              '_id.month': 1,
+
+              '_id.year':
+                1,
+
+              '_id.month':
+                1,
+
             },
+
           },
 
         ])
@@ -2559,6 +2649,7 @@ router.get(
 
   }
 )
+
 
 // ======================================
 // EXPORT ROUTER

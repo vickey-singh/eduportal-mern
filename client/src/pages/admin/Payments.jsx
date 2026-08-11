@@ -61,14 +61,24 @@ function Payments() {
     useState({
 
       totalRevenue: 0,
+
       todayRevenue: 0,
+
       monthlyRevenue: 0,
+
       totalPayments: 0,
+
       todayPayments: 0,
+
       monthlyPayments: 0,
+
       registrationRevenue: 0,
+
       courseFeeRevenue: 0,
+
       onlineRevenue: 0,
+
+      offlineRevenue: 0,
 
     })
 
@@ -81,6 +91,7 @@ function Payments() {
     useState({
 
       dailyRevenue: [],
+
       monthlyRevenue: [],
 
     })
@@ -149,26 +160,290 @@ function Payments() {
       // PAYMENTS
       // ==================================
 
-      setPayments(
+      const paymentList =
+
         Array.isArray(paymentResponse)
+
           ? paymentResponse
+
           : []
-      )
+
+
+      setPayments(paymentList)
 
 
       // ==================================
-      // REVENUE
+      // BACKEND REVENUE
       // ==================================
+
+      let backendRevenue = {
+
+        totalRevenue: 0,
+
+        todayRevenue: 0,
+
+        monthlyRevenue: 0,
+
+        totalPayments: 0,
+
+        todayPayments: 0,
+
+        monthlyPayments: 0,
+
+        registrationRevenue: 0,
+
+        courseFeeRevenue: 0,
+
+        onlineRevenue: 0,
+
+        offlineRevenue: 0,
+
+      }
+
 
       if (
         revenueResponse?.success
       ) {
 
-        setRevenue(
-          revenueResponse.revenue || {}
-        )
+        backendRevenue = {
+
+          totalRevenue:
+            Number(
+              revenueResponse.revenue
+                ?.totalRevenue || 0
+            ),
+
+          todayRevenue:
+            Number(
+              revenueResponse.revenue
+                ?.todayRevenue || 0
+            ),
+
+          monthlyRevenue:
+            Number(
+              revenueResponse.revenue
+                ?.monthlyRevenue || 0
+            ),
+
+          totalPayments:
+            Number(
+              revenueResponse.revenue
+                ?.totalPayments || 0
+            ),
+
+          todayPayments:
+            Number(
+              revenueResponse.revenue
+                ?.todayPayments || 0
+            ),
+
+          monthlyPayments:
+            Number(
+              revenueResponse.revenue
+                ?.monthlyPayments || 0
+            ),
+
+          registrationRevenue:
+            Number(
+              revenueResponse.revenue
+                ?.registrationRevenue || 0
+            ),
+
+          courseFeeRevenue:
+            Number(
+              revenueResponse.revenue
+                ?.courseFeeRevenue || 0
+            ),
+
+          onlineRevenue:
+            Number(
+              revenueResponse.revenue
+                ?.onlineRevenue || 0
+            ),
+
+          offlineRevenue:
+            Number(
+              revenueResponse.revenue
+                ?.offlineRevenue || 0
+            ),
+
+        }
 
       }
+
+
+      // ==================================
+      // CALCULATE MODE REVENUE FROM
+      // PAYMENT LIST
+      // ==================================
+      //
+      // This is an additional safety layer.
+      //
+      // New records:
+      //
+      // paymentMode = Online
+      // paymentMode = Offline
+      //
+      // Old records:
+      //
+      // paymentMode missing
+      //
+      // In that case:
+      //
+      // Razorpay -> Online
+      // Cash      -> Offline
+      // ==================================
+
+      const successfulPayments =
+        paymentList.filter(
+
+          (payment) =>
+
+            payment.paymentStatus ===
+            'Success'
+
+        )
+
+
+      let calculatedOnlineRevenue =
+        0
+
+      let calculatedOfflineRevenue =
+        0
+
+
+      successfulPayments.forEach(
+        (payment) => {
+
+          const amount =
+            Number(
+              payment.amountPaid || 0
+            )
+
+
+          const mode =
+            String(
+              payment.paymentMode || ''
+            )
+              .trim()
+              .toLowerCase()
+
+
+          const method =
+            String(
+              payment.paymentMethod || ''
+            )
+              .trim()
+              .toLowerCase()
+
+
+          // ==================================
+          // ONLINE
+          // ==================================
+
+          if (
+            mode === 'online'
+          ) {
+
+            calculatedOnlineRevenue +=
+              amount
+
+            return
+
+          }
+
+
+          // ==================================
+          // OFFLINE
+          // ==================================
+
+          if (
+            mode === 'offline'
+          ) {
+
+            calculatedOfflineRevenue +=
+              amount
+
+            return
+
+          }
+
+
+          // ==================================
+          // OLD RECORD FALLBACK
+          // ==================================
+
+          if (
+            method === 'razorpay' ||
+
+            method === 'online'
+          ) {
+
+            calculatedOnlineRevenue +=
+              amount
+
+          }
+
+          else {
+
+            calculatedOfflineRevenue +=
+              amount
+
+          }
+
+        }
+      )
+
+
+      // ==================================
+      // MODE REVENUE
+      // ==================================
+      //
+      // Payment list ko primary source
+      // rakha gaya hai because usme
+      // individual payment records hain.
+      //
+      // Agar payment list available hai,
+      // uske according Online/Offline
+      // calculate hoga.
+      //
+      // Agar payment list empty hai,
+      // backend revenue use hoga.
+      // ==================================
+
+      const finalOnlineRevenue =
+
+        successfulPayments.length > 0
+
+          ? calculatedOnlineRevenue
+
+          : backendRevenue.onlineRevenue
+
+
+      const finalOfflineRevenue =
+
+        successfulPayments.length > 0
+
+          ? calculatedOfflineRevenue
+
+          : backendRevenue.offlineRevenue
+
+
+      // ==================================
+      // FINAL REVENUE STATE
+      // ==================================
+
+      setRevenue({
+
+        ...backendRevenue,
+
+        onlineRevenue:
+          finalOnlineRevenue,
+
+        offlineRevenue:
+          finalOfflineRevenue,
+
+      })
 
 
       // ==================================
@@ -272,8 +547,12 @@ function Payments() {
 
   const currentPayments =
     filteredPayments.slice(
+
       startIndex,
-      startIndex + paymentsPerPage
+
+      startIndex +
+        paymentsPerPage
+
     )
 
 
@@ -331,7 +610,9 @@ function Payments() {
 
   const currentReport =
     reportType === 'daily'
+
       ? revenueReport.dailyRevenue
+
       : revenueReport.monthlyRevenue
 
 
@@ -363,7 +644,9 @@ function Payments() {
   const chartValues =
     currentReport.map(
       (item) =>
-        Number(item.revenue || 0)
+        Number(
+          item.revenue || 0
+        )
     )
 
 
@@ -382,7 +665,9 @@ function Payments() {
 
         label:
           reportType === 'daily'
+
             ? 'Daily Revenue'
+
             : 'Monthly Revenue',
 
         data:
@@ -410,7 +695,9 @@ function Payments() {
     plugins: {
 
       legend: {
+
         display: true,
+
       },
 
     },
@@ -424,6 +711,7 @@ function Payments() {
         ticks: {
 
           callback: (value) =>
+
             `₹ ${Number(
               value
             ).toLocaleString('en-IN')}`,
@@ -444,8 +732,11 @@ function Payments() {
   const goToPage = (page) => {
 
     if (
+
       page < 1 ||
+
       page > totalPages
+
     ) {
 
       return
@@ -464,11 +755,16 @@ function Payments() {
 
   const pageNumbers =
     Array.from(
+
       {
+
         length: totalPages,
+
       },
+
       (_, index) =>
         index + 1
+
     )
 
 
@@ -501,7 +797,7 @@ function Payments() {
       <div className="row g-4 mb-5">
 
 
-        {/* TOTAL */}
+        {/* TOTAL REVENUE */}
 
         <div className="col-md-6 col-xl-3">
 
@@ -510,17 +806,23 @@ function Payments() {
             <div className="card-body">
 
               <p className="text-muted mb-2">
+
                 Total Revenue
+
               </p>
 
               <h3 className="fw-bold text-success">
+
                 {formatCurrency(
                   revenue.totalRevenue
                 )}
+
               </h3>
 
               <small className="text-muted">
+
                 All successful payments
+
               </small>
 
             </div>
@@ -539,19 +841,27 @@ function Payments() {
             <div className="card-body">
 
               <p className="text-muted mb-2">
+
                 Today's Revenue
+
               </p>
 
               <h3 className="fw-bold text-primary">
+
                 {formatCurrency(
                   revenue.todayRevenue
                 )}
+
               </h3>
 
               <small className="text-muted">
+
                 {revenue.todayPayments || 0}
+
                 {' '}
+
                 payment(s) today
+
               </small>
 
             </div>
@@ -561,7 +871,7 @@ function Payments() {
         </div>
 
 
-        {/* MONTH */}
+        {/* THIS MONTH */}
 
         <div className="col-md-6 col-xl-3">
 
@@ -570,19 +880,27 @@ function Payments() {
             <div className="card-body">
 
               <p className="text-muted mb-2">
+
                 This Month
+
               </p>
 
               <h3 className="fw-bold text-warning">
+
                 {formatCurrency(
                   revenue.monthlyRevenue
                 )}
+
               </h3>
 
               <small className="text-muted">
+
                 {revenue.monthlyPayments || 0}
+
                 {' '}
+
                 payment(s) this month
+
               </small>
 
             </div>
@@ -592,7 +910,7 @@ function Payments() {
         </div>
 
 
-        {/* PAYMENTS */}
+        {/* TOTAL PAYMENTS */}
 
         <div className="col-md-6 col-xl-3">
 
@@ -601,15 +919,21 @@ function Payments() {
             <div className="card-body">
 
               <p className="text-muted mb-2">
+
                 Total Payments
+
               </p>
 
               <h3 className="fw-bold">
+
                 {revenue.totalPayments || 0}
+
               </h3>
 
               <small className="text-muted">
+
                 Successful transactions
+
               </small>
 
             </div>
@@ -628,20 +952,26 @@ function Payments() {
       <div className="row g-4 mb-5">
 
 
-        <div className="col-md-4">
+        {/* REGISTRATION */}
 
-          <div className="card border-0 shadow-sm">
+        <div className="col-md-6 col-xl-3">
+
+          <div className="card border-0 shadow-sm h-100">
 
             <div className="card-body">
 
               <p className="text-muted mb-2">
+
                 Registration Revenue
+
               </p>
 
               <h4 className="fw-bold">
+
                 {formatCurrency(
                   revenue.registrationRevenue
                 )}
+
               </h4>
 
             </div>
@@ -651,20 +981,26 @@ function Payments() {
         </div>
 
 
-        <div className="col-md-4">
+        {/* COURSE FEE */}
 
-          <div className="card border-0 shadow-sm">
+        <div className="col-md-6 col-xl-3">
+
+          <div className="card border-0 shadow-sm h-100">
 
             <div className="card-body">
 
               <p className="text-muted mb-2">
+
                 Course Fee Revenue
+
               </p>
 
               <h4 className="fw-bold">
+
                 {formatCurrency(
                   revenue.courseFeeRevenue
                 )}
+
               </h4>
 
             </div>
@@ -674,27 +1010,75 @@ function Payments() {
         </div>
 
 
-        <div className="col-md-4">
+        {/* ONLINE */}
 
-          <div className="card border-0 shadow-sm">
+        <div className="col-md-6 col-xl-3">
+
+          <div className="card border-0 shadow-sm h-100">
 
             <div className="card-body">
 
               <p className="text-muted mb-2">
+
                 Online Revenue
+
               </p>
 
-              <h4 className="fw-bold">
+              <h4 className="fw-bold text-primary">
+
                 {formatCurrency(
                   revenue.onlineRevenue
                 )}
+
               </h4>
+
+              <small className="text-muted">
+
+                Razorpay / Online Payments
+
+              </small>
 
             </div>
 
           </div>
 
         </div>
+
+
+        {/* OFFLINE */}
+
+        <div className="col-md-6 col-xl-3">
+
+          <div className="card border-0 shadow-sm h-100">
+
+            <div className="card-body">
+
+              <p className="text-muted mb-2">
+
+                Offline Revenue
+
+              </p>
+
+              <h4 className="fw-bold text-success">
+
+                {formatCurrency(
+                  revenue.offlineRevenue
+                )}
+
+              </h4>
+
+              <small className="text-muted">
+
+                Cash / Manual Payments
+
+              </small>
+
+            </div>
+
+          </div>
+
+        </div>
+
 
       </div>
 
@@ -707,16 +1091,22 @@ function Payments() {
 
         <div className="card-body">
 
+
           <div className="d-flex justify-content-between align-items-center flex-wrap gap-3 mb-4">
+
 
             <div>
 
               <h5 className="fw-bold mb-1">
+
                 Revenue Report
+
               </h5>
 
               <p className="text-muted mb-0">
+
                 Track revenue over time.
+
               </p>
 
             </div>
@@ -725,35 +1115,56 @@ function Payments() {
             <div>
 
               <button
+
                 type="button"
+
                 className={
+
                   reportType === 'daily'
+
                     ? 'btn btn-primary me-2'
+
                     : 'btn btn-outline-primary me-2'
+
                 }
+
                 onClick={() =>
                   setReportType('daily')
                 }
+
               >
+
                 Daily
+
               </button>
 
 
               <button
+
                 type="button"
+
                 className={
+
                   reportType === 'monthly'
+
                     ? 'btn btn-primary'
+
                     : 'btn btn-outline-primary'
+
                 }
+
                 onClick={() =>
                   setReportType('monthly')
                 }
+
               >
+
                 Monthly
+
               </button>
 
             </div>
+
 
           </div>
 
@@ -767,25 +1178,33 @@ function Payments() {
             {loading ? (
 
               <div className="text-center pt-5">
+
                 Loading Revenue...
+
               </div>
 
             ) : currentReport.length === 0 ? (
 
               <div className="text-center pt-5 text-muted">
+
                 No revenue data available.
+
               </div>
 
             ) : (
 
               <Line
+
                 data={chartData}
+
                 options={chartOptions}
+
               />
 
             )}
 
           </div>
+
 
         </div>
 
@@ -799,11 +1218,17 @@ function Payments() {
       <div className="mb-3">
 
         <input
+
           type="text"
+
           className="form-control"
+
           placeholder="Search by Admission Number, Student Name or Course"
+
           value={searchTerm}
+
           onChange={handleSearch}
+
         />
 
       </div>
@@ -820,17 +1245,25 @@ function Payments() {
           Showing{' '}
 
           {
+
             filteredPayments.length === 0
+
               ? 0
+
               : startIndex + 1
+
           }
 
           {' - '}
 
           {Math.min(
+
             startIndex +
+
               paymentsPerPage,
+
             filteredPayments.length
+
           )}
 
           {' of '}
@@ -856,23 +1289,41 @@ function Payments() {
 
             <tr>
 
-              <th>Admission No.</th>
+              <th>
+                Admission No.
+              </th>
 
-              <th>Student</th>
+              <th>
+                Student
+              </th>
 
-              <th>Course</th>
+              <th>
+                Course
+              </th>
 
-              <th>Category</th>
+              <th>
+                Category
+              </th>
 
-              <th>Amount</th>
+              <th>
+                Amount
+              </th>
 
-              <th>Type</th>
+              <th>
+                Type
+              </th>
 
-              <th>Mode</th>
+              <th>
+                Mode
+              </th>
 
-              <th>Status</th>
+              <th>
+                Status
+              </th>
 
-              <th>Date</th>
+              <th>
+                Date
+              </th>
 
             </tr>
 
@@ -889,7 +1340,9 @@ function Payments() {
                   colSpan="9"
                   className="text-center"
                 >
+
                   Loading Payments...
+
                 </td>
 
               </tr>
@@ -902,7 +1355,9 @@ function Payments() {
                   colSpan="9"
                   className="text-center"
                 >
+
                   No Payments Found
+
                 </td>
 
               </tr>
@@ -910,94 +1365,169 @@ function Payments() {
             ) : (
 
               currentPayments.map(
-                (payment) => (
+                (payment) => {
 
-                  <tr
-                    key={payment._id}
-                  >
+                  // ==================================
+                  // DISPLAY PAYMENT MODE
+                  // ==================================
 
-                    <td>
-                      {
-                        payment.admissionNumber ||
-                        '-'
+                  const paymentMode =
+
+                    payment.paymentMode
+
+                      ? payment.paymentMode
+
+                      : (
+
+                        String(
+                          payment.paymentMethod ||
+                          ''
+                        )
+                          .toLowerCase()
+                          .includes('razorpay')
+
+                          ? 'Online'
+
+                          : 'Offline'
+
+                      )
+
+
+                  return (
+
+                    <tr
+                      key={
+                        payment._id
                       }
-                    </td>
+                    >
 
-                    <td>
-                      {
-                        payment.studentName ||
-                        '-'
-                      }
-                    </td>
+                      <td>
 
-                    <td>
-                      {
-                        payment.course ||
-                        '-'
-                      }
-                    </td>
-
-                    <td>
-                      {
-                        payment.paymentCategory ||
-                        '-'
-                      }
-                    </td>
-
-                    <td>
-
-                      <strong>
-                        {formatCurrency(
-                          payment.amountPaid
-                        )}
-                      </strong>
-
-                    </td>
-
-                    <td>
-                      {
-                        payment.paymentType ||
-                        '-'
-                      }
-                    </td>
-
-                    <td>
-                      {
-                        payment.paymentMode ||
-                        'Online'
-                      }
-                    </td>
-
-                    <td>
-
-                      <span
-                        className={
-                          payment.paymentStatus ===
-                          'Success'
-                            ? 'badge bg-success'
-                            : payment.paymentStatus ===
-                              'Pending'
-                              ? 'badge bg-warning text-dark'
-                              : 'badge bg-danger'
-                        }
-                      >
                         {
-                          payment.paymentStatus ||
+                          payment.admissionNumber ||
                           '-'
                         }
-                      </span>
 
-                    </td>
+                      </td>
 
-                    <td>
-                      {formatDate(
-                        payment.createdAt
-                      )}
-                    </td>
+                      <td>
 
-                  </tr>
+                        {
+                          payment.studentName ||
+                          '-'
+                        }
 
-                )
+                      </td>
+
+                      <td>
+
+                        {
+                          payment.course ||
+                          '-'
+                        }
+
+                      </td>
+
+                      <td>
+
+                        {
+                          payment.paymentCategory ||
+                          '-'
+                        }
+
+                      </td>
+
+                      <td>
+
+                        <strong>
+
+                          {formatCurrency(
+                            payment.amountPaid
+                          )}
+
+                        </strong>
+
+                      </td>
+
+                      <td>
+
+                        {
+                          payment.paymentType ||
+                          '-'
+                        }
+
+                      </td>
+
+                      <td>
+
+                        <span
+
+                          className={
+
+                            paymentMode ===
+                            'Online'
+
+                              ? 'badge bg-primary'
+
+                              : 'badge bg-success'
+
+                          }
+
+                        >
+
+                          {
+                            paymentMode
+                          }
+
+                        </span>
+
+                      </td>
+
+                      <td>
+
+                        <span
+
+                          className={
+
+                            payment.paymentStatus ===
+                            'Success'
+
+                              ? 'badge bg-success'
+
+                              : payment.paymentStatus ===
+                                'Pending'
+
+                                ? 'badge bg-warning text-dark'
+
+                                : 'badge bg-danger'
+
+                          }
+
+                        >
+
+                          {
+                            payment.paymentStatus ||
+                            '-'
+                          }
+
+                        </span>
+
+                      </td>
+
+                      <td>
+
+                        {formatDate(
+                          payment.createdAt
+                        )}
+
+                      </td>
+
+                    </tr>
+
+                  )
+
+                }
+
               )
 
             )}
@@ -1019,16 +1549,25 @@ function Payments() {
 
 
           <button
+
             type="button"
+
             className="btn btn-outline-primary"
-            disabled={currentPage === 1}
+
+            disabled={
+              currentPage === 1
+            }
+
             onClick={() =>
               goToPage(
                 currentPage - 1
               )
             }
+
           >
+
             Previous
+
           </button>
 
 
@@ -1036,18 +1575,29 @@ function Payments() {
             (page) => (
 
               <button
+
                 key={page}
+
                 type="button"
+
                 className={
+
                   currentPage === page
+
                     ? 'btn btn-primary'
+
                     : 'btn btn-outline-primary'
+
                 }
+
                 onClick={() =>
                   goToPage(page)
                 }
+
               >
+
                 {page}
+
               </button>
 
             )
@@ -1055,19 +1605,27 @@ function Payments() {
 
 
           <button
+
             type="button"
+
             className="btn btn-outline-primary"
+
             disabled={
               currentPage === totalPages
             }
+
             onClick={() =>
               goToPage(
                 currentPage + 1
               )
             }
+
           >
+
             Next
+
           </button>
+
 
         </div>
 
@@ -1078,5 +1636,6 @@ function Payments() {
   )
 
 }
+
 
 export default Payments

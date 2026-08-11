@@ -36,7 +36,6 @@ const calculateFeesStatus = (
       total - paid
     )
 
-
   let status =
     'Pending'
 
@@ -74,7 +73,118 @@ const calculateFeesStatus = (
 
 
 // ======================================
+// HELPER: GENERATE NEXT ADMISSION NUMBER
+// ======================================
+//
+// Admin / Teacher manually admission
+//
+// Example:
+//
+// ADM0001
+// ADM0002
+// ADM0003
+//
+// Frontend admission number nahi bhejega.
+// Backend automatically generate karega.
+//
+// Existing database me agar:
+//
+// ADM0001
+// ADM0002
+// ADM0007
+//
+// hai to next:
+//
+// ADM0008
+//
+// hoga.
+// ======================================
+
+const generateAdmissionNumber =
+  async () => {
+
+    const students =
+      await Student.find({
+
+        admissionNumber: {
+
+          $regex:
+            /^ADM\d+$/,
+
+        },
+
+      })
+
+        .select(
+          'admissionNumber'
+        )
+
+        .lean()
+
+
+    let highestNumber =
+      0
+
+
+    for (
+      const student of students
+    ) {
+
+      const currentNumber =
+        parseInt(
+
+          String(
+            student.admissionNumber || ''
+          )
+            .replace(
+              'ADM',
+              ''
+            ),
+
+          10
+
+        ) || 0
+
+
+      if (
+        currentNumber >
+        highestNumber
+      ) {
+
+        highestNumber =
+          currentNumber
+
+      }
+
+    }
+
+
+    const nextNumber =
+      highestNumber + 1
+
+
+    return (
+      `ADM${String(
+        nextNumber
+      ).padStart(
+        4,
+        '0'
+      )}`
+    )
+
+  }
+
+
+// ======================================
 // ADD STUDENT
+// ======================================
+// ADMIN / TEACHER MANUAL ADMISSION
+//
+// Admission Number:
+// Automatically generated
+//
+// Payment:
+// Offline
 // ======================================
 
 router.post(
@@ -99,7 +209,9 @@ router.post(
 
         aadharNumber,
 
-        admissionNumber,
+        // IMPORTANT:
+        // admissionNumber intentionally
+        // not used from frontend
 
         course,
 
@@ -190,7 +302,21 @@ router.post(
 
 
       // ======================================
-      // CLOUDINARY IMAGE
+      // GENERATE ADMISSION NUMBER
+      // ======================================
+
+      const admissionNumber =
+        await generateAdmissionNumber()
+
+
+      console.log(
+        'Generated Admission Number:',
+        admissionNumber
+      )
+
+
+      // ======================================
+      // IMAGE
       // ======================================
 
       const image =
@@ -324,9 +450,8 @@ router.post(
       const registrationStatus =
 
         registrationPaid >=
-        registration
-
-          && registration > 0
+          registration &&
+        registration > 0
 
           ? 'Paid'
 
@@ -353,7 +478,8 @@ router.post(
           aadharNumber:
             aadharNumber || '',
 
-          admissionNumber,
+          admissionNumber:
+            admissionNumber,
 
           course,
 
@@ -425,7 +551,7 @@ router.post(
 
 
           // ==================================
-          // REGISTRATION FEE
+          // REGISTRATION
           // ==================================
 
           registrationFee:
@@ -456,7 +582,7 @@ router.post(
 
 
           // ==================================
-          // PAYMENT OPTIONS
+          // PAYMENT PLANS
           // ==================================
 
           monthlyInstallment:
@@ -499,6 +625,8 @@ router.post(
           // ==================================
           // PAYMENT MODE
           // ==================================
+          // ADMIN / TEACHER MANUAL ADMISSION
+          // ALWAYS OFFLINE
 
           paymentMode:
             'Offline',
@@ -514,7 +642,7 @@ router.post(
 
 
       // ======================================
-      // OFFLINE INITIAL REGISTRATION PAYMENT
+      // OFFLINE REGISTRATION PAYMENT
       // ======================================
 
       if (
@@ -564,7 +692,7 @@ router.post(
 
 
       // ======================================
-      // OFFLINE INITIAL COURSE PAYMENT
+      // OFFLINE COURSE FEE PAYMENT
       // ======================================
 
       if (
@@ -625,28 +753,203 @@ router.post(
       const savedStudent =
         await newStudent.save()
 
+
+      // ======================================
+      // SAVE REGISTRATION PAYMENT
+      // PAYMENT COLLECTION
+      // ======================================
+
+      let registrationPayment =
+        null
+
+
+      if (
+        registrationPaid > 0
+      ) {
+
+        registrationPayment =
+          await Payment.create({
+
+            studentName:
+              savedStudent.name,
+
+            admissionNumber:
+              savedStudent.admissionNumber,
+
+            email:
+              savedStudent.email,
+
+            phone:
+              savedStudent.contact,
+
+            course:
+              savedStudent.course,
+
+            totalFee:
+              savedStudent.totalFees,
+
+            registrationFee:
+              savedStudent.registrationFee,
+
+            paymentCategory:
+              'Registration',
+
+            paymentPlan:
+              '',
+
+            paymentType:
+              'Full',
+
+            amountPaid:
+              registrationPaid,
+
+            paymentMethod:
+              'Cash',
+
+            paymentMode:
+              'Offline',
+
+            paymentStatus:
+              'Success',
+
+            transactionId:
+              '',
+
+            razorpayOrderId:
+              '',
+
+            razorpayPaymentId:
+              '',
+
+            razorpaySignature:
+              '',
+
+          })
+
+      }
+
+
+      // ======================================
+      // SAVE COURSE FEE PAYMENT
+      // PAYMENT COLLECTION
+      // ======================================
+
+      let coursePayment =
+        null
+
+
+      if (
+        paidFee > 0
+      ) {
+
+        coursePayment =
+          await Payment.create({
+
+            studentName:
+              savedStudent.name,
+
+            admissionNumber:
+              savedStudent.admissionNumber,
+
+            email:
+              savedStudent.email,
+
+            phone:
+              savedStudent.contact,
+
+            course:
+              savedStudent.course,
+
+            totalFee:
+              savedStudent.totalFees,
+
+            registrationFee:
+              savedStudent.registrationFee,
+
+            paymentCategory:
+              'CourseFee',
+
+            paymentPlan:
+              savedStudent.paymentPlan || '',
+
+            paymentType:
+
+              savedStudent.paymentPlan ===
+              'full'
+
+                ? 'Full'
+
+                : 'Installment',
+
+            amountPaid:
+              paidFee,
+
+            paymentMethod:
+              'Cash',
+
+            paymentMode:
+              'Offline',
+
+            paymentStatus:
+              'Success',
+
+            transactionId:
+              '',
+
+            razorpayOrderId:
+              '',
+
+            razorpayPaymentId:
+              '',
+
+            razorpaySignature:
+              '',
+
+          })
+
+      }
+
+
       // ======================================
       // CREATE ADMISSION NOTIFICATION
       // ======================================
-      
-      await createNotification({
-      
-        type:
-          'Admission',
-      
-        title:
-          'New Admission',
-      
-        message:
-          `${savedStudent.name} has taken admission in ${savedStudent.course}`,
-      
-        link:
-          '/admin/students',
-      
-        relatedId:
-          savedStudent._id.toString(),
-      
-      })
+
+      try {
+
+        await createNotification({
+
+          type:
+            'Admission',
+
+          title:
+            'New Admission',
+
+          message:
+            `${savedStudent.name} has taken admission in ${savedStudent.course}`,
+
+          link:
+            '/admin/students',
+
+          relatedId:
+            savedStudent._id.toString(),
+
+        })
+
+      }
+
+      catch (
+        notificationError
+      ) {
+
+        console.log(
+          'Admission Notification Error:',
+          notificationError
+        )
+
+        // Notification fail hone par
+        // student creation fail nahi hoga.
+
+      }
 
 
       // ======================================
@@ -663,6 +966,10 @@ router.post(
         student:
           savedStudent,
 
+        registrationPayment,
+
+        coursePayment,
+
       })
 
     }
@@ -674,11 +981,34 @@ router.post(
         error
       )
 
+
+      // ======================================
+      // DUPLICATE ADMISSION NUMBER
+      // ======================================
+
+      if (
+        error.code === 11000 &&
+        error.keyPattern?.admissionNumber
+      ) {
+
+        return res.status(409).json({
+
+          success: false,
+
+          message:
+            'Admission number conflict. Please try again.',
+
+        })
+
+      }
+
+
       res.status(500).json({
 
         success: false,
 
         message:
+          error.message ||
           'Server Error',
 
       })
@@ -706,7 +1036,10 @@ router.get(
         await Student.find()
 
           .sort({
-            createdAt: -1,
+
+            createdAt:
+              -1,
+
           })
 
 
@@ -808,6 +1141,11 @@ router.delete(
 // ======================================
 // UPDATE STUDENT
 // ======================================
+// Admission Number cannot be changed.
+//
+// Existing admission number will remain
+// exactly as it is.
+// ======================================
 
 router.put(
 
@@ -830,8 +1168,6 @@ router.put(
         dob,
 
         aadharNumber,
-
-        admissionNumber,
 
         course,
 
@@ -956,7 +1292,7 @@ router.put(
 
 
       // ======================================
-      // FEES
+      // NUMERIC VALUES
       // ======================================
 
       const totalFee =
@@ -1020,6 +1356,39 @@ router.put(
       }
 
 
+      if (
+        registrationPaid < 0
+      ) {
+
+        return res.status(400).json({
+
+          success: false,
+
+          message:
+            'Registration fee paid cannot be negative.',
+
+        })
+
+      }
+
+
+      if (
+        registrationPaid >
+        registration
+      ) {
+
+        return res.status(400).json({
+
+          success: false,
+
+          message:
+            'Registration fee paid cannot be greater than registration fee.',
+
+        })
+
+      }
+
+
       // ======================================
       // FEE STATUS
       // ======================================
@@ -1041,6 +1410,21 @@ router.put(
 
 
       // ======================================
+      // REGISTRATION STATUS
+      // ======================================
+
+      const registrationStatus =
+
+        registrationPaid >=
+          registration &&
+        registration > 0
+
+          ? 'Paid'
+
+          : 'Pending'
+
+
+      // ======================================
       // UPDATE STUDENT
       // ======================================
 
@@ -1053,8 +1437,19 @@ router.put(
       student.aadharNumber =
         aadharNumber || ''
 
-      student.admissionNumber =
-        admissionNumber
+
+      // ======================================
+      // IMPORTANT
+      // ======================================
+      // admissionNumber is NOT changed.
+      //
+      // Existing:
+      // ADM0005
+      //
+      // remains:
+      // ADM0005
+      // ======================================
+
 
       student.course =
         course
@@ -1136,14 +1531,7 @@ router.put(
         registrationPaid
 
       student.registrationFeeStatus =
-
-        registrationPaid >=
-          registration &&
-        registration > 0
-
-          ? 'Paid'
-
-          : 'Pending'
+        registrationStatus
 
 
       // ======================================
@@ -1242,6 +1630,7 @@ router.put(
         success: false,
 
         message:
+          error.message ||
           'Server Error',
 
       })
@@ -1255,6 +1644,11 @@ router.put(
 
 // ======================================
 // ADD OFFLINE COURSE FEE PAYMENT
+// ======================================
+// ADMIN / TEACHER MANUAL PAYMENT
+//
+// Existing Student
+// Course Fee -> Offline
 // ======================================
 
 router.put(
@@ -1328,7 +1722,7 @@ router.put(
 
 
       // ======================================
-      // REMAINING FEE
+      // REMAINING COURSE FEE
       // ======================================
 
       const remainingFee =
@@ -1439,7 +1833,8 @@ router.put(
       // PAYMENT MINIMUM
       // ======================================
 
-      let minimumAmount = 0
+      let minimumAmount =
+        0
 
 
       switch (
@@ -1486,7 +1881,8 @@ router.put(
 
         default:
 
-          minimumAmount = 0
+          minimumAmount =
+            0
 
       }
 
@@ -1497,8 +1893,11 @@ router.put(
 
       const payableMinimum =
         Math.min(
+
           minimumAmount,
+
           remainingFee
+
         )
 
 
@@ -1591,7 +1990,7 @@ router.put(
 
 
       // ======================================
-      // UPDATE STUDENT PAYMENT HISTORY
+      // UPDATE PAYMENT HISTORY
       // ======================================
 
       student.paymentHistory.push({
@@ -1693,7 +2092,7 @@ router.put(
 
 
       // ======================================
-      // PAYMENT MODE
+      // LAST PAYMENT MODE
       // ======================================
 
       student.paymentMode =
@@ -1710,14 +2109,9 @@ router.put(
       // ======================================
       // SAVE PAYMENT COLLECTION
       // ======================================
-      //
-      // This is important because
-      // Payment Management and Revenue
-      // read from Payment collection.
-      // ======================================
 
       const payment =
-        new Payment({
+        await Payment.create({
 
           studentName:
             student.name,
@@ -1754,6 +2148,9 @@ router.put(
           paymentMethod:
             finalPaymentMethod,
 
+          paymentMode:
+            'Offline',
+
           paymentStatus:
             'Success',
 
@@ -1773,33 +2170,45 @@ router.put(
 
 
       // ======================================
-      // SAVE PAYMENT
+      // PAYMENT NOTIFICATION
       // ======================================
 
-      await payment.save()
+      try {
 
-      // ======================================
-      // CREATE PAYMENT NOTIFICATION
-      // ======================================
-      
-      await createNotification({
-      
-        type:
-          'Payment',
-      
-        title:
-          'Payment Received',
-      
-        message:
-          `${student.name} paid ₹${paymentAmount} for ${student.course}`,
-      
-        link:
-          '/admin/payments',
-      
-        relatedId:
-          payment._id.toString(),
-      
-      })
+        await createNotification({
+
+          type:
+            'Payment',
+
+          title:
+            'Payment Received',
+
+          message:
+            `${student.name} paid ₹${paymentAmount} for ${student.course}`,
+
+          link:
+            '/admin/payments',
+
+          relatedId:
+            payment._id.toString(),
+
+        })
+
+      }
+
+      catch (
+        notificationError
+      ) {
+
+        console.log(
+          'Payment Notification Error:',
+          notificationError
+        )
+
+        // Notification fail hone par
+        // payment fail nahi hoga.
+
+      }
 
 
       // ======================================
@@ -1811,7 +2220,7 @@ router.put(
         success: true,
 
         message:
-          'Payment Added Successfully',
+          'Offline Payment Added Successfully',
 
         student,
 
@@ -1824,7 +2233,7 @@ router.put(
     catch (error) {
 
       console.log(
-        'Add Payment Error:',
+        'Add Offline Payment Error:',
         error
       )
 
@@ -1833,6 +2242,7 @@ router.put(
         success: false,
 
         message:
+          error.message ||
           'Server Error',
 
       })
@@ -1867,15 +2277,43 @@ router.post(
       } = req.body
 
 
+      // ======================================
+      // VALIDATION
+      // ======================================
+
+      if (
+        !admissionNumber ||
+        !name ||
+        !phone
+      ) {
+
+        return res.status(400).json({
+
+          success: false,
+
+          message:
+            'Admission Number, Name and Mobile are required.',
+
+        })
+
+      }
+
+
+      // ======================================
+      // FIND STUDENT
+      // ======================================
+
       const student =
         await Student.findOne({
 
-          admissionNumber,
+          admissionNumber:
+            admissionNumber.trim(),
 
-          name,
+          name:
+            name.trim(),
 
           contact:
-            phone,
+            phone.trim(),
 
         })
 
@@ -1893,6 +2331,10 @@ router.post(
 
       }
 
+
+      // ======================================
+      // RESPONSE
+      // ======================================
 
       res.status(200).json({
 
@@ -1948,24 +2390,80 @@ router.post(
       } = req.body
 
 
-      const student =
-        await Student.findOne({
+      const conditions =
+        []
 
-          $or: [
 
-            {
-              email,
-            },
+      // ======================================
+      // EMAIL
+      // ======================================
 
-            {
-              contact:
-                phone,
-            },
+      if (email) {
 
-          ],
+        conditions.push({
+
+          email:
+            email
+              .trim()
+              .toLowerCase(),
 
         })
 
+      }
+
+
+      // ======================================
+      // PHONE
+      // ======================================
+
+      if (phone) {
+
+        conditions.push({
+
+          contact:
+            phone.trim(),
+
+        })
+
+      }
+
+
+      // ======================================
+      // VALIDATION
+      // ======================================
+
+      if (
+        conditions.length === 0
+      ) {
+
+        return res.status(400).json({
+
+          success: false,
+
+          message:
+            'Email or phone is required.',
+
+        })
+
+      }
+
+
+      // ======================================
+      // FIND
+      // ======================================
+
+      const student =
+        await Student.findOne({
+
+          $or:
+            conditions,
+
+        })
+
+
+      // ======================================
+      // RESPONSE
+      // ======================================
 
       res.status(200).json({
 
@@ -2002,7 +2500,7 @@ router.post(
 
 
 // ======================================
-// EXPORT ROUTER
+// EXPORT
 // ======================================
 
 module.exports =
