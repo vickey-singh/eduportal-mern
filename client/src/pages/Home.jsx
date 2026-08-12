@@ -1586,7 +1586,7 @@ function Home() {
 
 
       {/* ==================================================
-          PRINCIPAL MESSAGE
+          Director MESSAGE
       ================================================== */}
 
       <section
@@ -1618,7 +1618,7 @@ function Home() {
 
               <img
                 src={principalImage}
-                alt="Principal"
+                alt="Director"
                 className="
                   principal-image
                   img-fluid
@@ -1634,7 +1634,7 @@ function Home() {
                 "
               >
 
-                Dr. Rajesh Kumar
+                Vikash Upadhyay
 
               </h4>
 
@@ -1645,7 +1645,7 @@ function Home() {
                 "
               >
 
-                Principal
+                Director
 
               </p>
 
@@ -1666,7 +1666,7 @@ function Home() {
                 "
               >
 
-                Principal's Message
+                Director's Message
 
               </h2>
 
