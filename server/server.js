@@ -65,6 +65,9 @@ const noticeRoutes =
 const applicationRoutes =
   require('./routes/applicationRoutes')
 
+const homeSliderRoutes =
+  require('./routes/homeSliderRoutes')
+
 
 // ======================================
 // NOTIFICATION ROUTES
@@ -201,6 +204,11 @@ app.use(
 app.use(
   '/api',
   downloadRoutes
+)
+
+app.use(
+  '/api',
+  homeSliderRoutes
 )
 
 app.use(

@@ -308,3 +308,35 @@
     }
 
 }
+
+/* ======================================
+   DEVELOPER CREDIT
+====================================== */
+
+.footer-credit a {
+  color: #ffffff;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.footer-credit a:hover {
+  color: #ffffff;
+  text-decoration: none;
+}
+
+/* ======================================
+   FOOTER CONTACT ICON ALIGNMENT
+====================================== */
+
+.footer-column ul li {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.footer-column ul li svg {
+  flex-shrink: 0;
+  width: 16px;
+  height: 16px;
+  margin-top: 4px;
+}

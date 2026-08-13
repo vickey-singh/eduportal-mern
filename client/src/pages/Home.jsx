@@ -1,21 +1,21 @@
 import { Link } from 'react-router-dom'
 
-import { useEffect, useState } from 'react'
+import {
+  useEffect,
+  useState,
+} from 'react'
 
 import axios from 'axios'
 
 import CountUp from 'react-countup'
 
-import aboutImage from '../assets/images/about.jpeg'
+import {
+  getActiveHomeSliders,
+} from '../services/homeSliderService'
 
-import principalImage from '../assets/images/principal.jpeg'
-
-import image1 from '../assets/images/1.JPG'
-import image2 from '../assets/images/2.JPG'
-import image3 from '../assets/images/3.JPG'
-
-import video1 from '../assets/images/vid1.MP4'
-import video2 from '../assets/images/vid2.MP4'
+import {
+  getSettings,
+} from '../services/settingsService'
 
 // Import Home CSS
 import '../assets/styles/home.css'
@@ -59,6 +59,10 @@ function Home() {
   // HOME SLIDER
   // ======================================
 
+  const [sliders, setSliders] =
+    useState([])
+
+
   const [activeSlide, setActiveSlide] =
     useState(0)
 
@@ -68,6 +72,22 @@ function Home() {
   // ======================================
 
   const [videoMuted, setVideoMuted] =
+    useState(true)
+
+
+  // ======================================
+  // SETTINGS
+  // ======================================
+
+  const [settings, setSettings] =
+    useState(null)
+
+
+  // ======================================
+  // HOME DATA LOADING
+  // ======================================
+
+  const [homeLoading, setHomeLoading] =
     useState(true)
 
 
@@ -83,20 +103,138 @@ function Home() {
 
 
   // ======================================
+  // FETCH HOME SLIDERS + SETTINGS
+  // ======================================
+
+  useEffect(() => {
+
+    fetchHomeData()
+
+  }, [])
+
+
+  // ======================================
+  // FETCH HOME DATA
+  // ======================================
+
+  const fetchHomeData =
+    async () => {
+
+      try {
+
+        setHomeLoading(true)
+
+
+        const [
+          sliderResponse,
+          settingsResponse,
+        ] = await Promise.all([
+
+          getActiveHomeSliders(),
+
+          getSettings(),
+
+        ])
+
+
+        // ==================================
+        // SLIDERS
+        // ==================================
+
+        setSliders(
+
+          Array.isArray(
+            sliderResponse?.sliders
+          )
+
+            ? sliderResponse.sliders
+
+            : []
+
+        )
+
+
+        // ==================================
+        // SETTINGS
+        // ==================================
+
+        setSettings(
+          settingsResponse || null
+        )
+
+
+        // ==================================
+        // RESET ACTIVE SLIDE
+        // ==================================
+
+        setActiveSlide(0)
+
+      }
+
+      catch (error) {
+
+        console.log(
+          'Fetch Home Data Error:',
+          error
+        )
+
+      }
+
+      finally {
+
+        setHomeLoading(false)
+
+      }
+
+    }
+
+
+  // ======================================
   // AUTO SLIDER
   // ======================================
 
   useEffect(() => {
 
-    // ------------------------------
-    // VIDEO 1
-    // ------------------------------
+    // ==================================
+    // NO SLIDER
+    // ==================================
 
-    if (activeSlide === 3) {
+    if (
+      sliders.length === 0
+    ) {
+
+      return
+
+    }
+
+
+    // ==================================
+    // CURRENT SLIDE
+    // ==================================
+
+    const currentSlider =
+      sliders[activeSlide]
+
+
+    if (!currentSlider) {
+
+      return
+
+    }
+
+
+    // ==================================
+    // VIDEO
+    // ==================================
+
+    if (
+      currentSlider.mediaType ===
+      'video'
+    ) {
 
       const video =
         document.getElementById(
-          'home-video-1'
+          `home-video-${currentSlider._id}`
         )
 
 
@@ -104,54 +242,36 @@ function Home() {
 
         video.currentTime = 0
 
+        video.muted =
+          videoMuted
+
         video.play().catch(() => {})
 
       }
+
 
       return
 
     }
 
 
-    // ------------------------------
-    // VIDEO 2
-    // ------------------------------
-
-    if (activeSlide === 4) {
-
-      const video =
-        document.getElementById(
-          'home-video-2'
-        )
-
-
-      if (video) {
-
-        video.currentTime = 0
-
-        video.play().catch(() => {})
-
-      }
-
-      return
-
-    }
-
-
-    // ------------------------------
-    // IMAGE SLIDES
-    // ------------------------------
+    // ==================================
+    // IMAGE
+    // ==================================
 
     const timer =
       setTimeout(() => {
 
         setActiveSlide(
 
-          activeSlide === 2
+          (previous) =>
 
-            ? 3
+            previous >=
+            sliders.length - 1
 
-            : activeSlide + 1
+              ? 0
+
+              : previous + 1
 
         )
 
@@ -161,7 +281,43 @@ function Home() {
     return () =>
       clearTimeout(timer)
 
-  }, [activeSlide])
+  }, [
+    activeSlide,
+    sliders,
+    videoMuted,
+  ])
+
+
+  // ======================================
+  // KEEP ACTIVE SLIDE VALID
+  // ======================================
+
+  useEffect(() => {
+
+    if (
+      sliders.length === 0
+    ) {
+
+      setActiveSlide(0)
+
+      return
+
+    }
+
+
+    if (
+      activeSlide >=
+      sliders.length
+    ) {
+
+      setActiveSlide(0)
+
+    }
+
+  }, [
+    sliders,
+    activeSlide,
+  ])
 
 
   // ======================================
@@ -220,7 +376,9 @@ function Home() {
 
     }
 
-  }, [importantNotice])
+  }, [
+    importantNotice,
+  ])
 
 
   // ======================================
@@ -239,11 +397,15 @@ function Home() {
 
 
         setNotices(
+
           Array.isArray(
             response.data
           )
+
             ? response.data
+
             : []
+
         )
 
       }
@@ -269,7 +431,7 @@ function Home() {
   // Old /uploads/filename.jpg
   // ======================================
 
-  const getNoticeImageUrl =
+  const getImageUrl =
     (image) => {
 
       if (!image) {
@@ -279,17 +441,20 @@ function Home() {
       }
 
 
-      // ------------------------------
+      // ==================================
       // CLOUDINARY / EXTERNAL URL
-      // ------------------------------
+      // ==================================
 
       if (
+
         image.startsWith(
           'http://'
         ) ||
+
         image.startsWith(
           'https://'
         )
+
       ) {
 
         return image
@@ -297,15 +462,33 @@ function Home() {
       }
 
 
-      // ------------------------------
+      // ==================================
       // OLD LOCAL UPLOAD
-      // ------------------------------
+      // ==================================
 
       return `${API_BASE_URL}${
+
         image.startsWith('/')
+
           ? image
+
           : `/${image}`
+
       }`
+
+    }
+
+
+  // ======================================
+  // NOTICE IMAGE URL
+  // ======================================
+
+  const getNoticeImageUrl =
+    (image) => {
+
+      return getImageUrl(
+        image
+      )
 
     }
 
@@ -395,8 +578,11 @@ function Home() {
       ) {
 
         localStorage.setItem(
+
           'closedNotice',
+
           importantNotice._id
+
         )
 
       }
@@ -407,9 +593,128 @@ function Home() {
     }
 
 
+  // ======================================
+  // PREVIOUS SLIDE
+  // ======================================
+
+  const previousSlide =
+    () => {
+
+      if (
+        sliders.length === 0
+      ) {
+
+        return
+
+      }
+
+
+      setActiveSlide(
+
+        (previous) =>
+
+          previous === 0
+
+            ? sliders.length - 1
+
+            : previous - 1
+
+      )
+
+    }
+
+
+  // ======================================
+  // NEXT SLIDE
+  // ======================================
+
+  const nextSlide =
+    () => {
+
+      if (
+        sliders.length === 0
+      ) {
+
+        return
+
+      }
+
+
+      setActiveSlide(
+
+        (previous) =>
+
+          previous >=
+          sliders.length - 1
+
+            ? 0
+
+            : previous + 1
+
+      )
+
+    }
+
+
+  // ======================================
+  // MANUAL SLIDE
+  // ======================================
+
+  const goToSlide =
+    (index) => {
+
+      setActiveSlide(
+        index
+      )
+
+    }
+
+
+  // ======================================
+  // INSTITUTE NAME
+  // ======================================
+
+  const instituteName =
+    settings?.instituteName ||
+    'Prerna Institute Of Excellence'
+
+
+  // ======================================
+  // SPLIT INSTITUTE NAME
+  // ======================================
+  //
+  // First word:
+  //     hero-edu
+  //
+  // Remaining words:
+  //     hero-portal
+  //
+  // Example:
+  //
+  // Prerna Institute Of Excellence
+  //
+  // Prerna
+  // Institute Of Excellence
+  // ======================================
+
+  const instituteWords =
+    instituteName
+      .trim()
+      .split(/\s+/)
+
+
+  const firstInstituteWord =
+    instituteWords.shift()
+
+
+  const remainingInstituteName =
+    instituteWords.join(' ')
+
+
   return (
 
     <>
+
 
       {/* ==================================================
           IMPORTANT NOTICE AUTO POPUP
@@ -524,104 +829,41 @@ function Home() {
                     className="
                       notice-popup-image
                     "
-                    onError={(event) => {
-
-                      event.currentTarget.style.display =
-                        'none'
-
-                    }}
                   />
 
                 )
               }
+
+
+              {/* CLOSE BUTTON */}
+
+              <button
+                type="button"
+                className="
+                  btn
+                  btn-primary
+                  mt-3
+                "
+                onClick={
+                  closeImportantPopup
+                }
+              >
+
+                Close
+
+              </button>
 
             </div>
 
           </div>
 
         )
+
       }
 
 
       {/* ==================================================
-          NOTICE MARQUEE
-      ================================================== */}
-
-      <section
-        className="
-          notice-marquee
-        "
-      >
-
-        <div
-          className="
-            notice-marquee-track
-          "
-        >
-
-          {
-            notices.length > 0
-
-              ? notices.map(
-                  (notice) => (
-
-                    <button
-                      key={
-                        notice._id
-                      }
-                      type="button"
-                      className="
-                        notice-marquee-item
-                      "
-                      onClick={() =>
-                        openNoticeDetails(
-                          notice
-                        )
-                      }
-                    >
-
-                      {
-                        notice.isPinned
-                          ? '📌'
-                          : notice.isImportant
-                            ? '⚠️'
-                            : '📢'
-                      }
-
-                      {' '}
-
-                      {
-                        notice.title
-                      }
-
-                    </button>
-
-                  )
-                )
-
-              : (
-
-                <span
-                  className="
-                    notice-marquee-item
-                  "
-                >
-
-                  📢 Welcome To Prerna
-                  Institute Of Excellence
-
-                </span>
-
-              )
-          }
-
-        </div>
-
-      </section>
-
-
-      {/* ==================================================
-          NOTICE DETAILS MODAL
+          SELECTED NOTICE DETAILS
       ================================================== */}
 
       {
@@ -645,9 +887,7 @@ function Home() {
               }
             >
 
-              {/* ==================================
-                  CLOSE BUTTON
-              ================================== */}
+              {/* CLOSE */}
 
               <button
                 type="button"
@@ -658,7 +898,7 @@ function Home() {
                   closeNoticeDetails
                 }
                 aria-label="
-                  Close notice details
+                  Close notice
                 "
               >
 
@@ -667,82 +907,9 @@ function Home() {
               </button>
 
 
-              {/* ==================================
-                  NOTICE TYPE
-              ================================== */}
+              {/* TITLE */}
 
-              <div
-                className="
-                  notice-details-badges
-                "
-              >
-
-                {
-                  selectedNotice.isPinned && (
-
-                    <span
-                      className="
-                        notice-detail-badge
-                        pinned
-                      "
-                    >
-
-                      📌 Pinned Notice
-
-                    </span>
-
-                  )
-                }
-
-
-                {
-                  selectedNotice.isImportant && (
-
-                    <span
-                      className="
-                        notice-detail-badge
-                        important
-                      "
-                    >
-
-                      ⚠️ Important Notice
-
-                    </span>
-
-                  )
-                }
-
-
-                {
-                  !selectedNotice.isPinned &&
-                  !selectedNotice.isImportant && (
-
-                    <span
-                      className="
-                        notice-detail-badge
-                        normal
-                      "
-                    >
-
-                      📢 Notice
-
-                    </span>
-
-                  )
-                }
-
-              </div>
-
-
-              {/* ==================================
-                  TITLE
-              ================================== */}
-
-              <h2
-                className="
-                  notice-details-title
-                "
-              >
+              <h2>
 
                 {
                   selectedNotice.title
@@ -751,20 +918,12 @@ function Home() {
               </h2>
 
 
-              {/* ==================================
-                  DATE
-              ================================== */}
+              {/* DATE */}
 
               {
                 selectedNotice.createdAt && (
 
-                  <p
-                    className="
-                      notice-details-date
-                    "
-                  >
-
-                    Published on:{' '}
+                  <small>
 
                     {
                       new Date(
@@ -772,15 +931,13 @@ function Home() {
                       ).toLocaleDateString()
                     }
 
-                  </p>
+                  </small>
 
                 )
               }
 
 
-              {/* ==================================
-                  DESCRIPTION
-              ================================== */}
+              {/* DESCRIPTION */}
 
               <div
                 className="
@@ -795,9 +952,7 @@ function Home() {
               </div>
 
 
-              {/* ==================================
-                  NOTICE IMAGE
-              ================================== */}
+              {/* NOTICE IMAGE */}
 
               {
                 selectedNotice.image && (
@@ -831,12 +986,11 @@ function Home() {
                   </div>
 
                 )
+
               }
 
 
-              {/* ==================================
-                  CLOSE BUTTON
-              ================================== */}
+              {/* CLOSE BUTTON */}
 
               <div
                 className="
@@ -868,6 +1022,7 @@ function Home() {
           </div>
 
         )
+
       }
 
 
@@ -902,19 +1057,26 @@ function Home() {
               "
             >
 
-              Prerna
+              {firstInstituteWord}
 
             </span>{' '}
 
-            <span
-              className="
-                hero-portal
-              "
-            >
+            {
+              remainingInstituteName && (
 
-              Institute Of Excellence
+                <span
+                  className="
+                    hero-portal
+                  "
+                >
 
-            </span>
+                  {remainingInstituteName}
+
+                </span>
+
+              )
+
+            }
 
           </h1>
 
@@ -1006,6 +1168,7 @@ function Home() {
           </section>
 
         )
+
       }
 
 
@@ -1025,265 +1188,339 @@ function Home() {
           "
         >
 
-          {/* IMAGE 1 */}
+          {
+            homeLoading ? (
 
-          <div
-            className={`
-              home-slide
-              ${
-                activeSlide === 0
-                  ? 'active'
-                  : ''
-              }
-            `}
-          >
+              <div
+                className="
+                  home-slide
+                  active
+                  d-flex
+                  align-items-center
+                  justify-content-center
+                "
+              >
 
-            <img
-              src={image1}
-              alt="
-                Prerna Institute Of Excellence
-              "
-            />
+                <div className="text-center">
 
-          </div>
+                  <div
+                    className="
+                      spinner-border
+                      text-primary
+                    "
+                    role="status"
+                  ></div>
 
+                  <p className="mt-3">
 
-          {/* IMAGE 2 */}
+                    Loading...
 
-          <div
-            className={`
-              home-slide
-              ${
-                activeSlide === 1
-                  ? 'active'
-                  : ''
-              }
-            `}
-          >
+                  </p>
 
-            <img
-              src={image2}
-              alt="
-                Prerna Institute Of Excellence
-              "
-            />
+                </div>
 
-          </div>
+              </div>
 
+            ) : sliders.length === 0 ? (
 
-          {/* IMAGE 3 */}
+              <div
+                className="
+                  home-slide
+                  active
+                  d-flex
+                  align-items-center
+                  justify-content-center
+                "
+              >
 
-          <div
-            className={`
-              home-slide
-              ${
-                activeSlide === 2
-                  ? 'active'
-                  : ''
-              }
-            `}
-          >
+                <div className="text-center">
 
-            <img
-              src={image3}
-              alt="
-                Prerna Institute Of Excellence
-              "
-            />
+                  <h4>
 
-          </div>
+                    Welcome to{' '}
 
+                    {
+                      settings?.instituteName ||
+                      'Prerna Institute Of Excellence'
+                    }
 
-          {/* VIDEO 1 */}
+                  </h4>
 
-          <div
-            className={`
-              home-slide
-              ${
-                activeSlide === 3
-                  ? 'active'
-                  : ''
-              }
-            `}
-          >
+                </div>
 
-            <video
-              id="home-video-1"
-              muted={videoMuted}
-              playsInline
-              preload="metadata"
-              onEnded={() =>
-                setActiveSlide(4)
-              }
-            >
+              </div>
 
-              <source
-                src={video1}
-                type="video/mp4"
-              />
+            ) : (
 
-            </video>
+              sliders.map(
 
+                (slider, index) => (
 
-            <button
-              type="button"
-              className="
-                video-sound-button
-              "
-              onClick={() =>
-                setVideoMuted(
-                  !videoMuted
-                )
-              }
-            >
-
-              {
-                videoMuted
-                  ? '🔇'
-                  : '🔊'
-              }
-
-            </button>
-
-          </div>
-
-
-          {/* VIDEO 2 */}
-
-          <div
-            className={`
-              home-slide
-              ${
-                activeSlide === 4
-                  ? 'active'
-                  : ''
-              }
-            `}
-          >
-
-            <video
-              id="home-video-2"
-              muted={videoMuted}
-              playsInline
-              preload="metadata"
-              onEnded={() =>
-                setActiveSlide(0)
-              }
-            >
-
-              <source
-                src={video2}
-                type="video/mp4"
-              />
-
-            </video>
-
-
-            <button
-              type="button"
-              className="
-                video-sound-button
-              "
-              onClick={() =>
-                setVideoMuted(
-                  !videoMuted
-                )
-              }
-            >
-
-              {
-                videoMuted
-                  ? '🔇'
-                  : '🔊'
-              }
-
-            </button>
-
-          </div>
-
-
-          {/* PREVIOUS */}
-
-          <button
-            type="button"
-            className="
-              home-slider-prev
-            "
-            onClick={() =>
-              setActiveSlide(
-
-                activeSlide === 0
-                  ? 4
-                  : activeSlide - 1
-
-              )
-            }
-          >
-
-            ❮
-
-          </button>
-
-
-          {/* NEXT */}
-
-          <button
-            type="button"
-            className="
-              home-slider-next
-            "
-            onClick={() =>
-              setActiveSlide(
-
-                activeSlide === 4
-                  ? 0
-                  : activeSlide + 1
-
-              )
-            }
-          >
-
-            ❯
-
-          </button>
-
-
-          {/* INDICATORS */}
-
-          <div
-            className="
-              home-slider-indicators
-            "
-          >
-
-            {
-              [0, 1, 2, 3, 4]
-                .map(
-                  (index) => (
-
-                    <button
-                      key={index}
-                      type="button"
-                      className={
+                  <div
+                    key={
+                      slider._id
+                    }
+                    className={`
+                      home-slide
+                      ${
                         activeSlide === index
                           ? 'active'
                           : ''
                       }
-                      onClick={() =>
-                        setActiveSlide(
-                          index
-                        )
-                      }
-                      aria-label={
-                        `Slide ${index + 1}`
-                      }
-                    />
+                    `}
+                  >
+
+                    {/* ==============================
+                        IMAGE
+                    ============================== */}
+
+                    {
+                      slider.mediaType ===
+                      'image' && (
+
+                        <img
+                          src={
+                            getImageUrl(
+                              slider.mediaUrl
+                            )
+                          }
+                          alt={
+                            slider.title ||
+                            'Prerna Institute Of Excellence'
+                          }
+                        />
+
+                      )
+                    }
+
+
+                    {/* ==============================
+                        VIDEO
+                    ============================== */}
+
+                    {
+                      slider.mediaType ===
+                      'video' && (
+
+                        <>
+
+                          <video
+                            id={
+                              `home-video-${slider._id}`
+                            }
+                            muted={
+                              videoMuted
+                            }
+                            playsInline
+                            preload="metadata"
+                            onEnded={
+                              nextSlide
+                            }
+                          >
+
+                            <source
+                              src={
+                                getImageUrl(
+                                  slider.mediaUrl
+                                )
+                              }
+                              type="video/mp4"
+                            />
+
+                          </video>
+
+
+                          <button
+                            type="button"
+                            className="
+                              video-sound-button
+                            "
+                            onClick={() =>
+                              setVideoMuted(
+                                (previous) =>
+                                  !previous
+                              )
+                            }
+                          >
+
+                            {
+                              videoMuted
+                                ? '🔇'
+                                : '🔊'
+                            }
+
+                          </button>
+
+                        </>
+
+                      )
+                    }
+
+
+                    {/* ==============================
+                        OPTIONAL TITLE
+                    ============================== */}
+
+                    {
+                      (
+                        slider.title ||
+                        slider.description
+                      ) && (
+
+                        <div
+                          className="
+                            home-slide-content
+                          "
+                        >
+
+                          {
+                            slider.title && (
+
+                              <h3>
+
+                                {
+                                  slider.title
+                                }
+
+                              </h3>
+
+                            )
+                          }
+
+
+                          {
+                            slider.description && (
+
+                              <p>
+
+                                {
+                                  slider.description
+                                }
+
+                              </p>
+
+                            )
+                          }
+
+                        </div>
+
+                      )
+                    }
+
+                  </div>
+
+                )
+
+              )
+
+            )
+          }
+
+
+          {/* ==================================================
+              PREVIOUS
+          ================================================== */}
+
+          {
+            sliders.length > 1 && (
+
+              <button
+                type="button"
+                className="
+                  home-slider-prev
+                "
+                onClick={
+                  previousSlide
+                }
+              >
+
+                ❮
+
+              </button>
+
+            )
+
+          }
+
+
+          {/* ==================================================
+              NEXT
+          ================================================== */}
+
+          {
+            sliders.length > 1 && (
+
+              <button
+                type="button"
+                className="
+                  home-slider-next
+                "
+                onClick={
+                  nextSlide
+                }
+              >
+
+                ❯
+
+              </button>
+
+            )
+
+          }
+
+
+          {/* ==================================================
+              INDICATORS
+          ================================================== */}
+
+          {
+            sliders.length > 1 && (
+
+              <div
+                className="
+                  home-slider-indicators
+                "
+              >
+
+                {
+                  sliders.map(
+
+                    (slider, index) => (
+
+                      <button
+                        key={
+                          slider._id
+                        }
+                        type="button"
+                        className={
+
+                          activeSlide === index
+
+                            ? 'active'
+
+                            : ''
+
+                        }
+                        onClick={() =>
+                          goToSlide(
+                            index
+                          )
+                        }
+                        aria-label={
+                          `Slide ${index + 1}`
+                        }
+                      />
+
+                    )
 
                   )
-                )
-            }
+                }
 
-          </div>
+              </div>
+
+            )
+
+          }
 
         </div>
 
@@ -1321,17 +1558,44 @@ function Home() {
               "
             >
 
-              <img
-                src={aboutImage}
-                alt="
-                  About Prerna Institute
-                "
-                className="
-                  img-fluid
-                  rounded
-                  shadow
-                "
-              />
+              {
+                settings?.aboutImage ? (
+
+                  <img
+                    src={
+                      getImageUrl(
+                        settings.aboutImage
+                      )
+                    }
+                    alt="
+                      About Prerna Institute
+                    "
+                    className="
+                      img-fluid
+                      rounded
+                      shadow
+                    "
+                  />
+
+                ) : (
+
+                  <div
+                    className="
+                      text-center
+                      p-5
+                      bg-light
+                      rounded
+                    "
+                  >
+
+                    About image not
+                    available.
+
+                  </div>
+
+                )
+
+              }
 
             </div>
 
@@ -1586,7 +1850,7 @@ function Home() {
 
 
       {/* ==================================================
-          Director MESSAGE
+          DIRECTOR MESSAGE
       ================================================== */}
 
       <section
@@ -1616,15 +1880,43 @@ function Home() {
               "
             >
 
-              <img
-                src={principalImage}
-                alt="Director"
-                className="
-                  principal-image
-                  img-fluid
-                  shadow
-                "
-              />
+              {
+                settings?.directorImage ? (
+
+                  <img
+                    src={
+                      getImageUrl(
+                        settings.directorImage
+                      )
+                    }
+                    alt={
+                      settings?.directorName ||
+                      'Director'
+                    }
+                    className="
+                      principal-image
+                      img-fluid
+                      shadow
+                    "
+                  />
+
+                ) : (
+
+                  <div
+                    className="
+                      text-muted
+                      p-4
+                    "
+                  >
+
+                    Director image
+                    not available.
+
+                  </div>
+
+                )
+
+              }
 
 
               <h4
@@ -1634,7 +1926,10 @@ function Home() {
                 "
               >
 
-                Vikash Upadhyay
+                {
+                  settings?.directorName ||
+                  'Director'
+                }
 
               </h4>
 
@@ -1645,7 +1940,10 @@ function Home() {
                 "
               >
 
-                Director
+                {
+                  settings?.directorDesignation ||
+                  'Director'
+                }
 
               </p>
 
@@ -1981,6 +2279,7 @@ function Home() {
         </div>
 
       </section>
+
 
     </>
 

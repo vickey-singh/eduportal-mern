@@ -31,6 +31,9 @@ const sendAdmissionEmail =
 const sendAdminNotification =
   require('../utils/sendAdminNotification')
 
+const createNotification =
+  require('../utils/createNotification')
+
 const upload =
   require('../middleware/upload')
 
@@ -351,7 +354,7 @@ router.post(
 
       // ==================================
       // DUPLICATE PAYMENT CHECK
-      // ==================================
+      // ======================================
 
       const existingPayment =
         await Payment.findOne({
@@ -389,7 +392,7 @@ router.post(
 
       // ==================================
       // CHECK EXISTING STUDENT
-      // ==================================
+      // ======================================
 
       const alreadyExistingStudent =
         await Student.findOne({
@@ -429,7 +432,7 @@ router.post(
 
       // ==================================
       // FIND COURSE
-      // ==================================
+      // ======================================
 
       const course =
         await Course.findOne({
@@ -456,7 +459,7 @@ router.post(
 
       // ==================================
       // COURSE FEES
-      // ==================================
+      // ======================================
 
       const totalFee =
         Number(
@@ -472,7 +475,7 @@ router.post(
 
       // ==================================
       // REGISTRATION PAYMENT
-      // ==================================
+      // ======================================
 
       const amountPaid =
         Number(
@@ -500,7 +503,7 @@ router.post(
       // ==================================
       // PAYMENT AMOUNT MUST MATCH
       // REGISTRATION FEE
-      // ==================================
+      // ======================================
 
       if (
         amountPaid !==
@@ -519,52 +522,93 @@ router.post(
       }
 
 
-      // ==================================
+      // ======================================
       // ADMISSION NUMBER
       // ======================================
+      //
+      // New online admission format:
+      //
+      // PIE001
+      // PIE002
+      // PIE003
+      // PIE004
+      //
+      // Existing admission numbers are not changed.
+      // ======================================
 
-      const lastStudent =
-        await Student.findOne()
-          .sort({
-            createdAt: -1,
-          })
+      const existingStudents =
+        await Student.find({
+
+          admissionNumber: {
+
+            $regex:
+              /^PIE\d+$/i,
+
+          },
+
+        })
+
+          .select(
+            'admissionNumber'
+          )
+
+          .lean()
 
 
-      let admissionNumber
+      // ======================================
+      // FIND HIGHEST PIE NUMBER
+      // ======================================
+
+      let highestAdmissionNumber =
+        0
 
 
-      if (!lastStudent) {
+      for (
+        const student of existingStudents
+      ) {
 
-        admissionNumber =
-          'ADM0001'
-
-      }
-
-      else {
-
-        const lastNumber =
+        const number =
           parseInt(
 
             String(
-              lastStudent.admissionNumber
+              student.admissionNumber
             )
               .replace(
-                'ADM',
+                /^PIE/i,
                 ''
               )
 
           ) || 0
 
 
-        admissionNumber =
-          `ADM${String(
-            lastNumber + 1
-          ).padStart(
-            4,
-            '0'
-          )}`
+        if (
+          number >
+          highestAdmissionNumber
+        ) {
+
+          highestAdmissionNumber =
+            number
+
+        }
 
       }
+
+
+      // ======================================
+      // NEXT ADMISSION NUMBER
+      // ======================================
+
+      const nextAdmissionNumber =
+        highestAdmissionNumber + 1
+
+
+      const admissionNumber =
+        `PIE${String(
+          nextAdmissionNumber
+        ).padStart(
+          3,
+          '0'
+        )}`
 
 
       // ======================================
@@ -907,6 +951,53 @@ router.post(
 
 
       await payment.save()
+
+
+      // ======================================
+      // CREATE ADMIN NOTIFICATION
+      // ======================================
+      //
+      // This notification appears in the
+      // admin notification bell.
+      //
+      // This is for a NEW ONLINE ADMISSION.
+      // ======================================
+
+      try {
+
+        await createNotification({
+
+          type:
+            'Admission',
+
+          title:
+            'New Online Admission',
+
+          message:
+            `${student.name} has taken admission for ${student.course}`,
+
+          link:
+            '/admin/students',
+
+          relatedId:
+            student._id.toString(),
+
+        })
+
+        console.log(
+          'New Admission Notification Created ✅'
+        )
+
+      }
+
+      catch (notificationError) {
+
+        console.error(
+          'Admission Notification Error:',
+          notificationError
+        )
+
+      }
 
 
       // ==================================
@@ -1316,7 +1407,7 @@ router.post(
 
       // ==================================
       // DUPLICATE PAYMENT CHECK
-      // ==================================
+      // ======================================
 
       const duplicatePayment =
         await Payment.findOne({
@@ -1654,7 +1745,7 @@ router.post(
 
       // ==================================
       // INSTALLMENT
-      // ==================================
+      // ======================================
 
       else {
 
@@ -1945,6 +2036,54 @@ router.post(
 
 
       await payment.save()
+
+
+      // ======================================
+      // CREATE ADMIN NOTIFICATION
+      // ======================================
+      //
+      // This notification appears in the
+      // admin notification bell.
+      //
+      // This is for an EXISTING STUDENT
+      // course-fee payment.
+      // ======================================
+
+      try {
+
+        await createNotification({
+
+          type:
+            'Payment',
+
+          title:
+            'Course Fee Payment Received',
+
+          message:
+            `${student.name} has made a course fee payment of ₹${amount}.`,
+
+          link:
+            '/admin/payments',
+
+          relatedId:
+            payment._id.toString(),
+
+        })
+
+        console.log(
+          'Course Fee Payment Notification Created ✅'
+        )
+
+      }
+
+      catch (notificationError) {
+
+        console.error(
+          'Payment Notification Error:',
+          notificationError
+        )
+
+      }
 
 
       // ==================================

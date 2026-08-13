@@ -1,11 +1,13 @@
-import { useEffect, useState }
-  from 'react'
+import {
+  useEffect,
+  useState,
+} from 'react'
 
 import axios
-  from 'axios'
+from 'axios'
 
 import { Link }
-  from 'react-router-dom'
+from 'react-router-dom'
 
 import {
   FaInstagram,
@@ -17,46 +19,109 @@ import {
   FaClock,
 } from 'react-icons/fa'
 
-import { FaXTwitter } from 'react-icons/fa6'
+import { FaXTwitter }
+from 'react-icons/fa6'
 
 import '../assets/styles/footer.css'
 
+
+// ======================================
+// API BASE URL
+// ======================================
+
+const API_BASE_URL =
+  'https://eduportal-backend-m5t1.onrender.com'
+
+
 function Footer() {
 
-  const [settings,
-  setSettings]
+  // ======================================
+  // SETTINGS
+  // ======================================
 
-  = useState(null)
+  const [settings,
+    setSettings] =
+    useState(null)
+
+
+  // ======================================
+  // FETCH SETTINGS
+  // ======================================
 
   useEffect(() => {
 
-  fetchSettings()
+    fetchSettings()
 
-}, [])
+  }, [])
 
-const fetchSettings =
-  async () => {
 
-    try {
+  // ======================================
+  // GET SETTINGS
+  // ======================================
 
-      const response =
-        await axios.get(
-          'https://eduportal-backend-m5t1.onrender.com/api/settings'
+  const fetchSettings =
+    async () => {
+
+      try {
+
+        const response =
+          await axios.get(
+            `${API_BASE_URL}/api/settings`
+          )
+
+
+        setSettings(
+          response.data
         )
 
-      setSettings(
-        response.data
-      )
+      }
+
+      catch (error) {
+
+        console.log(
+          'Footer Settings Error:',
+          error
+        )
+
+      }
 
     }
 
-    catch (error) {
 
-      console.log(error)
+  // ======================================
+  // INSTITUTE NAME
+  // ======================================
 
-    }
+  const instituteName =
+    settings?.instituteName ||
+    'Prerna Institute Of Excellence'
 
-  }
+
+  // ======================================
+  // SPLIT INSTITUTE NAME
+  // ======================================
+  //
+  // Example:
+  //
+  // Prerna Institute Of Excellence
+  //
+  // Prerna
+  // Institute Of Excellence
+  // ======================================
+
+  const instituteWords =
+    instituteName
+      .trim()
+      .split(/\s+/)
+
+
+  const firstInstituteWord =
+    instituteWords.shift()
+
+
+  const remainingInstituteName =
+    instituteWords.join(' ')
+
 
   return (
 
@@ -66,23 +131,55 @@ const fetchSettings =
 
         <div className="footer-grid">
 
-          {/* About */}
+
+          {/* ==================================================
+              ABOUT
+          ================================================== */}
 
           <div className="footer-column">
 
             <h2 className="footer-logo">
 
-              <span className="footer-edu">
-                Prerna 
+              <span
+                className="
+                  footer-edu
+                "
+              >
+
+                {
+                  firstInstituteWord
+                }
+
               </span>{' '}
 
-              <span className="footer-portal">
-                Institute
-              </span>
+
+              {
+                remainingInstituteName && (
+
+                  <span
+                    className="
+                      footer-portal
+                    "
+                  >
+
+                    {
+                      remainingInstituteName
+                    }
+
+                  </span>
+
+                )
+
+              }
 
             </h2>
 
-            <p className="footer-description">
+
+            <p
+              className="
+                footer-description
+              "
+            >
 
               Empowering students through
               quality education, innovation,
@@ -95,7 +192,10 @@ const fetchSettings =
 
           </div>
 
-          {/* Downloads */}
+
+          {/* ==================================================
+              DOWNLOADS
+          ================================================== */}
 
           <div className="footer-column">
 
@@ -103,53 +203,68 @@ const fetchSettings =
               Downloads
             </h4>
 
+
             <ul>
 
               <li>
 
-                <Link to="/downloads">
-              
+                <Link
+                  to="/downloads"
+                >
+
                   Study Material
-              
+
                 </Link>
-              
+
               </li>
-              
+
+
               <li>
-              
-                <Link to="/downloads">
-              
+
+                <Link
+                  to="/downloads"
+                >
+
                   Syllabus
-              
+
                 </Link>
-              
+
               </li>
-              
+
+
               <li>
-              
-                <Link to="/downloads">
-              
+
+                <Link
+                  to="/downloads"
+                >
+
                   Resources
-              
+
                 </Link>
-              
+
               </li>
-              
+
+
               <li>
-              
-                <Link to="/downloads">
-              
+
+                <Link
+                  to="/downloads"
+                >
+
                   Assignment
-              
+
                 </Link>
-              
+
               </li>
 
             </ul>
 
           </div>
 
-          {/* Contact */}
+
+          {/* ==================================================
+              CONTACT
+          ================================================== */}
 
           <div className="footer-column">
 
@@ -157,31 +272,44 @@ const fetchSettings =
               Contact Us
             </h4>
 
+
             <ul>
 
               <li>
 
                 <FaMapMarkerAlt />
 
-                {settings?.address}
+                {
+                  settings?.address ||
+                  ''
+                }
 
               </li>
+
 
               <li>
 
                 <FaPhoneAlt />
 
-                {settings?.phone}
+                {
+                  settings?.phone ||
+                  ''
+                }
 
               </li>
+
 
               <li>
 
                 <FaEnvelope />
 
-                {settings?.email}
+                {
+                  settings?.email ||
+                  ''
+                }
 
               </li>
+
 
               <li>
 
@@ -196,13 +324,19 @@ const fetchSettings =
 
           </div>
 
-          {/* Why Prerna Institute Of Excellence */}
+
+          {/* ==================================================
+              WHY INSTITUTE
+          ================================================== */}
 
           <div className="footer-column">
 
             <h4>
-              Why Prerna Institute Of Excellence?
+
+              Why {instituteName}?
+
             </h4>
+
 
             <ul>
 
@@ -210,13 +344,16 @@ const fetchSettings =
                 ✓ Experienced Faculty
               </li>
 
+
               <li>
                 ✓ Modern Infrastructure
               </li>
 
+
               <li>
                 ✓ Student-Centric Learning
               </li>
+
 
               <li>
                 ✓ Career Focused Education
@@ -228,19 +365,42 @@ const fetchSettings =
 
         </div>
 
-        {/* Divider */}
 
-        <div className="footer-divider"></div>
+        {/* ==================================================
+            DIVIDER
+        ================================================== */}
 
-        {/* Social */}
+        <div
+          className="
+            footer-divider
+          "
+        ></div>
 
-        <div className="footer-social">
+
+        {/* ==================================================
+            SOCIAL
+        ================================================== */}
+
+        <div
+          className="
+            footer-social
+          "
+        >
 
           <h5>
             Follow Our Journey
           </h5>
 
-          <div className="social-icons">
+
+          <div
+            className="
+              social-icons
+            "
+          >
+
+            {/* ==========================================
+                INSTAGRAM
+            ========================================== */}
 
             <a
               href={
@@ -249,9 +409,17 @@ const fetchSettings =
               }
               target="_blank"
               rel="noreferrer"
+              aria-label="Instagram"
             >
+
               <FaInstagram />
+
             </a>
+
+
+            {/* ==========================================
+                YOUTUBE
+            ========================================== */}
 
             <a
               href={
@@ -260,9 +428,17 @@ const fetchSettings =
               }
               target="_blank"
               rel="noreferrer"
+              aria-label="YouTube"
             >
+
               <FaYoutube />
+
             </a>
+
+
+            {/* ==========================================
+                X / TWITTER
+            ========================================== */}
 
             <a
               href={
@@ -271,9 +447,17 @@ const fetchSettings =
               }
               target="_blank"
               rel="noreferrer"
+              aria-label="X / Twitter"
             >
+
               <FaXTwitter />
+
             </a>
+
+
+            {/* ==========================================
+                LINKEDIN
+            ========================================== */}
 
             <a
               href={
@@ -282,43 +466,81 @@ const fetchSettings =
               }
               target="_blank"
               rel="noreferrer"
+              aria-label="LinkedIn"
             >
+
               <FaLinkedin />
+
             </a>
 
           </div>
 
         </div>
 
-        {/* Copyright */}
 
-        <div className="footer-bottom">
+        {/* ==================================================
+            COPYRIGHT
+        ================================================== */}
+
+        <div
+          className="
+            footer-bottom
+          "
+        >
+
+          {/* COPYRIGHT */}
 
           <p>
 
             © 2026
 
             <span>
-              {' '}Prerna Institute Of Excellence
+
+              {' '}
+              {instituteName}
+
             </span>
 
             . All Rights Reserved.
 
           </p>
 
-          <p className="footer-tagline">
 
-            Empowering Students For A Better Tomorrow.
+          {/* TAGLINE */}
+
+          <p
+            className="
+              footer-tagline
+            "
+          >
+
+            Empowering Students For
+            A Better Tomorrow.
 
           </p>
 
-          <p className="footer-credit">
 
-            Designed by
+          {/* DEVELOPER CREDIT */}
 
-            <span>
-              {' '}Vickey Singh
-            </span>
+          <p
+            className="
+              footer-credit
+            "
+          >
+
+            Designed & Developed by{' '}
+
+            <a
+              href="
+                https://vickey-singh.netlify.app/
+              "
+              target="_blank"
+              rel="noreferrer"
+            >
+
+              Vickey Singh
+
+            </a>
 
           </p>
 
@@ -331,5 +553,6 @@ const fetchSettings =
   )
 
 }
+
 
 export default Footer

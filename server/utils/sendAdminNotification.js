@@ -1,13 +1,14 @@
-const sendEmail = require('./sendEmail')
-
-const Setting = require('../models/Setting')
+const sendEmail =
+  require('./sendEmail')
 
 
 // ======================================
 // PAYMENT PLAN LABEL
 // ======================================
 
-const getPaymentPlanLabel = (paymentPlan) => {
+const getPaymentPlanLabel = (
+  paymentPlan
+) => {
 
   switch (paymentPlan) {
 
@@ -74,20 +75,18 @@ const sendAdminNotification = async ({
   try {
 
     // ======================================
-    // GET INSTITUTE SETTINGS
+    // ADMIN / TEACHER EMAIL
     // ======================================
-
-    const settings =
-      await Setting.findOne()
-
-
-    // ======================================
-    // TEACHER / INSTITUTE EMAIL
+    //
+    // Admin email is taken from .env
+    //
+    // ADMIN_EMAIL =
+    // upadhyayvikashstudent36@gmail.com
+    //
     // ======================================
 
     const adminEmail =
-      settings?.email ||
-      process.env.SENDER_EMAIL
+      process.env.ADMIN_EMAIL
 
 
     // ======================================

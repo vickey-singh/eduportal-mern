@@ -1,6 +1,9 @@
 import Settings
   from '../pages/admin/Settings'
 
+import HomePage
+  from '../pages/admin/HomePage'
+
 import Downloads
   from '../pages/admin/Downloads'
 
@@ -137,6 +140,12 @@ function AppRoutes() {
           <Route
             path="dashboard"
             element={<AdminDashboard />}
+          />
+
+          {/* Home Page */}  
+          <Route
+            path="home-page"
+            element={<HomePage />}
           />
 
           {/* Students */}

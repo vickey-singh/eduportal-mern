@@ -33,6 +33,8 @@ import {
   FaCheckCircle,
   FaTrash,
   FaTimes,
+  FaHome,
+
 } from 'react-icons/fa'
 
 import {
@@ -590,6 +592,28 @@ function AdminLayout() {
 
               </NavLink>
 
+            </li>
+
+            {/* HOME PAGE */}
+
+            <li>
+            
+              <NavLink
+                to="/admin/home-page"
+                onClick={closeSidebar}
+                className={({ isActive }) =>
+                  isActive
+                    ? 'admin-link active-admin-link'
+                    : 'admin-link'
+                }
+              >
+            
+                <FaHome />
+            
+                Home Page
+            
+              </NavLink>
+            
             </li>
 
 

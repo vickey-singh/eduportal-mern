@@ -1,24 +1,50 @@
-import { useEffect, useRef, useState } from 'react'
+import {
+  useEffect,
+  useRef,
+  useState,
+} from 'react'
 
 import {
   Link,
   NavLink,
 } from 'react-router-dom'
 
+import axios
+from 'axios'
+
 // Import Navbar CSS
 import '../assets/styles/navbar.css'
 
-// Import Logo Image
-import logo from '../assets/images/logo.jpeg'
+// Default Logo
+import defaultLogo
+from '../assets/images/logo.jpeg'
+
+
+// ======================================
+// API BASE URL
+// ======================================
+
+const API_BASE_URL =
+  'https://eduportal-backend-m5t1.onrender.com'
 
 
 function Navbar() {
 
   // ======================================
+  // SETTINGS
+  // ======================================
+
+  const [settings,
+    setSettings] =
+    useState(null)
+
+
+  // ======================================
   // ADMISSION DROPDOWN STATE
   // ======================================
 
-  const [studentMenu, setStudentMenu] =
+  const [studentMenu,
+    setStudentMenu] =
     useState(false)
 
 
@@ -28,6 +54,94 @@ function Navbar() {
 
   const admissionRef =
     useRef(null)
+
+
+  // ======================================
+  // FETCH SETTINGS
+  // ======================================
+
+  useEffect(() => {
+
+    fetchSettings()
+
+  }, [])
+
+
+  // ======================================
+  // GET SETTINGS
+  // ======================================
+
+  const fetchSettings =
+    async () => {
+
+      try {
+
+        const response =
+          await axios.get(
+            `${API_BASE_URL}/api/settings`
+          )
+
+
+        setSettings(
+          response.data
+        )
+
+      }
+
+      catch (error) {
+
+        console.log(
+          'Navbar Settings Error:',
+          error
+        )
+
+      }
+
+    }
+
+
+  // ======================================
+  // INSTITUTE NAME
+  // ======================================
+
+  const instituteName =
+    settings?.instituteName ||
+    'Prerna Institute Of Excellence'
+
+
+  // ======================================
+  // SPLIT INSTITUTE NAME
+  // ======================================
+  //
+  // Example:
+  //
+  // Prerna Institute Of Excellence
+  //
+  // Prerna
+  // Institute Of Excellence
+  // ======================================
+
+  const instituteWords =
+    instituteName
+      .trim()
+      .split(/\s+/)
+
+
+  const firstInstituteWord =
+    instituteWords.shift()
+
+
+  const remainingInstituteName =
+    instituteWords.join(' ')
+
+
+  // ======================================
+  // LOGO
+  // ======================================
+
+  const logo =
+    settings?.logo ||
+    defaultLogo
 
 
   // ======================================
@@ -41,12 +155,15 @@ function Navbar() {
         'navbarNav'
       )
 
+
     if (
       navbar &&
       navbar.classList.contains('show')
     ) {
 
-      navbar.classList.remove('show')
+      navbar.classList.remove(
+        'show'
+      )
 
     }
 
@@ -73,6 +190,7 @@ function Navbar() {
   ) => {
 
     event.stopPropagation()
+
 
     setStudentMenu(
       (previous) => !previous
@@ -103,7 +221,10 @@ function Navbar() {
     const handleOutsideClick =
       (event) => {
 
-        // Desktop + Mobile
+        // ==================================
+        // DESKTOP + MOBILE DROPDOWN
+        // ==================================
+
         if (
           admissionRef.current &&
           !admissionRef.current.contains(
@@ -115,7 +236,11 @@ function Navbar() {
 
         }
 
-        // Mobile Navbar
+
+        // ==================================
+        // MOBILE NAVBAR
+        // ==================================
+
         if (
           window.innerWidth < 992
         ) {
@@ -124,6 +249,7 @@ function Navbar() {
             document.getElementById(
               'navbarNav'
             )
+
 
           const toggler =
             document.querySelector(
@@ -275,6 +401,7 @@ function Navbar() {
   return (
 
     <>
+
       {/* ====================================== */}
       {/* NAVBAR START */}
       {/* ====================================== */}
@@ -294,7 +421,7 @@ function Navbar() {
 
 
           {/* ================================== */}
-          {/* LOGO */}
+          {/* LOGO + INSTITUTE NAME */}
           {/* ================================== */}
 
           <Link
@@ -311,31 +438,95 @@ function Navbar() {
 
             <img
               src={logo}
-              alt="Logo"
+              alt={
+                instituteName
+              }
               width="40"
               height="40"
               className="
                 me-2
                 rounded-circle
               "
+              style={{
+                objectFit: 'cover',
+              }}
             />
 
 
-            <span className="fw-bold brand-text">
+            <span
+              className="
+                fw-bold
+                brand-text
+              "
+            >
 
-              <span className="edu">
-                Prerna
+              <span
+                className="
+                  edu
+                "
+              >
+
+                {
+                  firstInstituteWord
+                }
+
               </span>
 
-              {' '}
 
-              <span className="portal">
+              {
+                remainingInstituteName && (
 
-                Institute
-                <br />
-                Of Excellence
+                  <>
+                    {' '}
 
-              </span>
+                    <span
+                      className="
+                        portal
+                      "
+                    >
+
+                      {
+                        remainingInstituteName
+                          .split(' ')
+                          .map(
+                            (word, index) => (
+
+                              <span
+                                key={index}
+                              >
+
+                                {word}
+
+                                {
+                                  index <
+                                  remainingInstituteName
+                                    .split(' ')
+                                    .length - 1
+                                    ? ' '
+                                    : ''
+                                }
+
+                                {
+                                  word ===
+                                  'Institute' && (
+                                    <br />
+                                  )
+                                }
+
+                              </span>
+
+                            )
+                          )
+
+                      }
+
+                    </span>
+
+                  </>
+
+                )
+
+              }
 
             </span>
 
@@ -347,13 +538,17 @@ function Navbar() {
           {/* ================================== */}
 
           <button
-            className="navbar-toggler"
+            className="
+              navbar-toggler
+            "
             type="button"
             data-bs-toggle="collapse"
             data-bs-target="#navbarNav"
             aria-controls="navbarNav"
             aria-expanded="false"
-            aria-label="Toggle navigation"
+            aria-label="
+              Toggle navigation
+            "
             onClick={() => {
 
               closeStudentMenu()
@@ -361,7 +556,11 @@ function Navbar() {
             }}
           >
 
-            <span className="navbar-toggler-icon"></span>
+            <span
+              className="
+                navbar-toggler-icon
+              "
+            ></span>
 
           </button>
 
@@ -378,18 +577,29 @@ function Navbar() {
             id="navbarNav"
           >
 
-            <ul className="navbar-nav ms-auto">
+            <ul
+              className="
+                navbar-nav
+                ms-auto
+              "
+            >
 
 
               {/* ================================== */}
               {/* HOME */}
               {/* ================================== */}
 
-              <li className="nav-item">
+              <li
+                className="
+                  nav-item
+                "
+              >
 
                 <NavLink
                   to="/"
-                  className={({ isActive }) =>
+                  className={({
+                    isActive,
+                  }) =>
                     isActive
                       ? 'nav-link active-nav'
                       : 'nav-link'
@@ -410,11 +620,17 @@ function Navbar() {
               {/* SERVICES */}
               {/* ================================== */}
 
-              <li className="nav-item">
+              <li
+                className="
+                  nav-item
+                "
+              >
 
                 <NavLink
                   to="/services"
-                  className={({ isActive }) =>
+                  className={({
+                    isActive,
+                  }) =>
                     isActive
                       ? 'nav-link active-nav'
                       : 'nav-link'
@@ -435,11 +651,17 @@ function Navbar() {
               {/* ACHIEVEMENTS */}
               {/* ================================== */}
 
-              <li className="nav-item">
+              <li
+                className="
+                  nav-item
+                "
+              >
 
                 <NavLink
                   to="/achievements"
-                  className={({ isActive }) =>
+                  className={({
+                    isActive,
+                  }) =>
                     isActive
                       ? 'nav-link active-nav'
                       : 'nav-link'
@@ -460,11 +682,17 @@ function Navbar() {
               {/* FACULTY */}
               {/* ================================== */}
 
-              <li className="nav-item">
+              <li
+                className="
+                  nav-item
+                "
+              >
 
                 <NavLink
                   to="/faculty"
-                  className={({ isActive }) =>
+                  className={({
+                    isActive,
+                  }) =>
                     isActive
                       ? 'nav-link active-nav'
                       : 'nav-link'
@@ -485,11 +713,17 @@ function Navbar() {
               {/* GALLERY */}
               {/* ================================== */}
 
-              <li className="nav-item">
+              <li
+                className="
+                  nav-item
+                "
+              >
 
                 <NavLink
                   to="/gallery"
-                  className={({ isActive }) =>
+                  className={({
+                    isActive,
+                  }) =>
                     isActive
                       ? 'nav-link active-nav'
                       : 'nav-link'
@@ -541,8 +775,14 @@ function Navbar() {
 
                   Admission
 
-                  <span className="ms-1">
+                  <span
+                    className="
+                      ms-1
+                    "
+                  >
+
                     ▾
+
                   </span>
 
                 </button>
@@ -562,7 +802,9 @@ function Navbar() {
 
                   <NavLink
                     to="/apply"
-                    className={({ isActive }) =>
+                    className={({
+                      isActive,
+                    }) =>
                       isActive
                         ? `
                           admission-dropdown-item
@@ -586,7 +828,9 @@ function Navbar() {
 
                   <NavLink
                     to="/existing-student"
-                    className={({ isActive }) =>
+                    className={({
+                      isActive,
+                    }) =>
                       isActive
                         ? `
                           admission-dropdown-item
@@ -614,11 +858,17 @@ function Navbar() {
               {/* TESTIMONIALS */}
               {/* ================================== */}
 
-              <li className="nav-item">
+              <li
+                className="
+                  nav-item
+                "
+              >
 
                 <NavLink
                   to="/testimonials"
-                  className={({ isActive }) =>
+                  className={({
+                    isActive,
+                  }) =>
                     isActive
                       ? 'nav-link active-nav'
                       : 'nav-link'
@@ -639,11 +889,17 @@ function Navbar() {
               {/* CONTACT */}
               {/* ================================== */}
 
-              <li className="nav-item">
+              <li
+                className="
+                  nav-item
+                "
+              >
 
                 <NavLink
                   to="/contact"
-                  className={({ isActive }) =>
+                  className={({
+                    isActive,
+                  }) =>
                     isActive
                       ? 'nav-link active-nav'
                       : 'nav-link'

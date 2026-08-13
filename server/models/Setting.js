@@ -1,15 +1,24 @@
 const mongoose = require('mongoose')
 
+// ======================================
+// SETTINGS SCHEMA
+// ======================================
+
 const settingSchema =
   new mongoose.Schema(
 
     {
 
+      // ======================================
+      // INSTITUTE INFORMATION
+      // ======================================
+
       instituteName: {
 
         type: String,
 
-        default: 'Prerna Institute Of Excellence',
+        default:
+          'Prerna Institute Of Excellence',
 
       },
 
@@ -38,12 +47,12 @@ const settingSchema =
       },
 
       website: {
-        
-          type: String,
-        
-          default: '',
-        
-        },
+
+        type: String,
+
+        default: '',
+
+      },
 
       address: {
 
@@ -56,10 +65,15 @@ const settingSchema =
       googleMapUrl: {
 
         type: String,
-      
+
         default: '',
-      
+
       },
+
+
+      // ======================================
+      // SOCIAL MEDIA
+      // ======================================
 
       instagram: {
 
@@ -93,6 +107,50 @@ const settingSchema =
 
       },
 
+
+      // ======================================
+      // HOME PAGE - ABOUT SECTION
+      // ======================================
+
+      aboutImage: {
+
+        type: String,
+
+        default: '',
+
+      },
+
+
+      // ======================================
+      // HOME PAGE - DIRECTOR SECTION
+      // ======================================
+
+      directorName: {
+
+        type: String,
+
+        default:
+          'Vikash Upadhyay',
+
+      },
+
+      directorDesignation: {
+
+        type: String,
+
+        default:
+          'Director',
+
+      },
+
+      directorImage: {
+
+        type: String,
+
+        default: '',
+
+      },
+
     },
 
     {
@@ -103,11 +161,13 @@ const settingSchema =
 
   )
 
+
+// ======================================
+// EXPORT MODEL
+// ======================================
+
 module.exports =
   mongoose.model(
-
     'Setting',
-
     settingSchema
-
   )

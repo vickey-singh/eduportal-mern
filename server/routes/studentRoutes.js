@@ -78,26 +78,23 @@ const calculateFeesStatus = (
 //
 // Admin / Teacher manually admission
 //
-// Example:
+// New format:
 //
-// ADM0001
-// ADM0002
-// ADM0003
+// PIE0001
+// PIE0002
+// PIE0003
 //
-// Frontend admission number nahi bhejega.
-// Backend automatically generate karega.
+// Existing ADM numbers are NOT changed.
 //
-// Existing database me agar:
+// If database has:
 //
-// ADM0001
-// ADM0002
-// ADM0007
+// PIE0001
+// PIE0002
+// PIE0007
 //
-// hai to next:
+// next will be:
 //
-// ADM0008
-//
-// hoga.
+// PIE0008
 // ======================================
 
 const generateAdmissionNumber =
@@ -109,7 +106,7 @@ const generateAdmissionNumber =
         admissionNumber: {
 
           $regex:
-            /^ADM\d+$/,
+            /^PIE\d+$/,
 
         },
 
@@ -137,7 +134,7 @@ const generateAdmissionNumber =
             student.admissionNumber || ''
           )
             .replace(
-              'ADM',
+              'PIE',
               ''
             ),
 
@@ -164,12 +161,14 @@ const generateAdmissionNumber =
 
 
     return (
-      `ADM${String(
+
+      `PIE${String(
         nextNumber
       ).padStart(
         4,
         '0'
       )}`
+
     )
 
   }

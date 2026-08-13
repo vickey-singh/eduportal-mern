@@ -1,4 +1,7 @@
-import { useEffect, useState } from 'react'
+import {
+  useEffect,
+  useState,
+} from 'react'
 
 import axios from 'axios'
 
@@ -49,6 +52,40 @@ function Settings() {
 
 
   // ======================================
+  // ORIGINAL SETTINGS
+  // ======================================
+  //
+  // Used to detect which fields changed.
+  //
+  // Only changed fields will be sent
+  // to the backend.
+  // ======================================
+
+  const [initialFormData, setInitialFormData] =
+    useState({
+
+      instituteName: '',
+
+      phone: '',
+
+      email: '',
+
+      address: '',
+
+      googleMapUrl: '',
+
+      instagram: '',
+
+      youtube: '',
+
+      linkedin: '',
+
+      twitter: '',
+
+    })
+
+
+  // ======================================
   // EXISTING LOGO
   // ======================================
 
@@ -85,7 +122,7 @@ function Settings() {
 
 
   // ======================================
-  // FETCH SETTINGS
+  // FETCH SETTINGS ON LOAD
   // ======================================
 
   useEffect(() => {
@@ -95,24 +132,24 @@ function Settings() {
   }, [])
 
 
+  // ======================================
+  // FETCH SETTINGS
+  // ======================================
+
   const fetchSettings =
     async () => {
 
       try {
 
-        const response =
+        const settings =
           await getSettings()
 
 
-        const settings =
-          response.data
-
-
         // ==================================
-        // FORM DATA
+        // LOADED SETTINGS
         // ==================================
 
-        setFormData({
+        const loadedSettings = {
 
           instituteName:
             settings.instituteName || '',
@@ -141,9 +178,33 @@ function Settings() {
           twitter:
             settings.twitter || '',
 
+        }
+
+
+        // ==================================
+        // FORM DATA
+        // ==================================
+
+        setFormData({
+
+          ...loadedSettings,
+
           logo: null,
 
         })
+
+
+        // ==================================
+        // SAVE ORIGINAL VALUES
+        // ==================================
+        //
+        // These values will be compared
+        // when Save Settings is clicked.
+        // ==================================
+
+        setInitialFormData(
+          loadedSettings
+        )
 
 
         // ==================================
@@ -153,7 +214,6 @@ function Settings() {
         setExistingLogo(
           settings.logo || ''
         )
-
 
       }
 
@@ -237,14 +297,22 @@ function Settings() {
   const handleChange =
     (e) => {
 
-      setFormData({
+      const {
+        name,
+        value,
+      } = e.target
 
-        ...formData,
 
-        [e.target.name]:
-          e.target.value,
+      setFormData(
+        (previous) => ({
 
-      })
+          ...previous,
+
+          [name]:
+            value,
+
+        })
+      )
 
     }
 
@@ -258,6 +326,7 @@ function Settings() {
 
       e.preventDefault()
 
+
       try {
 
         setLoading(true)
@@ -268,76 +337,75 @@ function Settings() {
 
 
         // ==================================
-        // BASIC DETAILS
+        // SETTINGS TEXT FIELDS
         // ==================================
 
-        data.append(
+        const fields = [
+
           'instituteName',
-          formData.instituteName
-        )
 
-
-        data.append(
           'phone',
-          formData.phone
-        )
 
-
-        data.append(
           'email',
-          formData.email
-        )
 
-
-        data.append(
           'address',
-          formData.address
-        )
 
-
-        // ==================================
-        // GOOGLE MAP
-        // ==================================
-
-        data.append(
           'googleMapUrl',
-          formData.googleMapUrl
-        )
 
-
-        // ==================================
-        // SOCIAL LINKS
-        // ==================================
-
-        data.append(
           'instagram',
-          formData.instagram
-        )
 
-
-        data.append(
           'youtube',
-          formData.youtube
-        )
 
-
-        data.append(
           'linkedin',
-          formData.linkedin
-        )
 
-
-        data.append(
           'twitter',
-          formData.twitter
+
+        ]
+
+
+        // ==================================
+        // ONLY CHANGED FIELDS
+        // ==================================
+        //
+        // If value has changed, send it.
+        //
+        // If value has not changed,
+        // don't send it.
+        //
+        // This prevents existing settings
+        // from being overwritten.
+        // ==================================
+
+        fields.forEach(
+          (field) => {
+
+            if (
+              formData[field] !==
+              initialFormData[field]
+            ) {
+
+              data.append(
+                field,
+                formData[field]
+              )
+
+            }
+
+          }
         )
 
 
         // ==================================
         // LOGO
         // ==================================
+        //
+        // Only send logo if a new file
+        // has actually been selected.
+        // ==================================
 
-        if (formData.logo) {
+        if (
+          formData.logo
+        ) {
 
           data.append(
             'logo',
@@ -348,13 +416,17 @@ function Settings() {
 
 
         // ==================================
-        // UPDATE
+        // UPDATE SETTINGS
         // ==================================
 
         await updateSettings(
           data
         )
 
+
+        // ==================================
+        // SUCCESS
+        // ==================================
 
         alert(
           'Settings Updated Successfully'
@@ -366,7 +438,6 @@ function Settings() {
         // ==================================
 
         await fetchSettings()
-
 
       }
 
@@ -404,14 +475,16 @@ function Settings() {
   const handleAccountChange =
     (e) => {
 
-      setAccountData({
+      setAccountData(
+        (previous) => ({
 
-        ...accountData,
+          ...previous,
 
-        [e.target.name]:
-          e.target.value,
+          [e.target.name]:
+            e.target.value,
 
-      })
+        })
+      )
 
     }
 
@@ -496,7 +569,6 @@ function Settings() {
           confirmPassword: '',
 
         })
-
 
       }
 
@@ -686,15 +758,17 @@ function Settings() {
 
               onChange={(e) => {
 
-                setFormData({
+                setFormData(
+                  (previous) => ({
 
-                  ...formData,
+                    ...previous,
 
-                  logo:
-                    e.target.files?.[0] ||
-                    null,
+                    logo:
+                      e.target.files?.[0] ||
+                      null,
 
-                })
+                  })
+                )
 
               }}
 
@@ -709,7 +783,13 @@ function Settings() {
 
               <div className="mt-3">
 
-                <small className="text-muted d-block mb-2">
+                <small
+                  className="
+                    text-muted
+                    d-block
+                    mb-2
+                  "
+                >
 
                   Current Logo
 
@@ -724,7 +804,9 @@ function Settings() {
                     )
                   }
 
-                  alt="Current Institute Logo"
+                  alt="
+                    Current Institute Logo
+                  "
 
                   style={{
 
@@ -814,7 +896,9 @@ function Settings() {
 
               className="form-control"
 
-              placeholder="Google Maps Embed URL"
+              placeholder="
+                Google Maps Embed URL
+              "
 
               name="googleMapUrl"
 
@@ -986,15 +1070,20 @@ function Settings() {
 
           type="submit"
 
-          className="table-btn approve-btn"
+          className="
+            table-btn
+            approve-btn
+          "
 
           disabled={loading}
 
         >
 
-          {loading
-            ? 'Saving...'
-            : 'Save Settings'}
+          {
+            loading
+              ? 'Saving...'
+              : 'Save Settings'
+          }
 
         </button>
 
@@ -1002,14 +1091,22 @@ function Settings() {
       </form>
 
 
-      <hr className="my-5" />
+      <hr
+        className="
+          my-5
+        "
+      />
 
 
       {/* ====================================== */}
       {/* ADMIN ACCOUNT SECURITY */}
       {/* ====================================== */}
 
-      <div className="applications-header">
+      <div
+        className="
+          applications-header
+        "
+      >
 
         <h3>
           Admin Account Security
@@ -1198,7 +1295,9 @@ function Settings() {
 
               className="form-control"
 
-              placeholder="Confirm New Password"
+              placeholder="
+                Confirm New Password
+              "
 
               name="confirmPassword"
 
@@ -1226,7 +1325,10 @@ function Settings() {
 
           type="submit"
 
-          className="table-btn approve-btn"
+          className="
+            table-btn
+            approve-btn
+          "
 
         >
 

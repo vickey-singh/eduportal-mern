@@ -1,59 +1,59 @@
 import '../../assets/styles/admin.css'
 
+import { API_URL } from '../../config/api'
+
 function ReceiptButton({ selectedStudent }) {
+
+  // ======================================
+  // GENERATE STUDENT RECEIPT
+  // ======================================
+
+  const handleGenerateReceipt = () => {
+
+    // ======================================
+    // CHECK STUDENT
+    // ======================================
+
+    if (!selectedStudent?._id) {
+
+      alert(
+        'Student Information Not Available'
+      )
+
+      return
+
+    }
+
+    // ======================================
+    // OPEN STUDENT RECEIPT
+    // PAYMENT IS NOT REQUIRED
+    // ======================================
+
+    window.open(
+
+      `${API_URL}/receipt/student/${selectedStudent._id}`,
+
+      '_blank'
+
+    )
+
+  }
+
 
   return (
 
     <div className="mb-4">
-          
-            <button
-              className="table-btn view-btn"
-              onClick={() => {
-          
-                if (
-          
-                  !selectedStudent.paymentHistory ||
-          
-                  selectedStudent.paymentHistory.length === 0
-          
-                ) {
-          
-                  alert(
-                    'No Payment History Found'
-                  )
-          
-                  return
-          
-                }
-          
-                // ======================================
-                // LAST PAYMENT INDEX
-                // ======================================
-          
-                const lastPaymentIndex =
-          
-                  selectedStudent.paymentHistory.length - 1
-          
-                // ======================================
-                // OPEN RECEIPT
-                // ======================================
-          
-                window.open(
-          
-                  `https://eduportal-backend-m5t1.onrender.com/api/receipt/${selectedStudent._id}/${lastPaymentIndex}`,
-          
-                  '_blank'
-          
-                )
-          
-              }}
-            >
-          
-              Generate Receipt
-          
-            </button>
-          
-          </div>
+
+      <button
+        className="table-btn view-btn"
+        onClick={handleGenerateReceipt}
+      >
+
+        Generate Receipt
+
+      </button>
+
+    </div>
 
   )
 
