@@ -1,6 +1,5 @@
 import {
   useEffect,
-  useRef,
   useState,
 } from 'react'
 
@@ -9,15 +8,13 @@ import {
   NavLink,
 } from 'react-router-dom'
 
-import axios
-from 'axios'
+import axios from 'axios'
 
 // Import Navbar CSS
 import '../assets/styles/navbar.css'
 
 // Default Logo
-import defaultLogo
-from '../assets/images/logo.jpeg'
+import defaultLogo from '../assets/images/logo.jpeg'
 
 
 // ======================================
@@ -37,23 +34,6 @@ function Navbar() {
   const [settings,
     setSettings] =
     useState(null)
-
-
-  // ======================================
-  // ADMISSION DROPDOWN STATE
-  // ======================================
-
-  const [studentMenu,
-    setStudentMenu] =
-    useState(false)
-
-
-  // ======================================
-  // ADMISSION DROPDOWN REF
-  // ======================================
-
-  const admissionRef =
-    useRef(null)
 
 
   // ======================================
@@ -171,35 +151,6 @@ function Navbar() {
 
 
   // ======================================
-  // CLOSE ADMISSION DROPDOWN
-  // ======================================
-
-  const closeStudentMenu = () => {
-
-    setStudentMenu(false)
-
-  }
-
-
-  // ======================================
-  // TOGGLE ADMISSION DROPDOWN
-  // ======================================
-
-  const toggleStudentMenu = (
-    event
-  ) => {
-
-    event.stopPropagation()
-
-
-    setStudentMenu(
-      (previous) => !previous
-    )
-
-  }
-
-
-  // ======================================
   // NORMAL NAVIGATION CLICK
   // ======================================
 
@@ -207,13 +158,12 @@ function Navbar() {
 
     closeNavbar()
 
-    closeStudentMenu()
-
   }
 
 
   // ======================================
-  // CLOSE DROPDOWN ON OUTSIDE CLICK
+  // CLOSE MOBILE NAVBAR
+  // ON OUTSIDE CLICK
   // ======================================
 
   useEffect(() => {
@@ -222,23 +172,7 @@ function Navbar() {
       (event) => {
 
         // ==================================
-        // DESKTOP + MOBILE DROPDOWN
-        // ==================================
-
-        if (
-          admissionRef.current &&
-          !admissionRef.current.contains(
-            event.target
-          )
-        ) {
-
-          setStudentMenu(false)
-
-        }
-
-
-        // ==================================
-        // MOBILE NAVBAR
+        // MOBILE NAVBAR ONLY
         // ==================================
 
         if (
@@ -272,8 +206,6 @@ function Navbar() {
 
             closeNavbar()
 
-            closeStudentMenu()
-
           }
 
         }
@@ -300,7 +232,8 @@ function Navbar() {
 
 
   // ======================================
-  // CLOSE MOBILE NAVBAR ON SCROLL
+  // CLOSE MOBILE NAVBAR
+  // ON SCROLL
   // ======================================
 
   useEffect(() => {
@@ -331,8 +264,6 @@ function Navbar() {
 
         closeNavbar()
 
-        closeStudentMenu()
-
       }
 
     }
@@ -360,24 +291,24 @@ function Navbar() {
 
 
   // ======================================
-  // CLOSE DROPDOWN ON ESC
+  // CLOSE MOBILE NAVBAR
+  // ON ESC
   // ======================================
 
   useEffect(() => {
 
-    const handleEscape = (
-      event
-    ) => {
+    const handleEscape =
+      (event) => {
 
-      if (
-        event.key === 'Escape'
-      ) {
+        if (
+          event.key === 'Escape'
+        ) {
 
-        closeStudentMenu()
+          closeNavbar()
+
+        }
 
       }
-
-    }
 
 
     document.addEventListener(
@@ -460,6 +391,10 @@ function Navbar() {
               "
             >
 
+              {/* ==================================
+                  FIRST WORD
+              ================================== */}
+
               <span
                 className="
                   edu
@@ -472,6 +407,10 @@ function Navbar() {
 
               </span>
 
+
+              {/* ==================================
+                  REMAINING NAME
+              ================================== */}
 
               {
                 remainingInstituteName && (
@@ -489,13 +428,17 @@ function Navbar() {
                         remainingInstituteName
                           .split(' ')
                           .map(
-                            (word, index) => (
+                            (
+                              word,
+                              index
+                            ) => (
 
                               <span
                                 key={index}
                               >
 
                                 {word}
+
 
                                 {
                                   index <
@@ -506,10 +449,13 @@ function Navbar() {
                                     : ''
                                 }
 
+
                                 {
                                   word ===
                                   'Institute' && (
+
                                     <br />
+
                                   )
                                 }
 
@@ -549,11 +495,6 @@ function Navbar() {
             aria-label="
               Toggle navigation
             "
-            onClick={() => {
-
-              closeStudentMenu()
-
-            }}
           >
 
             <span
@@ -585,9 +526,9 @@ function Navbar() {
             >
 
 
-              {/* ================================== */}
-              {/* HOME */}
-              {/* ================================== */}
+              {/* ==================================
+                  HOME
+              ================================== */}
 
               <li
                 className="
@@ -616,9 +557,9 @@ function Navbar() {
               </li>
 
 
-              {/* ================================== */}
-              {/* SERVICES */}
-              {/* ================================== */}
+              {/* ==================================
+                  SERVICES
+              ================================== */}
 
               <li
                 className="
@@ -647,9 +588,9 @@ function Navbar() {
               </li>
 
 
-              {/* ================================== */}
-              {/* ACHIEVEMENTS */}
-              {/* ================================== */}
+              {/* ==================================
+                  ACHIEVEMENTS
+              ================================== */}
 
               <li
                 className="
@@ -678,9 +619,9 @@ function Navbar() {
               </li>
 
 
-              {/* ================================== */}
-              {/* FACULTY */}
-              {/* ================================== */}
+              {/* ==================================
+                  FACULTY
+              ================================== */}
 
               <li
                 className="
@@ -709,9 +650,9 @@ function Navbar() {
               </li>
 
 
-              {/* ================================== */}
-              {/* GALLERY */}
-              {/* ================================== */}
+              {/* ==================================
+                  GALLERY
+              ================================== */}
 
               <li
                 className="
@@ -740,123 +681,44 @@ function Navbar() {
               </li>
 
 
-              {/* ================================== */}
-              {/* ADMISSION DROPDOWN */}
-              {/* ================================== */}
+              {/* ==================================
+                  ADMISSION
+              ================================== */}
+              {/* Direct Link
+                  No Dropdown
+                  No Existing Student
+              ================================== */}
 
               <li
-                ref={admissionRef}
-                className={`
+                className="
                   nav-item
-                  admission-dropdown
-                  ${
-                    studentMenu
-                      ? 'dropdown-open'
-                      : ''
-                  }
-                `}
+                "
               >
 
-                {/* Admission Button */}
-
-                <button
-                  type="button"
-                  className="
-                    nav-link
-                    admission-dropdown-btn
-                  "
-                  onClick={
-                    toggleStudentMenu
+                <NavLink
+                  to="/apply"
+                  className={({
+                    isActive,
+                  }) =>
+                    isActive
+                      ? 'nav-link active-nav'
+                      : 'nav-link'
                   }
-                  aria-expanded={
-                    studentMenu
+                  onClick={
+                    handleNavClick
                   }
                 >
 
                   Admission
 
-                  <span
-                    className="
-                      ms-1
-                    "
-                  >
-
-                    ▾
-
-                  </span>
-
-                </button>
-
-
-                {/* ==================================
-                    DROPDOWN MENU
-                ================================== */}
-
-                <div
-                  className="
-                    admission-dropdown-menu
-                  "
-                >
-
-                  {/* New Admission */}
-
-                  <NavLink
-                    to="/apply"
-                    className={({
-                      isActive,
-                    }) =>
-                      isActive
-                        ? `
-                          admission-dropdown-item
-                          active-dropdown-item
-                        `
-                        : `
-                          admission-dropdown-item
-                        `
-                    }
-                    onClick={
-                      handleNavClick
-                    }
-                  >
-
-                    New Admission
-
-                  </NavLink>
-
-
-                  {/* Existing Student */}
-
-                  <NavLink
-                    to="/existing-student"
-                    className={({
-                      isActive,
-                    }) =>
-                      isActive
-                        ? `
-                          admission-dropdown-item
-                          active-dropdown-item
-                        `
-                        : `
-                          admission-dropdown-item
-                        `
-                    }
-                    onClick={
-                      handleNavClick
-                    }
-                  >
-
-                    Existing Student
-
-                  </NavLink>
-
-                </div>
+                </NavLink>
 
               </li>
 
 
-              {/* ================================== */}
-              {/* TESTIMONIALS */}
-              {/* ================================== */}
+              {/* ==================================
+                  TESTIMONIALS
+              ================================== */}
 
               <li
                 className="
@@ -885,9 +747,9 @@ function Navbar() {
               </li>
 
 
-              {/* ================================== */}
-              {/* CONTACT */}
-              {/* ================================== */}
+              {/* ==================================
+                  CONTACT
+              ================================== */}
 
               <li
                 className="
@@ -915,6 +777,7 @@ function Navbar() {
 
               </li>
 
+
             </ul>
 
           </div>
@@ -922,6 +785,7 @@ function Navbar() {
         </div>
 
       </nav>
+
 
       {/* ====================================== */}
       {/* NAVBAR END */}

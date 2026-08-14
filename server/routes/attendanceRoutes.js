@@ -2,35 +2,119 @@ const express = require('express')
 
 const router = express.Router()
 
+
 const Attendance =
   require('../models/Attendance')
 
 const Student =
   require('../models/Student')
 
+const StudentNotification =
+  require('../models/StudentNotification')
+
+const teacherAuth =
+  require('../middleware/teacherAuth')
+
 
 // ======================================
-// GET STUDENTS FOR ATTENDANCE
+// CREATE STUDENT ATTENDANCE NOTIFICATION
 // ======================================
-// Course + Batch Time ke basis par students
+
+const createAttendanceNotification =
+  async (
+
+    studentId,
+    studentName,
+    status,
+    date,
+    relatedId
+
+  ) => {
+
+    try {
+
+      const message =
+
+        status === 'Removed'
+
+          ? `Your attendance record for ${date} has been removed.`
+
+          : `Your attendance for ${date} has been marked as ${status}.`
+
+
+      await StudentNotification.create({
+
+        studentId,
+
+        type:
+          'Attendance',
+
+        title:
+          'Attendance Updated',
+
+        message,
+
+        link:
+          '/student/attendance',
+
+        relatedId:
+          String(relatedId),
+
+        isRead:
+          false,
+
+      })
+
+    }
+
+    catch (error) {
+
+      console.log(
+
+        'Create Student Attendance Notification Error:',
+        error
+
+      )
+
+      // Notification fail hone par
+      // attendance operation fail nahi hoga.
+
+    }
+
+  }
+
+
+// ======================================
+// GET STUDENTS FOR TEACHER ATTENDANCE
+// ======================================
+//
+// GET
+// /api/teacher/attendance/students
+//
 // ======================================
 
 router.get(
-  '/attendance/students',
+
+  '/teacher/attendance/students',
+
+  teacherAuth,
+
   async (req, res) => {
 
     try {
 
       const {
+
         course,
         batchTime,
         date,
+
       } = req.query
 
 
-      // ======================================
-      // CHECK REQUIRED DATA
-      // ======================================
+      // ==================================
+      // VALIDATION
+      // ==================================
 
       if (!course) {
 
@@ -46,81 +130,97 @@ router.get(
       }
 
 
-      // ======================================
+      // ==================================
       // STUDENT FILTER
-      // ======================================
+      // ==================================
 
       const studentFilter = {
 
-        course,
+        course:
+          course.trim(),
 
       }
 
 
-      // Batch Time diya gaya ho
       if (batchTime) {
 
         studentFilter.batchTime =
-          batchTime
+          batchTime.trim()
 
       }
 
 
-      // ======================================
+      // ==================================
       // GET STUDENTS
-      // ======================================
+      // ==================================
 
       const students =
         await Student.find(
           studentFilter
         )
         .sort({
+
           name: 1,
+
         })
 
 
-      // ======================================
-      // IF DATE PROVIDED
-      // GET EXISTING ATTENDANCE
-      // ======================================
+      // ==================================
+      // EXISTING ATTENDANCE
+      // ==================================
 
       let attendanceMap = {}
 
 
       if (date) {
 
+        const attendanceQuery = {
+
+          course:
+            course.trim(),
+
+          date,
+
+        }
+
+
+        if (batchTime) {
+
+          attendanceQuery.batchTime =
+            batchTime.trim()
+
+        }
+
+
         const attendanceRecords =
-          await Attendance.find({
-
-            course,
-
-            batchTime:
-              batchTime || undefined,
-
-            date,
-
-          })
+          await Attendance.find(
+            attendanceQuery
+          )
 
 
         attendanceRecords.forEach(
+
           (record) => {
 
             attendanceMap[
               record.student.toString()
-            ] = record.status
+            ] =
+              record.status
 
           }
+
         )
 
       }
 
 
-      // ======================================
-      // ADD ATTENDANCE STATUS
-      // ======================================
+      // ==================================
+      // RESPONSE
+      // ==================================
 
       const result =
         students.map(
+
           (student) => ({
 
             _id:
@@ -145,19 +245,17 @@ router.get(
               student.email || '',
 
             attendanceStatus:
+
               attendanceMap[
                 student._id.toString()
               ] || '',
 
           })
+
         )
 
 
-      // ======================================
-      // RESPONSE
-      // ======================================
-
-      res.status(200).json({
+      return res.status(200).json({
 
         success: true,
 
@@ -171,11 +269,14 @@ router.get(
     catch (error) {
 
       console.log(
+
         'Get Attendance Students Error:',
         error
+
       )
 
-      res.status(500).json({
+
+      return res.status(500).json({
 
         success: false,
 
@@ -187,15 +288,25 @@ router.get(
     }
 
   }
+
 )
 
 
 // ======================================
-// SAVE / UPDATE ATTENDANCE
+// SAVE / UPDATE SINGLE ATTENDANCE
+// ======================================
+//
+// POST
+// /api/attendance
+//
 // ======================================
 
 router.post(
+
   '/attendance',
+
+  teacherAuth,
+
   async (req, res) => {
 
     try {
@@ -209,14 +320,16 @@ router.post(
       } = req.body
 
 
-      // ======================================
-      // CHECK REQUIRED DATA
-      // ======================================
+      // ==================================
+      // VALIDATION
+      // ==================================
 
       if (
+
         !student ||
         !date ||
         !status
+
       ) {
 
         return res.status(400).json({
@@ -231,15 +344,13 @@ router.post(
       }
 
 
-      // ======================================
-      // CHECK STATUS
-      // ======================================
-
       if (
+
         ![
           'Present',
           'Absent',
         ].includes(status)
+
       ) {
 
         return res.status(400).json({
@@ -254,9 +365,9 @@ router.post(
       }
 
 
-      // ======================================
+      // ==================================
       // GET STUDENT
-      // ======================================
+      // ==================================
 
       const studentData =
         await Student.findById(
@@ -278,9 +389,9 @@ router.post(
       }
 
 
-      // ======================================
-      // CREATE / UPDATE ATTENDANCE
-      // ======================================
+      // ==================================
+      // SAVE / UPDATE
+      // ==================================
 
       const attendance =
         await Attendance.findOneAndUpdate(
@@ -317,24 +428,43 @@ router.post(
 
           {
 
-            new: true,
+            returnDocument:
+              'after',
 
-            upsert: true,
+            upsert:
+              true,
 
-            runValidators: true,
+            runValidators:
+              true,
 
-            setDefaultsOnInsert: true,
+            setDefaultsOnInsert:
+              true,
 
           }
 
         )
 
 
-      // ======================================
-      // RESPONSE
-      // ======================================
+      // ==================================
+      // CREATE NOTIFICATION
+      // ==================================
 
-      res.status(200).json({
+      await createAttendanceNotification(
+
+        studentData._id,
+
+        studentData.name,
+
+        attendance.status,
+
+        attendance.date,
+
+        attendance._id
+
+      )
+
+
+      return res.status(200).json({
 
         success: true,
 
@@ -350,11 +480,14 @@ router.post(
     catch (error) {
 
       console.log(
+
         'Save Attendance Error:',
         error
+
       )
 
-      res.status(500).json({
+
+      return res.status(500).json({
 
         success: false,
 
@@ -366,35 +499,46 @@ router.post(
     }
 
   }
+
 )
 
 
 // ======================================
 // SAVE MULTIPLE ATTENDANCE
 // ======================================
-// Teacher ek batch ke saare students ko
-// ek saath save kar sakega.
+//
+// POST
+// /api/teacher/attendance/bulk
+//
 // ======================================
 
 router.post(
-  '/attendance/bulk',
+
+  '/teacher/attendance/bulk',
+
+  teacherAuth,
+
   async (req, res) => {
 
     try {
 
       const {
+
         date,
         attendance,
+
       } = req.body
 
 
-      // ======================================
-      // CHECK DATA
-      // ======================================
+      // ==================================
+      // VALIDATION
+      // ==================================
 
       if (
+
         !date ||
         !Array.isArray(attendance)
+
       ) {
 
         return res.status(400).json({
@@ -409,15 +553,37 @@ router.post(
       }
 
 
-      // ======================================
-      // PROCESS EACH STUDENT
-      // ======================================
+      if (
+        attendance.length === 0
+      ) {
+
+        return res.status(400).json({
+
+          success: false,
+
+          message:
+            'No attendance data provided',
+
+        })
+
+      }
+
+
+      // ==================================
+      // RESULTS
+      // ==================================
 
       const results = []
 
 
+      // ==================================
+      // PROCESS EACH STUDENT
+      // ==================================
+
       for (
+
         const item of attendance
+
       ) {
 
         const {
@@ -428,9 +594,15 @@ router.post(
         } = item
 
 
+        // ==================================
+        // VALIDATION
+        // ==================================
+
         if (
+
           !student ||
           !status
+
         ) {
 
           continue
@@ -439,10 +611,12 @@ router.post(
 
 
         if (
+
           ![
             'Present',
             'Absent',
           ].includes(status)
+
         ) {
 
           continue
@@ -450,9 +624,9 @@ router.post(
         }
 
 
-        // ======================================
+        // ==================================
         // GET STUDENT
-        // ======================================
+        // ==================================
 
         const studentData =
           await Student.findById(
@@ -467,9 +641,9 @@ router.post(
         }
 
 
-        // ======================================
-        // SAVE / UPDATE
-        // ======================================
+        // ==================================
+        // SAVE / UPDATE ATTENDANCE
+        // ==================================
 
         const record =
           await Attendance.findOneAndUpdate(
@@ -477,7 +651,6 @@ router.post(
             {
 
               student,
-
               date,
 
             },
@@ -506,18 +679,45 @@ router.post(
 
             {
 
-              new: true,
+              returnDocument:
+                'after',
 
-              upsert: true,
+              upsert:
+                true,
 
-              runValidators: true,
+              runValidators:
+                true,
 
-              setDefaultsOnInsert: true,
+              setDefaultsOnInsert:
+                true,
 
             }
 
           )
 
+
+        // ==================================
+        // CREATE STUDENT NOTIFICATION
+        // ==================================
+
+        await createAttendanceNotification(
+
+          studentData._id,
+
+          studentData.name,
+
+          record.status,
+
+          record.date,
+
+          record._id
+
+        )
+
+
+        // ==================================
+        // ADD RESULT
+        // ==================================
 
         results.push(
           record
@@ -526,11 +726,11 @@ router.post(
       }
 
 
-      // ======================================
+      // ==================================
       // RESPONSE
-      // ======================================
+      // ==================================
 
-      res.status(200).json({
+      return res.status(200).json({
 
         success: true,
 
@@ -547,11 +747,14 @@ router.post(
     catch (error) {
 
       console.log(
+
         'Bulk Attendance Error:',
         error
+
       )
 
-      res.status(500).json({
+
+      return res.status(500).json({
 
         success: false,
 
@@ -563,29 +766,28 @@ router.post(
     }
 
   }
+
 )
 
 
 // ======================================
 // GET STUDENT ATTENDANCE
 // ======================================
-// Daily / Monthly / Yearly details
-// ======================================
 
 router.get(
+
   '/attendance/student/:studentId',
+
   async (req, res) => {
 
     try {
 
       const {
+
         studentId,
+
       } = req.params
 
-
-      // ======================================
-      // GET STUDENT
-      // ======================================
 
       const student =
         await Student.findById(
@@ -607,10 +809,6 @@ router.get(
       }
 
 
-      // ======================================
-      // GET ALL ATTENDANCE
-      // ======================================
-
       const attendance =
         await Attendance.find({
 
@@ -619,13 +817,15 @@ router.get(
 
         })
         .sort({
+
           date: -1,
+
         })
 
 
-      // ======================================
+      // ==================================
       // SUMMARY
-      // ======================================
+      // ==================================
 
       const total =
         attendance.length
@@ -633,34 +833,39 @@ router.get(
 
       const present =
         attendance.filter(
+
           (item) =>
             item.status === 'Present'
+
         ).length
 
 
       const absent =
         attendance.filter(
+
           (item) =>
             item.status === 'Absent'
+
         ).length
 
 
       const percentage =
+
         total > 0
+
           ? Number(
+
               (
                 present /
                 total
               ) * 100
+
             ).toFixed(2)
+
           : 0
 
 
-      // ======================================
-      // RESPONSE
-      // ======================================
-
-      res.status(200).json({
+      return res.status(200).json({
 
         success: true,
 
@@ -704,11 +909,14 @@ router.get(
     catch (error) {
 
       console.log(
+
         'Get Student Attendance Error:',
         error
+
       )
 
-      res.status(500).json({
+
+      return res.status(500).json({
 
         success: false,
 
@@ -720,6 +928,7 @@ router.get(
     }
 
   }
+
 )
 
 
@@ -728,25 +937,33 @@ router.get(
 // ======================================
 
 router.get(
+
   '/attendance/student/:studentId/monthly',
+
   async (req, res) => {
 
     try {
 
       const {
+
         studentId,
+
       } = req.params
 
 
       const {
+
         year,
         month,
+
       } = req.query
 
 
       if (
+
         !year ||
         !month
+
       ) {
 
         return res.status(400).json({
@@ -761,13 +978,12 @@ router.get(
       }
 
 
-      // ======================================
-      // MONTH FORMAT
-      // ======================================
-
       const monthString =
         String(month)
-          .padStart(2, '0')
+          .padStart(
+            2,
+            '0'
+          )
 
 
       const startDate =
@@ -795,14 +1011,13 @@ router.get(
         endDate =
           `${year}-${String(
             endMonth
-          ).padStart(2, '0')}-01`
+          ).padStart(
+            2,
+            '0'
+          )}-01`
 
       }
 
-
-      // ======================================
-      // GET RECORDS
-      // ======================================
 
       const attendance =
         await Attendance.find({
@@ -822,13 +1037,15 @@ router.get(
 
         })
         .sort({
+
           date: 1,
+
         })
 
 
-      // ======================================
+      // ==================================
       // SUMMARY
-      // ======================================
+      // ==================================
 
       const total =
         attendance.length
@@ -836,34 +1053,39 @@ router.get(
 
       const present =
         attendance.filter(
+
           (item) =>
             item.status === 'Present'
+
         ).length
 
 
       const absent =
         attendance.filter(
+
           (item) =>
             item.status === 'Absent'
+
         ).length
 
 
       const percentage =
+
         total > 0
+
           ? Number(
+
               (
                 present /
                 total
               ) * 100
+
             ).toFixed(2)
+
           : 0
 
 
-      // ======================================
-      // RESPONSE
-      // ======================================
-
-      res.status(200).json({
+      return res.status(200).json({
 
         success: true,
 
@@ -894,11 +1116,14 @@ router.get(
     catch (error) {
 
       console.log(
+
         'Monthly Attendance Error:',
         error
+
       )
 
-      res.status(500).json({
+
+      return res.status(500).json({
 
         success: false,
 
@@ -910,6 +1135,7 @@ router.get(
     }
 
   }
+
 )
 
 
@@ -918,18 +1144,24 @@ router.get(
 // ======================================
 
 router.get(
+
   '/attendance/student/:studentId/yearly',
+
   async (req, res) => {
 
     try {
 
       const {
+
         studentId,
+
       } = req.params
 
 
       const {
+
         year,
+
       } = req.query
 
 
@@ -947,10 +1179,6 @@ router.get(
       }
 
 
-      // ======================================
-      // DATE RANGE
-      // ======================================
-
       const startDate =
         `${year}-01-01`
 
@@ -958,10 +1186,6 @@ router.get(
       const endDate =
         `${Number(year) + 1}-01-01`
 
-
-      // ======================================
-      // GET ATTENDANCE
-      // ======================================
 
       const attendance =
         await Attendance.find({
@@ -981,13 +1205,15 @@ router.get(
 
         })
         .sort({
+
           date: 1,
+
         })
 
 
-      // ======================================
+      // ==================================
       // SUMMARY
-      // ======================================
+      // ==================================
 
       const total =
         attendance.length
@@ -995,37 +1221,47 @@ router.get(
 
       const present =
         attendance.filter(
+
           (item) =>
             item.status === 'Present'
+
         ).length
 
 
       const absent =
         attendance.filter(
+
           (item) =>
             item.status === 'Absent'
+
         ).length
 
 
       const percentage =
+
         total > 0
+
           ? Number(
+
               (
                 present /
                 total
               ) * 100
+
             ).toFixed(2)
+
           : 0
 
 
-      // ======================================
-      // MONTH-WISE SUMMARY
-      // ======================================
+      // ==================================
+      // MONTHLY SUMMARY
+      // ==================================
 
       const monthlySummary = {}
 
 
       attendance.forEach(
+
         (item) => {
 
           const month =
@@ -1041,11 +1277,14 @@ router.get(
 
             monthlySummary[month] = {
 
-              total: 0,
+              total:
+                0,
 
-              present: 0,
+              present:
+                0,
 
-              absent: 0,
+              absent:
+                0,
 
             }
 
@@ -1058,8 +1297,10 @@ router.get(
 
 
           if (
+
             item.status ===
             'Present'
+
           ) {
 
             monthlySummary[
@@ -1069,8 +1310,10 @@ router.get(
           }
 
           else if (
+
             item.status ===
             'Absent'
+
           ) {
 
             monthlySummary[
@@ -1080,16 +1323,18 @@ router.get(
           }
 
         }
+
       )
 
 
-      // ======================================
+      // ==================================
       // ADD PERCENTAGE
-      // ======================================
+      // ==================================
 
       Object.keys(
         monthlySummary
       ).forEach(
+
         (month) => {
 
           const data =
@@ -1099,24 +1344,26 @@ router.get(
 
 
           data.percentage =
+
             data.total > 0
+
               ? Number(
+
                   (
                     data.present /
                     data.total
                   ) * 100
+
                 ).toFixed(2)
+
               : 0
 
         }
+
       )
 
 
-      // ======================================
-      // RESPONSE
-      // ======================================
-
-      res.status(200).json({
+      return res.status(200).json({
 
         success: true,
 
@@ -1146,11 +1393,14 @@ router.get(
     catch (error) {
 
       console.log(
+
         'Yearly Attendance Error:',
         error
+
       )
 
-      res.status(500).json({
+
+      return res.status(500).json({
 
         success: false,
 
@@ -1162,6 +1412,7 @@ router.get(
     }
 
   }
+
 )
 
 
@@ -1170,13 +1421,17 @@ router.get(
 // ======================================
 
 router.delete(
+
   '/attendance/:id',
+
+  teacherAuth,
+
   async (req, res) => {
 
     try {
 
       const attendance =
-        await Attendance.findByIdAndDelete(
+        await Attendance.findById(
           req.params.id
         )
 
@@ -1195,7 +1450,37 @@ router.delete(
       }
 
 
-      res.status(200).json({
+      // ==================================
+      // DELETE ATTENDANCE
+      // ==================================
+
+      await Attendance.findByIdAndDelete(
+
+        req.params.id
+
+      )
+
+
+      // ==================================
+      // NOTIFY STUDENT
+      // ==================================
+
+      await createAttendanceNotification(
+
+        attendance.student,
+
+        attendance.studentName,
+
+        'Removed',
+
+        attendance.date,
+
+        attendance._id
+
+      )
+
+
+      return res.status(200).json({
 
         success: true,
 
@@ -1209,11 +1494,14 @@ router.delete(
     catch (error) {
 
       console.log(
+
         'Delete Attendance Error:',
         error
+
       )
 
-      res.status(500).json({
+
+      return res.status(500).json({
 
         success: false,
 
@@ -1225,8 +1513,13 @@ router.delete(
     }
 
   }
+
 )
 
+
+// ======================================
+// EXPORT
+// ======================================
 
 module.exports =
   router

@@ -8,6 +8,10 @@ const connectDB =
   require('./config/db')
 
 
+// ======================================
+// ROUTES
+// ======================================
+
 const paymentRoutes =
   require('./routes/paymentRoutes')
 
@@ -35,6 +39,15 @@ const attendanceRoutes =
 const studentRoutes =
   require('./routes/studentRoutes')
 
+const studentPortalRoutes =
+  require('./routes/studentPortalRoutes')
+
+const studentProfileRoutes =
+  require('./routes/studentProfileRoutes')
+
+const studentReportRoutes =
+  require('./routes/studentReportRoutes')
+
 const messageRoutes =
   require('./routes/messageRoutes')
 
@@ -56,6 +69,39 @@ const facultyRoutes =
 const adminRoutes =
   require('./routes/adminRoutes')
 
+const teacherRoutes =
+  require('./routes/teacherRoutes')
+
+const studentAuthRoutes =
+  require('./routes/studentAuthRoutes')
+
+const assignmentRoutes =
+  require('./routes/assignmentRoutes')
+
+const examRoutes =
+  require('./routes/examRoutes')
+
+const studyMaterialRoutes =
+  require('./routes/studyMaterialRoutes')
+
+const timetableRoutes =
+  require('./routes/timetableRoutes')
+
+const announcementRoutes =
+  require('./routes/announcementRoutes')
+
+const teacherMessageRoutes =
+  require('./routes/teacherMessageRoutes')
+
+const teacherReportRoutes =
+  require('./routes/teacherReportRoutes')
+
+const facultyAttendanceRoutes =
+  require('./routes/facultyAttendanceRoutes')
+
+const teacherAttendanceRoutes =
+  require('./routes/teacherAttendanceRoutes')
+
 const receiptRoutes =
   require('./routes/receiptRoutes')
 
@@ -70,11 +116,19 @@ const homeSliderRoutes =
 
 
 // ======================================
-// NOTIFICATION ROUTES
+// ADMIN NOTIFICATION ROUTES
 // ======================================
 
 const notificationRoutes =
   require('./routes/notificationRoutes')
+
+
+// ======================================
+// STUDENT NOTIFICATION ROUTES
+// ======================================
+
+const studentNotificationRoutes =
+  require('./routes/studentNotificationRoute')
 
 
 // ======================================
@@ -95,7 +149,9 @@ connectDB()
 // MIDDLEWARE
 // ======================================
 
-app.use(cors())
+app.use(
+  cors()
+)
 
 app.use(
   express.json()
@@ -138,7 +194,62 @@ app.use(
 
 app.use(
   '/api',
+  teacherRoutes
+)
+
+app.use(
+  '/api',
+  assignmentRoutes
+)
+
+app.use(
+  '/api',
+  examRoutes
+)
+
+app.use(
+  '/api',
+  studyMaterialRoutes
+)
+
+app.use(
+  '/api',
+  timetableRoutes
+)
+
+app.use(
+  '/api',
+  announcementRoutes
+)
+
+app.use(
+  '/api',
+  teacherMessageRoutes
+)
+
+app.use(
+  '/api',
+  teacherReportRoutes
+)
+
+app.use(
+  '/api',
+  teacherAttendanceRoutes
+)
+
+app.use(
+  '/api',
+  studentAuthRoutes
+)
+
+app.use(
+  '/api',
   facultyRoutes
+)
+
+app.use(
+  '/api',
+  facultyAttendanceRoutes
 )
 
 app.use(
@@ -173,12 +284,27 @@ app.use(
 
 app.use(
   '/api',
+  studentPortalRoutes
+)
+
+app.use(
+  '/api',
+  studentProfileRoutes
+)
+
+app.use(
+  '/api',
   dashboardRoutes
 )
 
 app.use(
   '/api',
   attendanceRoutes
+)
+
+app.use(
+  '/api',
+  studentReportRoutes
 )
 
 app.use(
@@ -223,12 +349,22 @@ app.use(
 
 
 // ======================================
-// NOTIFICATION ROUTES
+// ADMIN NOTIFICATION ROUTES
 // ======================================
 
 app.use(
   '/api',
   notificationRoutes
+)
+
+
+// ======================================
+// STUDENT NOTIFICATION ROUTES
+// ======================================
+
+app.use(
+  '/api',
+  studentNotificationRoutes
 )
 
 

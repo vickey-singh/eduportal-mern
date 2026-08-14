@@ -1,47 +1,124 @@
 import { useState, useEffect } from 'react'
 
+import { Link } from 'react-router-dom'
+
 import axios from 'axios'
+
+import {
+  API_BASE_URL,
+  API_URL
+} from '../../config/api'
 
 import '../../assets/styles/admin.css'
 
 
 // ======================================
-// API BASE URL
+// FACULTY
 // ======================================
-
-const API_BASE_URL =
-  'https://eduportal-backend-m5t1.onrender.com'
-
 
 function Faculty() {
 
   // ======================================
-  // STATE
+  // FORM STATE
   // ======================================
 
   const [formData, setFormData] =
     useState({
 
+      // PUBLIC
       name: '',
-
       designation: '',
-
       experience: '',
-
       subject: '',
-
       image: '',
-
       description: '',
+
+      // PERSONAL
+      dob: '',
+      gender: '',
+      aadharNumber: '',
+
+      // CONTACT
+      phone: '',
+      email: '',
+
+      // ADDRESS
+      permanentAddress: '',
+      currentAddress: '',
+
+      // PROFESSIONAL
+      qualification: '',
+      institution: '',
+      joiningDate: '',
+
+      // TEACHER ACCOUNT
+      createTeacherAccount: false,
+      teacherPassword: '',
+      accountStatus: 'Active',
+
+      // COURSE / BATCH
+      assignedClasses: [],
+
+      // WEBSITE
+      isWebsiteVisible: true,
 
     })
 
+
+  // ======================================
+  // FACULTY DATA
+  // ======================================
 
   const [facultyData, setFacultyData] =
     useState([])
 
 
+  // ======================================
+  // COURSE DATA
+  // ======================================
+
+  const [courseData, setCourseData] =
+    useState([])
+
+
+  // ======================================
+  // EDIT ID
+  // ======================================
+
   const [editId, setEditId] =
+    useState(null)
+
+
+  // ======================================
+  // VIEW FACULTY
+  // ======================================
+
+  const [viewFaculty, setViewFaculty] =
+    useState(null)
+
+
+  // ======================================
+  // RESET PASSWORD
+  // ======================================
+
+  const [resetFaculty, setResetFaculty] =
+    useState(null)
+
+  const [resetPassword, setResetPassword] =
+    useState('')
+
+
+  // ======================================
+  // LOADING
+  // ======================================
+
+  const [loading, setLoading] =
+    useState(false)
+
+  const [resettingPassword, setResettingPassword] =
+    useState(false)
+
+  const [visibilityUpdatingId, setVisibilityUpdatingId] =
     useState(null)
 
 
@@ -49,18 +126,303 @@ function Faculty() {
   // HANDLE INPUT
   // ======================================
 
-  const handleChange = (e) => {
+  const handleChange =
+    (e) => {
 
-    setFormData({
+      const {
+        name,
+        value,
+        type,
+        checked,
+      } = e.target
 
-      ...formData,
 
-      [e.target.name]:
-        e.target.value,
+      setFormData({
 
-    })
+        ...formData,
 
-  }
+        [name]:
+
+          type === 'checkbox'
+            ? checked
+            : value,
+
+      })
+
+    }
+
+
+  // ======================================
+  // HANDLE IMAGE
+  // ======================================
+
+  const handleImageChange =
+    (e) => {
+
+      setFormData({
+
+        ...formData,
+
+        image:
+          e.target.files?.[0] || '',
+
+      })
+
+    }
+
+
+  // ======================================
+  // RESET FORM
+  // ======================================
+
+  const resetForm =
+    () => {
+
+      setFormData({
+
+        name: '',
+        designation: '',
+        experience: '',
+        subject: '',
+        image: '',
+        description: '',
+
+        dob: '',
+        gender: '',
+        aadharNumber: '',
+
+        phone: '',
+        email: '',
+
+        permanentAddress: '',
+        currentAddress: '',
+
+        qualification: '',
+        institution: '',
+        joiningDate: '',
+
+        createTeacherAccount: false,
+        teacherPassword: '',
+        accountStatus: 'Active',
+
+        assignedClasses: [],
+
+        isWebsiteVisible: true,
+
+      })
+
+
+      setEditId(null)
+
+    }
+
+
+  // ======================================
+  // FETCH FACULTY
+  // ======================================
+
+  const fetchFaculty =
+    async () => {
+
+      try {
+
+        const response =
+          await axios.get(
+
+            `${API_URL}/faculty`
+
+          )
+
+
+        setFacultyData(
+          response.data
+        )
+
+      }
+
+      catch (error) {
+
+        console.log(
+          'Fetch Faculty Error:',
+          error
+        )
+
+      }
+
+    }
+
+
+  // ======================================
+  // FETCH COURSES
+  // ======================================
+
+  const fetchCourses =
+    async () => {
+
+      try {
+
+        const response =
+          await axios.get(
+
+            `${API_URL}/courses`
+
+          )
+
+
+        setCourseData(
+          response.data
+        )
+
+      }
+
+      catch (error) {
+
+        console.log(
+          'Fetch Courses Error:',
+          error
+        )
+
+      }
+
+    }
+
+
+  // ======================================
+  // INITIAL LOAD
+  // ======================================
+
+  useEffect(() => {
+
+    fetchFaculty()
+
+    fetchCourses()
+
+  }, [])
+
+
+  // ======================================
+  // COURSE ASSIGNED CHECK
+  // ======================================
+
+  const isCourseAssigned =
+    (courseId) => {
+
+      return (
+
+        formData.assignedClasses.some(
+
+          (item) => {
+
+            const id =
+
+              item.courseId?._id ||
+
+              item.courseId
+
+
+            return (
+
+              String(id) ===
+              String(courseId)
+
+            )
+
+          }
+
+        )
+
+      )
+
+    }
+
+
+  // ======================================
+  // TOGGLE COURSE
+  // ======================================
+
+  const toggleCourse =
+    (course) => {
+
+      const exists =
+        isCourseAssigned(
+          course._id
+        )
+
+
+      if (exists) {
+
+        setFormData({
+
+          ...formData,
+
+          assignedClasses:
+
+            formData.assignedClasses.filter(
+
+              (item) => {
+
+                const id =
+
+                  item.courseId?._id ||
+
+                  item.courseId
+
+
+                return (
+
+                  String(id) !==
+                  String(course._id)
+
+                )
+
+              }
+
+            ),
+
+        })
+
+
+        return
+
+      }
+
+
+      if (!course.batchTime) {
+
+        alert(
+
+          `${course.courseName} does not have a batch time. Please add the batch time first.`
+
+        )
+
+        return
+
+      }
+
+
+      setFormData({
+
+        ...formData,
+
+        assignedClasses: [
+
+          ...formData.assignedClasses,
+
+          {
+
+            courseId:
+              course._id,
+
+            batchTime:
+              course.batchTime,
+
+          },
+
+        ],
+
+      })
+
+    }
 
 
   // ======================================
@@ -73,39 +435,45 @@ function Faculty() {
       e.preventDefault()
 
 
+      if (loading) {
+
+        return
+
+      }
+
+
       try {
 
-        // ==================================
-        // CREATE FORMDATA
-        // ==================================
+        setLoading(true)
+
 
         const facultyFormData =
           new FormData()
 
+
+        // ==================================
+        // PUBLIC
+        // ==================================
 
         facultyFormData.append(
           'name',
           formData.name
         )
 
-
         facultyFormData.append(
           'designation',
           formData.designation
         )
-
 
         facultyFormData.append(
           'experience',
           formData.experience
         )
 
-
         facultyFormData.append(
           'subject',
           formData.subject
         )
-
 
         facultyFormData.append(
           'description',
@@ -114,16 +482,194 @@ function Faculty() {
 
 
         // ==================================
-        // IMAGE
+        // PERSONAL
+        // ==================================
+
+        facultyFormData.append(
+          'dob',
+          formData.dob
+        )
+
+        facultyFormData.append(
+          'gender',
+          formData.gender
+        )
+
+        facultyFormData.append(
+          'aadharNumber',
+          formData.aadharNumber
+        )
+
+
+        // ==================================
+        // CONTACT
+        // ==================================
+
+        facultyFormData.append(
+          'phone',
+          formData.phone
+        )
+
+        facultyFormData.append(
+          'email',
+          formData.email
+        )
+
+
+        // ==================================
+        // ADDRESS
+        // ==================================
+
+        facultyFormData.append(
+          'permanentAddress',
+          formData.permanentAddress
+        )
+
+        facultyFormData.append(
+          'currentAddress',
+          formData.currentAddress
+        )
+
+
+        // ==================================
+        // PROFESSIONAL
+        // ==================================
+
+        facultyFormData.append(
+          'qualification',
+          formData.qualification
+        )
+
+        facultyFormData.append(
+          'institution',
+          formData.institution
+        )
+
+        facultyFormData.append(
+          'joiningDate',
+          formData.joiningDate
+        )
+
+
+        // ==================================
+        // TEACHER ACCOUNT
+        // ==================================
+
+        facultyFormData.append(
+
+          'createTeacherAccount',
+
+          String(
+            formData.createTeacherAccount
+          )
+
+        )
+
+
+        facultyFormData.append(
+
+          'isTeacher',
+
+          String(
+            formData.createTeacherAccount
+          )
+
+        )
+
+
+        facultyFormData.append(
+
+          'accountStatus',
+
+          formData.accountStatus
+
+        )
+
+
+        // ==================================
+        // NEW TEACHER PASSWORD
         // ==================================
 
         if (
-          formData.image
+
+          !editId &&
+
+          formData.createTeacherAccount &&
+
+          formData.teacherPassword
+
         ) {
 
           facultyFormData.append(
+
+            'teacherPassword',
+
+            formData.teacherPassword
+
+          )
+
+        }
+
+
+        // ==================================
+        // ASSIGNED CLASSES
+        // ==================================
+
+        facultyFormData.append(
+
+          'assignedClasses',
+
+          JSON.stringify(
+
+            formData.assignedClasses.map(
+
+              (item) => ({
+
+                courseId:
+
+                  item.courseId?._id ||
+
+                  item.courseId,
+
+                batchTime:
+                  item.batchTime || '',
+
+              })
+
+            )
+
+          )
+
+        )
+
+
+        // ==================================
+        // WEBSITE
+        // ==================================
+
+        facultyFormData.append(
+
+          'isWebsiteVisible',
+
+          String(
+            formData.isWebsiteVisible
+          )
+
+        )
+
+
+        // ==================================
+        // IMAGE
+        // ==================================
+
+        if (formData.image) {
+
+          facultyFormData.append(
+
             'image',
+
             formData.image
+
           )
 
         }
@@ -133,7 +679,7 @@ function Faculty() {
 
 
         // ==================================
-        // UPDATE FACULTY
+        // UPDATE
         // ==================================
 
         if (editId) {
@@ -141,31 +687,17 @@ function Faculty() {
           response =
             await axios.put(
 
-              `${API_BASE_URL}/api/faculty/${editId}`,
+              `${API_URL}/faculty/${editId}`,
 
-              facultyFormData,
-
-              {
-
-                headers: {
-
-                  'Content-Type':
-                    'multipart/form-data',
-
-                },
-
-              }
+              facultyFormData
 
             )
 
 
-          // ==================================
-          // UPDATE UI
-          // ==================================
-
           setFacultyData(
 
             facultyData.map(
+
               (item) =>
 
                 item._id === editId
@@ -183,42 +715,41 @@ function Faculty() {
             'Faculty Updated Successfully'
           )
 
-
-          setEditId(null)
-
         }
 
 
         // ==================================
-        // ADD FACULTY
+        // ADD
         // ==================================
 
         else {
 
+          if (
+
+            formData.createTeacherAccount &&
+
+            !formData.teacherPassword.trim()
+
+          ) {
+
+            alert(
+              'Please enter a teacher password.'
+            )
+
+            return
+
+          }
+
+
           response =
             await axios.post(
 
-              `${API_BASE_URL}/api/faculty`,
+              `${API_URL}/faculty`,
 
-              facultyFormData,
-
-              {
-
-                headers: {
-
-                  'Content-Type':
-                    'multipart/form-data',
-
-                },
-
-              }
+              facultyFormData
 
             )
 
-
-          // ==================================
-          // ADD NEW FACULTY TO UI
-          // ==================================
 
           setFacultyData([
 
@@ -240,25 +771,7 @@ function Faculty() {
         }
 
 
-        // ==================================
-        // RESET FORM
-        // ==================================
-
-        setFormData({
-
-          name: '',
-
-          designation: '',
-
-          experience: '',
-
-          subject: '',
-
-          image: '',
-
-          description: '',
-
-        })
+        resetForm()
 
       }
 
@@ -280,49 +793,125 @@ function Faculty() {
 
       }
 
+      finally {
+
+        setLoading(false)
+
+      }
+
     }
 
 
   // ======================================
-  // FETCH FACULTY
+  // EDIT FACULTY
   // ======================================
 
-  useEffect(() => {
+  const editFaculty =
+    (item) => {
 
-    const fetchFaculty =
-      async () => {
+      setFormData({
 
-        try {
+        name:
+          item.name || '',
 
-          const response =
-            await axios.get(
+        designation:
+          item.designation || '',
 
-              `${API_BASE_URL}/api/faculty`
+        experience:
+          item.experience || '',
 
-            )
+        subject:
+          item.subject || '',
 
+        image: '',
 
-          setFacultyData(
-            response.data
+        description:
+          item.description || '',
+
+        dob:
+          item.dob || '',
+
+        gender:
+          item.gender || '',
+
+        aadharNumber:
+          item.aadharNumber || '',
+
+        phone:
+          item.phone || '',
+
+        email:
+          item.email || '',
+
+        permanentAddress:
+          item.permanentAddress || '',
+
+        currentAddress:
+          item.currentAddress || '',
+
+        qualification:
+          item.qualification || '',
+
+        institution:
+          item.institution || '',
+
+        joiningDate:
+          item.joiningDate || '',
+
+        createTeacherAccount:
+          item.isTeacher === true,
+
+        teacherPassword: '',
+
+        accountStatus:
+          item.accountStatus ||
+          'Active',
+
+        assignedClasses:
+
+          Array.isArray(
+            item.assignedClasses
           )
 
-        }
+            ? item.assignedClasses.map(
 
-        catch (error) {
+                (assignment) => ({
 
-          console.log(
-            'Fetch Faculty Error:',
-            error
-          )
+                  courseId:
 
-        }
+                    assignment.courseId?._id ||
 
-      }
+                    assignment.courseId,
+
+                  batchTime:
+                    assignment.batchTime || '',
+
+                })
+
+              )
+
+            : [],
+
+        isWebsiteVisible:
+          item.isWebsiteVisible !== false,
+
+      })
 
 
-    fetchFaculty()
+      setEditId(
+        item._id
+      )
 
-  }, [])
+
+      window.scrollTo({
+
+        top: 0,
+
+        behavior: 'smooth',
+
+      })
+
+    }
 
 
   // ======================================
@@ -332,11 +921,36 @@ function Faculty() {
   const deleteFaculty =
     async (id) => {
 
+      if (loading) {
+
+        return
+
+      }
+
+
+      const confirmDelete =
+        window.confirm(
+
+          'Are you sure you want to delete this faculty?'
+
+        )
+
+
+      if (!confirmDelete) {
+
+        return
+
+      }
+
+
       try {
+
+        setLoading(true)
+
 
         await axios.delete(
 
-          `${API_BASE_URL}/api/faculty/${id}`
+          `${API_URL}/faculty/${id}`
 
         )
 
@@ -368,7 +982,253 @@ function Faculty() {
 
 
         alert(
+
+          error?.response?.data?.message ||
+
           'Delete Failed'
+
+        )
+
+      }
+
+      finally {
+
+        setLoading(false)
+
+      }
+
+    }
+
+
+  // ======================================
+  // WEBSITE VISIBILITY
+  // ======================================
+
+  const toggleWebsiteVisibility =
+    async (item) => {
+
+      if (visibilityUpdatingId) {
+
+        return
+
+      }
+
+
+      try {
+
+        setVisibilityUpdatingId(
+          item._id
+        )
+
+
+        const data =
+          new FormData()
+
+
+        // PUBLIC
+        data.append(
+          'name',
+          item.name || ''
+        )
+
+        data.append(
+          'designation',
+          item.designation || ''
+        )
+
+        data.append(
+          'experience',
+          item.experience || ''
+        )
+
+        data.append(
+          'subject',
+          item.subject || ''
+        )
+
+        data.append(
+          'description',
+          item.description || ''
+        )
+
+
+        // PERSONAL
+        data.append(
+          'dob',
+          item.dob || ''
+        )
+
+        data.append(
+          'gender',
+          item.gender || ''
+        )
+
+        data.append(
+          'aadharNumber',
+          item.aadharNumber || ''
+        )
+
+
+        // CONTACT
+        data.append(
+          'phone',
+          item.phone || ''
+        )
+
+        data.append(
+          'email',
+          item.email || ''
+        )
+
+
+        // ADDRESS
+        data.append(
+          'permanentAddress',
+          item.permanentAddress || ''
+        )
+
+        data.append(
+          'currentAddress',
+          item.currentAddress || ''
+        )
+
+
+        // PROFESSIONAL
+        data.append(
+          'qualification',
+          item.qualification || ''
+        )
+
+        data.append(
+          'institution',
+          item.institution || ''
+        )
+
+        data.append(
+          'joiningDate',
+          item.joiningDate || ''
+        )
+
+
+        // TEACHER
+        data.append(
+
+          'isTeacher',
+
+          String(
+            item.isTeacher === true
+          )
+
+        )
+
+
+        data.append(
+
+          'accountStatus',
+
+          item.accountStatus ||
+          'Active'
+
+        )
+
+
+        // ASSIGNED CLASSES
+        data.append(
+
+          'assignedClasses',
+
+          JSON.stringify(
+
+            Array.isArray(
+              item.assignedClasses
+            )
+
+              ? item.assignedClasses.map(
+
+                  (assignment) => ({
+
+                    courseId:
+
+                      assignment.courseId?._id ||
+
+                      assignment.courseId,
+
+                    batchTime:
+                      assignment.batchTime || '',
+
+                  })
+
+                )
+
+              : []
+
+          )
+
+        )
+
+
+        // WEBSITE
+        data.append(
+
+          'isWebsiteVisible',
+
+          String(
+            !item.isWebsiteVisible
+          )
+
+        )
+
+
+        const response =
+          await axios.put(
+
+            `${API_URL}/faculty/${item._id}`,
+
+            data
+
+          )
+
+
+        setFacultyData(
+
+          facultyData.map(
+
+            (faculty) =>
+
+              faculty._id === item._id
+
+                ? response.data.faculty
+
+                : faculty
+
+          )
+
+        )
+
+      }
+
+      catch (error) {
+
+        console.log(
+          'Website Visibility Error:',
+          error
+        )
+
+
+        alert(
+
+          error?.response?.data?.message ||
+
+          'Website Visibility Update Failed'
+
+        )
+
+      }
+
+      finally {
+
+        setVisibilityUpdatingId(
+          null
         )
 
       }
@@ -377,66 +1237,191 @@ function Faculty() {
 
 
   // ======================================
-  // EDIT FACULTY
+  // RESET PASSWORD
   // ======================================
 
-  const editFaculty =
-    (item) => {
+  const handleResetPassword =
+    async () => {
 
-      setFormData({
+      if (resettingPassword) {
 
-        name:
-          item.name || '',
+        return
 
-        designation:
-          item.designation || '',
-
-        experience:
-          item.experience || '',
-
-        subject:
-          item.subject || '',
-
-        // ==================================
-        // IMPORTANT
-        // Existing image is NOT put here
-        // ==================================
-
-        image: '',
-
-        description:
-          item.description || '',
-
-      })
+      }
 
 
-      setEditId(
-        item._id
+      if (!resetFaculty) {
+
+        return
+
+      }
+
+
+      if (!resetPassword.trim()) {
+
+        alert(
+          'Please enter a new password.'
+        )
+
+        return
+
+      }
+
+
+      if (
+        resetPassword.trim().length < 6
+      ) {
+
+        alert(
+          'Password must be at least 6 characters.'
+        )
+
+        return
+
+      }
+
+
+      try {
+
+        setResettingPassword(
+          true
+        )
+
+
+        const response =
+          await axios.put(
+
+            `${API_URL}/faculty/${resetFaculty._id}/reset-password`,
+
+            {
+
+              teacherPassword:
+                resetPassword.trim(),
+
+            }
+
+          )
+
+
+        alert(
+
+          response.data.message ||
+
+          'Teacher Password Reset Successfully'
+
+        )
+
+
+        setResetFaculty(
+          null
+        )
+
+        setResetPassword('')
+
+      }
+
+      catch (error) {
+
+        console.log(
+          'Reset Password Error:',
+          error
+        )
+
+
+        alert(
+
+          error?.response?.data?.message ||
+
+          'Password Reset Failed'
+
+        )
+
+      }
+
+      finally {
+
+        setResettingPassword(
+          false
+        )
+
+      }
+
+    }
+
+
+  // ======================================
+  // GET ASSIGNED COURSE
+  // ======================================
+
+  const getAssignedCourse =
+    (assignment) => {
+
+      if (!assignment) {
+
+        return null
+
+      }
+
+
+      // ==================================
+      // POPULATED COURSE OBJECT
+      // ==================================
+
+      if (
+
+        assignment.courseId &&
+
+        typeof assignment.courseId ===
+          'object'
+
+      ) {
+
+        return assignment.courseId
+
+      }
+
+
+      // ==================================
+      // PLAIN COURSE ID
+      // ==================================
+
+      const courseId =
+        assignment.courseId
+
+
+      if (!courseId) {
+
+        return null
+
+      }
+
+
+      // ==================================
+      // FIND FROM COURSE DATA
+      // ==================================
+
+      return (
+
+        courseData.find(
+
+          (course) =>
+
+            String(
+              course._id
+            ) ===
+            String(
+              courseId
+            )
+
+        ) || null
+
       )
-
-
-      window.scrollTo({
-
-        top: 0,
-
-        behavior: 'smooth',
-
-      })
 
     }
 
 
   // ======================================
   // IMAGE URL
-  // ======================================
-  //
-  // Cloudinary:
-  //     complete URL
-  //
-  // Old records:
-  //     /uploads/filename.jpg
-  //
-  // Supports both.
   // ======================================
 
   const getImageUrl =
@@ -471,7 +1456,7 @@ function Faculty() {
 
 
       // ==================================
-      // OLD LOCAL UPLOAD
+      // LOCAL UPLOAD
       // ==================================
 
       return `${API_BASE_URL}${
@@ -487,32 +1472,51 @@ function Faculty() {
     }
 
 
+  // ======================================
+  // RENDER
+  // ======================================
+
   return (
 
     <div className="applications-section">
 
 
-      {/* ====================================== */}
-      {/* PAGE HEADER */}
-      {/* ====================================== */}
+      {/* ======================================
+          HEADER
+      ====================================== */}
 
-      <div className="applications-header">
+      <div className="applications-header d-flex justify-content-between align-items-center">
 
-        <h2>
-          Faculty Management
-        </h2>
+        <div>
+      
+          <h2>
+            Faculty Management
+          </h2>
+      
+          <p>
+            Add and manage faculty members.
+          </p>
+      
+        </div>
+      
+      
+        <Link
+          to="/admin/faculty-attendance"
+          className="btn faculty-attendance-btn"
+        >
 
+          <i className="fas fa-calendar-check me-2"></i>
 
-        <p>
-          Add and manage faculty members.
-        </p>
-
+          Faculty Attendance
+          
+        </Link>
+              
       </div>
 
 
-      {/* ====================================== */}
-      {/* FACULTY FORM */}
-      {/* ====================================== */}
+      {/* ======================================
+          FORM
+      ====================================== */}
 
       <div className="admin-form-wrapper">
 
@@ -524,8 +1528,23 @@ function Faculty() {
 
 
             {/* ==================================
-                NAME
+                PUBLIC INFORMATION
             ================================== */}
+
+            <div className="col-12 mb-3">
+
+              <h5 className="fw-bold">
+
+                Public Faculty Information
+
+              </h5>
+
+              <hr />
+
+            </div>
+
+
+            {/* NAME */}
 
             <div className="col-md-6 mb-3">
 
@@ -541,8 +1560,6 @@ function Faculty() {
                 type="text"
 
                 className="form-control"
-
-                placeholder="Enter faculty name"
 
                 name="name"
 
@@ -561,9 +1578,7 @@ function Faculty() {
             </div>
 
 
-            {/* ==================================
-                DESIGNATION
-            ================================== */}
+            {/* DESIGNATION */}
 
             <div className="col-md-6 mb-3">
 
@@ -579,8 +1594,6 @@ function Faculty() {
                 type="text"
 
                 className="form-control"
-
-                placeholder="Enter designation"
 
                 name="designation"
 
@@ -599,9 +1612,7 @@ function Faculty() {
             </div>
 
 
-            {/* ==================================
-                EXPERIENCE
-            ================================== */}
+            {/* EXPERIENCE */}
 
             <div className="col-md-6 mb-3">
 
@@ -617,8 +1628,6 @@ function Faculty() {
                 type="text"
 
                 className="form-control"
-
-                placeholder="Enter experience"
 
                 name="experience"
 
@@ -637,9 +1646,7 @@ function Faculty() {
             </div>
 
 
-            {/* ==================================
-                SUBJECT
-            ================================== */}
+            {/* SUBJECT */}
 
             <div className="col-md-6 mb-3">
 
@@ -655,8 +1662,6 @@ function Faculty() {
                 type="text"
 
                 className="form-control"
-
-                placeholder="Enter subject"
 
                 name="subject"
 
@@ -675,9 +1680,7 @@ function Faculty() {
             </div>
 
 
-            {/* ==================================
-                FACULTY IMAGE
-            ================================== */}
+            {/* IMAGE */}
 
             <div className="col-12 mb-3">
 
@@ -694,22 +1697,11 @@ function Faculty() {
 
                 className="form-control"
 
-                name="image"
-
                 accept="image/jpeg,image/png,image/jpg,image/webp"
 
-                onChange={(e) => {
-
-                  setFormData({
-
-                    ...formData,
-
-                    image:
-                      e.target.files[0] || '',
-
-                  })
-
-                }}
+                onChange={
+                  handleImageChange
+                }
 
               />
 
@@ -718,8 +1710,7 @@ function Faculty() {
 
                 <small className="text-muted">
 
-                  Leave this empty to keep the
-                  existing image.
+                  Leave empty to keep existing image.
 
                 </small>
 
@@ -728,9 +1719,7 @@ function Faculty() {
             </div>
 
 
-            {/* ==================================
-                DESCRIPTION
-            ================================== */}
+            {/* DESCRIPTION */}
 
             <div className="col-12 mb-4">
 
@@ -745,9 +1734,7 @@ function Faculty() {
 
                 className="form-control"
 
-                rows="5"
-
-                placeholder="Write faculty description"
+                rows="4"
 
                 name="description"
 
@@ -765,12 +1752,817 @@ function Faculty() {
 
             </div>
 
+
+            {/* ==================================
+                PERSONAL
+            ================================== */}
+
+            <div className="col-12 mb-3">
+
+              <h5 className="fw-bold">
+
+                Personal Information
+
+              </h5>
+
+              <hr />
+
+            </div>
+
+
+            <div className="col-md-4 mb-3">
+
+              <label className="form-label">
+
+                Date of Birth
+
+              </label>
+
+
+              <input
+
+                type="date"
+
+                className="form-control"
+
+                name="dob"
+
+                value={
+                  formData.dob
+                }
+
+                onChange={
+                  handleChange
+                }
+
+              />
+
+            </div>
+
+
+            <div className="col-md-4 mb-3">
+
+              <label className="form-label">
+
+                Gender
+
+              </label>
+
+
+              <select
+
+                className="form-select"
+
+                name="gender"
+
+                value={
+                  formData.gender
+                }
+
+                onChange={
+                  handleChange
+                }
+
+              >
+
+                <option value="">
+
+                  Select Gender
+
+                </option>
+
+                <option value="Male">
+
+                  Male
+
+                </option>
+
+                <option value="Female">
+
+                  Female
+
+                </option>
+
+                <option value="Other">
+
+                  Other
+
+                </option>
+
+              </select>
+
+            </div>
+
+
+            <div className="col-md-4 mb-3">
+
+              <label className="form-label">
+
+                Aadhaar Number
+
+              </label>
+
+
+              <input
+
+                type="text"
+
+                className="form-control"
+
+                name="aadharNumber"
+
+                value={
+                  formData.aadharNumber
+                }
+
+                onChange={
+                  handleChange
+                }
+
+              />
+
+            </div>
+
+
+            {/* ==================================
+                CONTACT
+            ================================== */}
+
+            <div className="col-12 mt-2 mb-3">
+
+              <h5 className="fw-bold">
+
+                Contact Information
+
+              </h5>
+
+              <hr />
+
+            </div>
+
+
+            <div className="col-md-6 mb-3">
+
+              <label className="form-label">
+
+                Mobile Number
+
+              </label>
+
+
+              <input
+
+                type="tel"
+
+                className="form-control"
+
+                name="phone"
+
+                value={
+                  formData.phone
+                }
+
+                onChange={
+                  handleChange
+                }
+
+              />
+
+            </div>
+
+
+            <div className="col-md-6 mb-3">
+
+              <label className="form-label">
+
+                Email
+
+              </label>
+
+
+              <input
+
+                type="email"
+
+                className="form-control"
+
+                name="email"
+
+                value={
+                  formData.email
+                }
+
+                onChange={
+                  handleChange
+                }
+
+              />
+
+            </div>
+
+
+            {/* ==================================
+                ADDRESS
+            ================================== */}
+
+            <div className="col-12 mt-2 mb-3">
+
+              <h5 className="fw-bold">
+
+                Address
+
+              </h5>
+
+              <hr />
+
+            </div>
+
+
+            <div className="col-md-6 mb-3">
+
+              <label className="form-label">
+
+                Permanent Address
+
+              </label>
+
+
+              <textarea
+
+                className="form-control"
+
+                rows="3"
+
+                name="permanentAddress"
+
+                value={
+                  formData.permanentAddress
+                }
+
+                onChange={
+                  handleChange
+                }
+
+              ></textarea>
+
+            </div>
+
+
+            <div className="col-md-6 mb-3">
+
+              <label className="form-label">
+
+                Current Address
+
+              </label>
+
+
+              <textarea
+
+                className="form-control"
+
+                rows="3"
+
+                name="currentAddress"
+
+                value={
+                  formData.currentAddress
+                }
+
+                onChange={
+                  handleChange
+                }
+
+              ></textarea>
+
+            </div>
+
+
+            {/* ==================================
+                PROFESSIONAL
+            ================================== */}
+
+            <div className="col-12 mt-2 mb-3">
+
+              <h5 className="fw-bold">
+
+                Professional Information
+
+              </h5>
+
+              <hr />
+
+            </div>
+
+
+            <div className="col-md-6 mb-3">
+
+              <label className="form-label">
+
+                Qualification
+
+              </label>
+
+
+              <input
+
+                type="text"
+
+                className="form-control"
+
+                name="qualification"
+
+                value={
+                  formData.qualification
+                }
+
+                onChange={
+                  handleChange
+                }
+
+              />
+
+            </div>
+
+
+            <div className="col-md-6 mb-3">
+
+              <label className="form-label">
+
+                University / Institution
+
+              </label>
+
+
+              <input
+
+                type="text"
+
+                className="form-control"
+
+                name="institution"
+
+                value={
+                  formData.institution
+                }
+
+                onChange={
+                  handleChange
+                }
+
+              />
+
+            </div>
+
+
+            <div className="col-md-6 mb-3">
+
+              <label className="form-label">
+
+                Joining Date
+
+              </label>
+
+
+              <input
+
+                type="date"
+
+                className="form-control"
+
+                name="joiningDate"
+
+                value={
+                  formData.joiningDate
+                }
+
+                onChange={
+                  handleChange
+                }
+
+              />
+
+            </div>
+
+
+            <div className="col-md-6 mb-3">
+
+              <label className="form-label">
+
+                Employee ID
+
+              </label>
+
+
+              <div className="form-control bg-light">
+
+                {editId
+
+                  ? (
+
+                    facultyData.find(
+
+                      (item) =>
+                        item._id === editId
+
+                    )?.employeeId ||
+
+                    'Auto-generated'
+
+                  )
+
+                  : (
+
+                    <span className="text-muted">
+
+                      Auto-generated by system
+
+                    </span>
+
+                  )
+
+                }
+
+              </div>
+
+            </div>
+
+
+            {/* ==================================
+                TEACHER ACCOUNT
+            ================================== */}
+
+            <div className="col-12 mt-2 mb-3">
+
+              <h5 className="fw-bold">
+
+                Teacher Account
+
+              </h5>
+
+              <hr />
+
+            </div>
+
+
+            <div className="col-md-6 mb-3">
+
+              <div className="form-check">
+
+                <input
+
+                  type="checkbox"
+
+                  className="form-check-input"
+
+                  id="createTeacherAccount"
+
+                  name="createTeacherAccount"
+
+                  checked={
+                    formData.createTeacherAccount
+                  }
+
+                  onChange={
+                    handleChange
+                  }
+
+                />
+
+
+                <label
+
+                  className="form-check-label"
+
+                  htmlFor="createTeacherAccount"
+
+                >
+
+                  Enable Teacher Login
+
+                </label>
+
+              </div>
+
+
+              <small className="text-muted">
+
+                Teacher ID will be generated automatically.
+
+              </small>
+
+            </div>
+
+
+            {formData.createTeacherAccount && (
+
+              <div className="col-md-6 mb-3">
+
+                <label className="form-label">
+
+                  Account Status
+
+                </label>
+
+
+                <select
+
+                  className="form-select"
+
+                  name="accountStatus"
+
+                  value={
+                    formData.accountStatus
+                  }
+
+                  onChange={
+                    handleChange
+                  }
+
+                >
+
+                  <option value="Active">
+
+                    Active
+
+                  </option>
+
+                  <option value="Inactive">
+
+                    Inactive
+
+                  </option>
+
+                </select>
+
+              </div>
+
+            )}
+
+
+            {!editId &&
+              formData.createTeacherAccount && (
+
+                <div className="col-md-6 mb-3">
+
+                  <label className="form-label">
+
+                    Initial Teacher Password
+
+                  </label>
+
+
+                  <input
+
+                    type="password"
+
+                    className="form-control"
+
+                    name="teacherPassword"
+
+                    value={
+                      formData.teacherPassword
+                    }
+
+                    onChange={
+                      handleChange
+                    }
+
+                    required
+
+                  />
+
+                </div>
+
+              )}
+
+
+            {editId &&
+              formData.createTeacherAccount && (
+
+                <div className="col-12 mb-3">
+
+                  <div className="alert alert-info">
+
+                    Password is managed from
+                    <strong>
+                      {' '}Reset Password
+                    </strong>.
+
+                  </div>
+
+                </div>
+
+              )}
+
+
+            {/* ==================================
+                COURSE / BATCH
+            ================================== */}
+
+            <div className="col-12 mt-2 mb-3">
+
+              <h5 className="fw-bold">
+
+                Course & Batch Assignment
+
+              </h5>
+
+              <hr />
+
+
+              <p className="text-muted">
+
+                Select courses and batches assigned
+                to this teacher.
+
+              </p>
+
+            </div>
+
+
+            <div className="col-12 mb-4">
+
+              {courseData.length === 0 ? (
+
+                <div className="alert alert-warning">
+
+                  No courses found.
+
+                </div>
+
+              ) : (
+
+                <div className="row g-3">
+
+                  {courseData.map(
+
+                    (course) => (
+
+                      <div
+
+                        className="col-md-6"
+
+                        key={
+                          course._id
+                        }
+
+                      >
+
+                        <div className="border rounded p-3">
+
+                          <div className="form-check">
+
+                            <input
+
+                              type="checkbox"
+
+                              className="form-check-input"
+
+                              id={
+                                `course-${course._id}`
+                              }
+
+                              checked={
+
+                                isCourseAssigned(
+                                  course._id
+                                )
+
+                              }
+
+                              onChange={() =>
+                                toggleCourse(
+                                  course
+                                )
+                              }
+
+                            />
+
+
+                            <label
+
+                              className="form-check-label"
+
+                              htmlFor={
+                                `course-${course._id}`
+                              }
+
+                            >
+
+                              <strong>
+
+                                {
+                                  course.courseName
+                                }
+
+                              </strong>
+
+
+                              {' '}
+
+
+                              <span className="text-muted">
+
+                                (
+                                {
+                                  course.courseCode
+                                }
+                                )
+
+                              </span>
+
+                            </label>
+
+                          </div>
+
+
+                          <small className="text-muted ms-4">
+
+                            Batch:{' '}
+
+                            {
+                              course.batchTime ||
+                              'Not Set'
+                            }
+
+                          </small>
+
+                        </div>
+
+                      </div>
+
+                    )
+
+                  )}
+
+                </div>
+
+              )}
+
+            </div>
+
+
+            {/* ==================================
+                WEBSITE
+            ================================== */}
+
+            <div className="col-12 mt-2 mb-4">
+
+              <h5 className="fw-bold">
+
+                Website Visibility
+
+              </h5>
+
+              <hr />
+
+
+              <div className="form-check form-switch">
+
+                <input
+
+                  className="form-check-input"
+
+                  type="checkbox"
+
+                  id="isWebsiteVisible"
+
+                  name="isWebsiteVisible"
+
+                  checked={
+                    formData.isWebsiteVisible
+                  }
+
+                  onChange={
+                    handleChange
+                  }
+
+                />
+
+
+                <label
+
+                  className="form-check-label"
+
+                  htmlFor="isWebsiteVisible"
+
+                >
+
+                  Show this faculty on main website
+
+                </label>
+
+              </div>
+
+            </div>
+
           </div>
 
 
-          {/* ======================================
+          {/* ==================================
               SUBMIT
-          ====================================== */}
+          ================================== */}
 
           <button
 
@@ -778,22 +2570,26 @@ function Faculty() {
 
             className="table-btn approve-btn"
 
+            disabled={
+              loading
+            }
+
           >
 
-            {editId
+            {loading
 
-              ? 'Update Faculty'
+              ? 'Please Wait...'
 
-              : 'Add Faculty'
+              : editId
+
+                ? 'Update Faculty'
+
+                : 'Add Faculty'
 
             }
 
           </button>
 
-
-          {/* ======================================
-              CANCEL EDIT
-          ====================================== */}
 
           {editId && (
 
@@ -803,27 +2599,13 @@ function Faculty() {
 
               className="table-btn reject-btn ms-2"
 
-              onClick={() => {
+              onClick={
+                resetForm
+              }
 
-                setEditId(null)
-
-                setFormData({
-
-                  name: '',
-
-                  designation: '',
-
-                  experience: '',
-
-                  subject: '',
-
-                  image: '',
-
-                  description: '',
-
-                })
-
-              }}
+              disabled={
+                loading
+              }
 
             >
 
@@ -838,42 +2620,35 @@ function Faculty() {
       </div>
 
 
-      {/* ====================================== */}
-      {/* FACULTY TABLE */}
-      {/* ====================================== */}
+      {/* ======================================
+          FACULTY TABLE
+      ====================================== */}
 
       <div className="table-responsive mt-5">
 
         <table className="table applications-table">
 
-
           <thead>
 
             <tr>
 
-              <th>
-                Image
-              </th>
+              <th>Image</th>
 
-              <th>
-                Name
-              </th>
+              <th>Name</th>
 
-              <th>
-                Subject
-              </th>
+              <th>Subject</th>
 
-              <th>
-                Experience
-              </th>
+              <th>Experience</th>
 
-              <th>
-                Designation
-              </th>
+              <th>Designation</th>
 
-              <th>
-                Action
-              </th>
+              <th>Teacher ID</th>
+
+              <th>Employee ID</th>
+
+              <th>Website</th>
+
+              <th>Action</th>
 
             </tr>
 
@@ -887,7 +2662,7 @@ function Faculty() {
               <tr>
 
                 <td
-                  colSpan="6"
+                  colSpan="9"
                   className="text-center"
                 >
 
@@ -900,6 +2675,7 @@ function Faculty() {
             ) : (
 
               facultyData.map(
+
                 (item) => (
 
                   <tr
@@ -907,11 +2683,6 @@ function Faculty() {
                       item._id
                     }
                   >
-
-
-                    {/* ==================================
-                        IMAGE
-                    ================================== */}
 
                     <td>
 
@@ -953,50 +2724,146 @@ function Faculty() {
                     </td>
 
 
-                    {/* ==================================
-                        NAME
-                    ================================== */}
-
                     <td>
-                      {item.name}
+                      {
+                        item.name
+                      }
                     </td>
 
 
-                    {/* ==================================
-                        SUBJECT
-                    ================================== */}
-
                     <td>
-                      {item.subject}
+                      {
+                        item.subject
+                      }
                     </td>
 
 
-                    {/* ==================================
-                        EXPERIENCE
-                    ================================== */}
-
                     <td>
-                      {item.experience}
+                      {
+                        item.experience
+                      }
                     </td>
 
 
-                    {/* ==================================
-                        DESIGNATION
-                    ================================== */}
-
                     <td>
-                      {item.designation}
+                      {
+                        item.designation
+                      }
                     </td>
 
 
-                    {/* ==================================
-                        ACTIONS
-                    ================================== */}
+                    <td>
+
+                      {item.isTeacher === true
+
+                        ? (
+
+                          item.teacherId ||
+                          'Generating...'
+
+                        )
+
+                        : (
+
+                          <span className="text-muted">
+
+                            Not Enabled
+
+                          </span>
+
+                        )
+
+                      }
+
+                    </td>
+
 
                     <td>
 
-                      <div className="d-flex gap-2">
+                      {
+                        item.employeeId ||
+                        'Generating...'
+                      }
 
+                    </td>
+
+
+                    <td>
+
+                      <button
+
+                        type="button"
+
+                        className={
+
+                          `table-btn ${
+                            item.isWebsiteVisible
+                              ? 'approve-btn'
+                              : 'reject-btn'
+                          }`
+
+                        }
+
+                        onClick={() =>
+                          toggleWebsiteVisibility(
+                            item
+                          )
+                        }
+
+                        disabled={
+
+                          visibilityUpdatingId ===
+                          item._id
+
+                        }
+
+                      >
+
+                        {visibilityUpdatingId ===
+                        item._id
+
+                          ? 'Please Wait...'
+
+                          : item.isWebsiteVisible
+
+                            ? 'Visible'
+
+                            : 'Hidden'
+
+                        }
+
+                      </button>
+
+                    </td>
+
+
+                    <td>
+
+                      <div className="d-flex gap-2 flex-wrap">
+
+
+                        {/* VIEW */}
+
+                        <button
+
+                          type="button"
+
+                          className="table-btn approve-btn"
+
+                          onClick={() =>
+                            setViewFaculty(
+                              item
+                            )
+                          }
+
+                        >
+
+                          View
+
+                        </button>
+
+
+                        {/* EDIT */}
 
                         <button
 
@@ -1016,6 +2883,37 @@ function Faculty() {
 
                         </button>
 
+
+                        {/* RESET PASSWORD */}
+
+                        {item.isTeacher === true && (
+
+                          <button
+
+                            type="button"
+
+                            className="table-btn approve-btn"
+
+                            onClick={() => {
+
+                              setResetFaculty(
+                                item
+                              )
+
+                              setResetPassword('')
+
+                            }}
+
+                          >
+
+                            Reset Password
+
+                          </button>
+
+                        )}
+
+
+                        {/* DELETE */}
 
                         <button
 
@@ -1052,6 +2950,914 @@ function Faculty() {
         </table>
 
       </div>
+
+
+      {/* ======================================
+          VIEW FACULTY MODAL
+      ====================================== */}
+
+      {viewFaculty && (
+
+        <div
+
+          className="modal d-block"
+
+          tabIndex="-1"
+
+          style={{
+
+            backgroundColor:
+              'rgba(0,0,0,0.5)',
+
+          }}
+
+        >
+
+          <div className="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
+
+            <div className="modal-content">
+
+
+              {/* HEADER */}
+
+              <div className="modal-header">
+
+                <h5 className="modal-title">
+
+                  Faculty Details
+
+                </h5>
+
+
+                <button
+
+                  type="button"
+
+                  className="btn-close"
+
+                  onClick={() =>
+                    setViewFaculty(null)
+                  }
+
+                ></button>
+
+              </div>
+
+
+              {/* BODY */}
+
+              <div className="modal-body">
+
+                <div className="row g-4">
+
+
+                  {/* IMAGE */}
+
+                  <div className="col-md-3 text-center">
+
+                    <img
+
+                      src={
+                        getImageUrl(
+                          viewFaculty.image
+                        )
+                      }
+
+                      alt={
+                        viewFaculty.name
+                      }
+
+                      width="160"
+
+                      height="160"
+
+                      style={{
+
+                        objectFit:
+                          'cover',
+
+                        borderRadius:
+                          '12px',
+
+                      }}
+
+                      onError={(e) => {
+
+                        e.currentTarget.src =
+                          '/logo.png'
+
+                      }}
+
+                    />
+
+
+                    <h5 className="mt-3">
+
+                      {
+                        viewFaculty.name
+                      }
+
+                    </h5>
+
+                  </div>
+
+
+                  {/* BASIC */}
+
+                  <div className="col-md-9">
+
+                    <h5 className="fw-bold">
+
+                      Basic Information
+
+                    </h5>
+
+                    <hr />
+
+
+                    <div className="row">
+
+                      <div className="col-md-6 mb-2">
+
+                        <strong>Name:</strong>{' '}
+
+                        {
+                          viewFaculty.name ||
+                          '-'
+                        }
+
+                      </div>
+
+
+                      <div className="col-md-6 mb-2">
+
+                        <strong>Designation:</strong>{' '}
+
+                        {
+                          viewFaculty.designation ||
+                          '-'
+                        }
+
+                      </div>
+
+
+                      <div className="col-md-6 mb-2">
+
+                        <strong>Subject:</strong>{' '}
+
+                        {
+                          viewFaculty.subject ||
+                          '-'
+                        }
+
+                      </div>
+
+
+                      <div className="col-md-6 mb-2">
+
+                        <strong>Experience:</strong>{' '}
+
+                        {
+                          viewFaculty.experience ||
+                          '-'
+                        }
+
+                      </div>
+
+                    </div>
+
+                  </div>
+
+
+                  {/* PERSONAL */}
+
+                  <div className="col-12">
+
+                    <h5 className="fw-bold">
+
+                      Personal Information
+
+                    </h5>
+
+                    <hr />
+
+
+                    <div className="row">
+
+                      <div className="col-md-4 mb-2">
+
+                        <strong>Date of Birth:</strong>{' '}
+
+                        {
+                          viewFaculty.dob ||
+                          '-'
+                        }
+
+                      </div>
+
+
+                      <div className="col-md-4 mb-2">
+
+                        <strong>Gender:</strong>{' '}
+
+                        {
+                          viewFaculty.gender ||
+                          '-'
+                        }
+
+                      </div>
+
+
+                      <div className="col-md-4 mb-2">
+
+                        <strong>Aadhaar:</strong>{' '}
+
+                        {
+                          viewFaculty.aadharNumber ||
+                          '-'
+                        }
+
+                      </div>
+
+                    </div>
+
+                  </div>
+
+
+                  {/* CONTACT */}
+
+                  <div className="col-12">
+
+                    <h5 className="fw-bold">
+
+                      Contact Information
+
+                    </h5>
+
+                    <hr />
+
+
+                    <div className="row">
+
+                      <div className="col-md-6 mb-2">
+
+                        <strong>Mobile:</strong>{' '}
+
+                        {
+                          viewFaculty.phone ||
+                          '-'
+                        }
+
+                      </div>
+
+
+                      <div className="col-md-6 mb-2">
+
+                        <strong>Email:</strong>{' '}
+
+                        {
+                          viewFaculty.email ||
+                          '-'
+                        }
+
+                      </div>
+
+                    </div>
+
+                  </div>
+
+
+                  {/* ADDRESS */}
+
+                  <div className="col-12">
+
+                    <h5 className="fw-bold">
+
+                      Address
+
+                    </h5>
+
+                    <hr />
+
+
+                    <div className="row">
+
+                      <div className="col-md-6 mb-2">
+
+                        <strong>
+                          Permanent Address:
+                        </strong>
+
+
+                        <div className="text-muted">
+
+                          {
+                            viewFaculty.permanentAddress ||
+                            '-'
+                          }
+
+                        </div>
+
+                      </div>
+
+
+                      <div className="col-md-6 mb-2">
+
+                        <strong>
+                          Current Address:
+                        </strong>
+
+
+                        <div className="text-muted">
+
+                          {
+                            viewFaculty.currentAddress ||
+                            '-'
+                          }
+
+                        </div>
+
+                      </div>
+
+                    </div>
+
+                  </div>
+
+
+                  {/* PROFESSIONAL */}
+
+                  <div className="col-12">
+
+                    <h5 className="fw-bold">
+
+                      Professional Information
+
+                    </h5>
+
+                    <hr />
+
+
+                    <div className="row">
+
+                      <div className="col-md-6 mb-2">
+
+                        <strong>
+                          Qualification:
+                        </strong>{' '}
+
+                        {
+                          viewFaculty.qualification ||
+                          '-'
+                        }
+
+                      </div>
+
+
+                      <div className="col-md-6 mb-2">
+
+                        <strong>
+                          Institution:
+                        </strong>{' '}
+
+                        {
+                          viewFaculty.institution ||
+                          '-'
+                        }
+
+                      </div>
+
+
+                      <div className="col-md-6 mb-2">
+
+                        <strong>
+                          Joining Date:
+                        </strong>{' '}
+
+                        {
+                          viewFaculty.joiningDate ||
+                          '-'
+                        }
+
+                      </div>
+
+
+                      <div className="col-md-6 mb-2">
+
+                        <strong>
+                          Employee ID:
+                        </strong>{' '}
+
+                        {
+                          viewFaculty.employeeId ||
+                          '-'
+                        }
+
+                      </div>
+
+                    </div>
+
+                  </div>
+
+
+                  {/* TEACHER ACCOUNT */}
+
+                  <div className="col-12">
+
+                    <h5 className="fw-bold">
+
+                      Teacher Account
+
+                    </h5>
+
+                    <hr />
+
+
+                    {viewFaculty.isTeacher === true ? (
+
+                      <div className="row">
+
+                        <div className="col-md-4 mb-2">
+
+                          <strong>
+                            Teacher ID:
+                          </strong>{' '}
+
+                          {
+                            viewFaculty.teacherId ||
+                            'Generating...'
+                          }
+
+                        </div>
+
+
+                        <div className="col-md-4 mb-2">
+
+                          <strong>
+                            Account Status:
+                          </strong>{' '}
+
+                          {
+                            viewFaculty.accountStatus ||
+                            'Active'
+                          }
+
+                        </div>
+
+
+                        <div className="col-md-4 mb-2">
+
+                          <strong>
+                            Password:
+                          </strong>{' '}
+
+                          <span className="text-muted">
+
+                            Not displayed
+
+                          </span>
+
+                        </div>
+
+                      </div>
+
+                    ) : (
+
+                      <p className="text-muted">
+
+                        Teacher login is not enabled.
+
+                      </p>
+
+                    )}
+
+                  </div>
+
+
+                  {/* ==================================
+                      ASSIGNED COURSES & BATCHES
+                  ================================== */}
+
+                  <div className="col-12">
+
+                    <h5 className="fw-bold">
+
+                      Assigned Courses & Batches
+
+                    </h5>
+
+                    <hr />
+
+
+                    {Array.isArray(
+                      viewFaculty.assignedClasses
+                    ) &&
+
+                    viewFaculty.assignedClasses.length > 0 ? (
+
+                      <div className="table-responsive">
+
+                        <table className="table table-bordered table-sm">
+
+                          <thead>
+
+                            <tr>
+
+                              <th>
+                                Course
+                              </th>
+
+                              <th>
+                                Course Code
+                              </th>
+
+                              <th>
+                                Batch
+                              </th>
+
+                            </tr>
+
+                          </thead>
+
+
+                          <tbody>
+
+                            {viewFaculty.assignedClasses.map(
+
+                              (assignment, index) => {
+
+                                const course =
+                                  getAssignedCourse(
+                                    assignment
+                                  )
+
+
+                                return (
+
+                                  <tr
+
+                                    key={
+
+                                      `${
+                                        assignment.courseId?._id ||
+                                        assignment.courseId ||
+                                        'course'
+                                      }-${index}`
+
+                                    }
+
+                                  >
+
+                                    <td>
+
+                                      {
+
+                                        course?.courseName ||
+
+                                        'Course Not Found'
+
+                                      }
+
+                                    </td>
+
+
+                                    <td>
+
+                                      {
+
+                                        course?.courseCode ||
+
+                                        '-'
+
+                                      }
+
+                                    </td>
+
+
+                                    <td>
+
+                                      {
+
+                                        assignment.batchTime ||
+
+                                        '-'
+
+                                      }
+
+                                    </td>
+
+                                  </tr>
+
+                                )
+
+                              }
+
+                            )}
+
+                          </tbody>
+
+                        </table>
+
+                      </div>
+
+                    ) : (
+
+                      <p className="text-muted">
+
+                        No course/batch assigned.
+
+                      </p>
+
+                    )}
+
+                  </div>
+
+
+                  {/* WEBSITE */}
+
+                  <div className="col-md-6">
+
+                    <h6 className="fw-bold">
+
+                      Website Visibility
+
+                    </h6>
+
+
+                    <p>
+
+                      {
+
+                        viewFaculty.isWebsiteVisible
+
+                          ? 'Visible on main website'
+
+                          : 'Hidden from main website'
+
+                      }
+
+                    </p>
+
+                  </div>
+
+
+                  {/* DESCRIPTION */}
+
+                  <div className="col-12">
+
+                    <h5 className="fw-bold">
+
+                      Description
+
+                    </h5>
+
+                    <hr />
+
+
+                    <p className="text-muted">
+
+                      {
+                        viewFaculty.description ||
+                        '-'
+                      }
+
+                    </p>
+
+                  </div>
+
+                </div>
+
+              </div>
+
+
+              {/* FOOTER */}
+
+              <div className="modal-footer">
+
+                <button
+
+                  type="button"
+
+                  className="table-btn reject-btn"
+
+                  onClick={() =>
+                    setViewFaculty(null)
+                  }
+
+                >
+
+                  Close
+
+                </button>
+
+              </div>
+
+            </div>
+
+          </div>
+
+        </div>
+
+      )}
+
+
+      {/* ======================================
+          RESET PASSWORD MODAL
+      ====================================== */}
+
+      {resetFaculty && (
+
+        <div
+
+          className="modal d-block"
+
+          tabIndex="-1"
+
+          style={{
+
+            backgroundColor:
+              'rgba(0,0,0,0.5)',
+
+          }}
+
+        >
+
+          <div className="modal-dialog modal-dialog-centered">
+
+            <div className="modal-content">
+
+
+              <div className="modal-header">
+
+                <h5 className="modal-title">
+
+                  Reset Teacher Password
+
+                </h5>
+
+
+                <button
+
+                  type="button"
+
+                  className="btn-close"
+
+                  onClick={() => {
+
+                    if (
+                      resettingPassword
+                    ) {
+
+                      return
+
+                    }
+
+
+                    setResetFaculty(
+                      null
+                    )
+
+                    setResetPassword(
+                      ''
+                    )
+
+                  }}
+
+                ></button>
+
+              </div>
+
+
+              <div className="modal-body">
+
+                <p>
+
+                  Teacher:
+
+                  <strong className="ms-1">
+
+                    {
+                      resetFaculty.name
+                    }
+
+                  </strong>
+
+                </p>
+
+
+                <p>
+
+                  Teacher ID:
+
+                  <strong className="ms-1">
+
+                    {
+                      resetFaculty.teacherId ||
+                      'Generating...'
+                    }
+
+                  </strong>
+
+                </p>
+
+
+                <label className="form-label">
+
+                  New Password
+
+                </label>
+
+
+                <input
+
+                  type="password"
+
+                  className="form-control"
+
+                  value={
+                    resetPassword
+                  }
+
+                  onChange={(e) =>
+                    setResetPassword(
+                      e.target.value
+                    )
+                  }
+
+                  disabled={
+                    resettingPassword
+                  }
+
+                />
+
+              </div>
+
+
+              <div className="modal-footer">
+
+                <button
+
+                  type="button"
+
+                  className="table-btn reject-btn"
+
+                  onClick={() => {
+
+                    setResetFaculty(
+                      null
+                    )
+
+                    setResetPassword(
+                      ''
+                    )
+
+                  }}
+
+                  disabled={
+                    resettingPassword
+                  }
+
+                >
+
+                  Cancel
+
+                </button>
+
+
+                <button
+
+                  type="button"
+
+                  className="table-btn approve-btn"
+
+                  onClick={
+                    handleResetPassword
+                  }
+
+                  disabled={
+                    resettingPassword
+                  }
+
+                >
+
+                  {resettingPassword
+
+                    ? 'Please Wait...'
+
+                    : 'Reset Password'
+
+                  }
+
+                </button>
+
+              </div>
+
+            </div>
+
+          </div>
+
+        </div>
+
+      )}
 
     </div>
 

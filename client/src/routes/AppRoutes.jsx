@@ -1,3 +1,68 @@
+import {
+  BrowserRouter,
+  Routes,
+  Route,
+} from 'react-router-dom'
+
+
+// ======================================
+// PRIVATE ROUTE
+// ======================================
+
+import PrivateRoute
+  from './PrivateRoute'
+
+
+// ======================================
+// TEACHER PRIVATE ROUTE
+// ======================================
+
+import TeacherPrivateRoute
+  from './TeacherPrivateRoute'
+
+
+// ======================================
+// STUDENT PRIVATE ROUTE
+// ======================================
+
+import StudentPrivateRoute
+  from './StudentPrivateRoute'
+
+
+// ======================================
+// ADMIN PAGES
+// ======================================
+
+import AdminLogin
+  from '../pages/admin/AdminLogin'
+
+import AdminDashboard
+  from '../pages/admin/AdminDashboard'
+
+import Students
+  from '../pages/admin/Students'
+
+import AdminFaculty
+  from '../pages/admin/Faculty'
+
+import FacultyAttendance
+  from '../pages/admin/FacultyAttendance'
+
+import Applications
+  from '../pages/admin/Applications'
+
+import TestimonialsAdmin
+  from '../pages/admin/Testimonials'
+
+import GalleryAdmin
+  from '../pages/admin/GalleryAdmin'
+
+import Messages
+  from '../pages/admin/Messages'
+
+import AchievementsAdmin
+  from '../pages/admin/Achievements'
+
 import Settings
   from '../pages/admin/Settings'
 
@@ -7,96 +72,171 @@ import HomePage
 import Downloads
   from '../pages/admin/Downloads'
 
-import DownloadsPage
-  from '../pages/Downloads'
-
 import Feedbacks
   from '../pages/admin/Feedbacks'
 
 import Notices
   from '../pages/admin/Notices'
 
-import Course 
+import Course
   from '../pages/admin/Course'
 
-import Payments 
+import Payments
   from '../pages/admin/Payments'
 
-import Receipt 
+
+// ======================================
+// RECEIPT
+// ======================================
+
+import Receipt
   from '../pages/Receipt'
 
-import {
-  BrowserRouter,
-  Routes,
-  Route,
-} from 'react-router-dom'
 
 // ======================================
-// PRIVATE ROUTE
+// TEACHER PAGES
 // ======================================
 
-import PrivateRoute from './PrivateRoute'
+import TeacherLogin
+  from '../pages/teacher/TeacherLogin'
+
+import TeacherDashboard
+  from '../pages/teacher/TeacherDashboard'
+
+import TeacherClasses
+  from '../pages/teacher/TeacherClasses'
+
+import TeacherStudents
+  from '../pages/teacher/TeacherStudents'
+
+import TeacherAttendance
+  from '../pages/teacher/TeacherAttendance'
+
+import TeacherAssignments
+  from '../pages/teacher/TeacherAssignments'
+
+import TeacherExams
+  from '../pages/teacher/TeacherExams'
+
+import TeacherMaterials
+  from '../pages/teacher/TeacherMaterials'
+
+import TeacherTimetable
+  from '../pages/teacher/TeacherTimetable'
+
+import TeacherAnnouncements
+  from '../pages/teacher/TeacherAnnouncements'
+
+import TeacherMessages
+  from '../pages/teacher/TeacherMessages'
+
+import TeacherReports
+  from '../pages/teacher/TeacherReports'
+
+import TeacherProfile
+  from '../pages/teacher/TeacherProfile'
+
 
 // ======================================
-// ADMIN PAGES
+// STUDENT PAGES
 // ======================================
 
-import AdminLogin from '../pages/admin/AdminLogin'
+import StudentLogin
+  from '../pages/student/StudentLogin'
 
-import AdminDashboard from '../pages/admin/AdminDashboard'
+import StudentDashboard
+  from '../pages/student/StudentDashboard'
 
-import Students from '../pages/admin/Students'
+import StudentCourses
+  from '../pages/student/StudentCourses'
 
-import AdminFaculty from '../pages/admin/Faculty'
+import StudentTimetable
+  from '../pages/student/StudentTimetable'
 
-import Applications from '../pages/admin/Applications'
+import StudentAttendance
+  from '../pages/student/StudentAttendance'
 
-import TestimonialsAdmin from '../pages/admin/Testimonials'
+import StudentAssignments
+  from '../pages/student/StudentAssignments'
 
-import GalleryAdmin from '../pages/admin/GalleryAdmin'
+import StudentStudyMaterials
+  from '../pages/student/StudentStudyMaterials'
 
-import Messages from '../pages/admin/Messages'
+import StudentMarks
+  from '../pages/student/StudentMarks'
 
-import AchievementsAdmin
-  from '../pages/admin/Achievements'
+import StudentAnnouncements
+  from '../pages/student/StudentAnnouncements'
+
+import StudentMessages
+  from '../pages/student/StudentMessages'
+
+import StudentFees
+  from '../pages/student/StudentFees'
+
+import StudentReports
+  from '../pages/student/StudentReports'
+
+import StudentProfile
+  from '../pages/student/StudentProfile'
+
 
 // ======================================
 // LAYOUTS
 // ======================================
 
-import AdminLayout from '../layouts/AdminLayout'
+import AdminLayout
+  from '../layouts/AdminLayout'
 
-import MainLayout from '../layouts/MainLayout'
+import MainLayout
+  from '../layouts/MainLayout'
+
+import TeacherLayout
+  from '../layouts/TeacherLayout'
+
+import StudentLayout
+  from '../layouts/StudentLayout'
+
 
 // ======================================
 // MAIN WEBSITE PAGES
 // ======================================
 
-import Home from '../pages/Home'
+import Home
+  from '../pages/Home'
 
-import About from '../pages/About'
+import About
+  from '../pages/About'
 
-import Faculty from '../pages/Faculty'
+import Faculty
+  from '../pages/Faculty'
 
-import Gallery from '../pages/Gallery'
+import Gallery
+  from '../pages/Gallery'
 
-import Achievements from '../pages/Achievements'
+import Achievements
+  from '../pages/Achievements'
 
-import Attendance from '../pages/admin/Attendance'
+import Attendance
+  from '../pages/admin/Attendance'
 
-import StudentAttendance from '../pages/admin/StudentAttendance'
+import StudentAttendanceAdmin
+  from '../pages/admin/StudentAttendance'
 
-import Contact from '../pages/Contact'
+import Contact
+  from '../pages/Contact'
 
-import Services from '../pages/Services'
+import Services
+  from '../pages/Services'
 
-import Testimonials from '../pages/Testimonials'
+import Testimonials
+  from '../pages/Testimonials'
 
-import Apply from '../pages/Apply'
+import Apply
+  from '../pages/Apply'
 
-import ExistingStudent from '../pages/ExistingStudent'
-
-import NotFound from '../pages/NotFound'
+import NotFound
+  from '../pages/NotFound'
 
 
 function AppRoutes() {
@@ -107,6 +247,7 @@ function AppRoutes() {
 
       <Routes>
 
+
         {/* ====================================== */}
         {/* ADMIN LOGIN */}
         {/* ====================================== */}
@@ -115,6 +256,27 @@ function AppRoutes() {
           path="/admin/login"
           element={<AdminLogin />}
         />
+
+
+        {/* ====================================== */}
+        {/* TEACHER LOGIN */}
+        {/* ====================================== */}
+
+        <Route
+          path="/teacher/login"
+          element={<TeacherLogin />}
+        />
+
+
+        {/* ====================================== */}
+        {/* STUDENT LOGIN */}
+        {/* ====================================== */}
+
+        <Route
+          path="/student/login"
+          element={<StudentLogin />}
+        />
+
 
         {/* ====================================== */}
         {/* PROTECTED ADMIN ROUTES */}
@@ -136,94 +298,144 @@ function AppRoutes() {
 
         >
 
-          {/* Dashboard */}
+
+          {/* ADMIN DASHBOARD */}
+
           <Route
             path="dashboard"
             element={<AdminDashboard />}
           />
 
-          {/* Home Page */}  
+
+          {/* HOME PAGE */}
+
           <Route
             path="home-page"
             element={<HomePage />}
           />
 
-          {/* Students */}
+
+          {/* STUDENTS */}
+
           <Route
             path="students"
             element={<Students />}
           />
 
-          {/* Faculty */}
+
+          {/* FACULTY */}
+
           <Route
             path="faculty"
             element={<AdminFaculty />}
           />
 
-          {/* Achievements */}
+
+          {/* FACULTY ATTENDANCE */}
+
+          <Route
+            path="faculty-attendance"
+            element={<FacultyAttendance />}
+          />
+
+
+          {/* ACHIEVEMENTS */}
+
           <Route
             path="achievements"
             element={<AchievementsAdmin />}
           />
 
-          {/* Applications */}
+
+          {/* APPLICATIONS */}
+
           <Route
             path="applications"
             element={<Applications />}
           />
 
-          {/* Testimonials */}
+
+          {/* TESTIMONIALS */}
+
           <Route
             path="testimonials"
             element={<TestimonialsAdmin />}
           />
 
-          {/* Gallery */}
+
+          {/* GALLERY */}
+
           <Route
             path="gallery"
             element={<GalleryAdmin />}
           />
 
-          {/* Messages */}
+
+          {/* MESSAGES */}
+
           <Route
             path="messages"
             element={<Messages />}
           />
+
+
+          {/* FEEDBACKS */}
 
           <Route
             path="feedbacks"
             element={<Feedbacks />}
           />
 
+
+          {/* NOTICES */}
+
           <Route
             path="notices"
             element={<Notices />}
           />
+
+
+          {/* DOWNLOADS */}
 
           <Route
             path="downloads"
             element={<Downloads />}
           />
 
+
+          {/* SETTINGS */}
+
           <Route
             path="settings"
             element={<Settings />}
           />
+
+
+          {/* COURSES */}
 
           <Route
             path="courses"
             element={<Course />}
           />
 
+
+          {/* ATTENDANCE */}
+
           <Route
             path="attendance"
             element={<Attendance />}
           />
 
+
+          {/* STUDENT ATTENDANCE */}
+
           <Route
             path="attendance/student/:studentId"
-            element={<StudentAttendance />}
+            element={<StudentAttendanceAdmin />}
           />
+
+
+          {/* PAYMENTS */}
 
           <Route
             path="payments"
@@ -232,96 +444,365 @@ function AppRoutes() {
 
         </Route>
 
+
+        {/* ====================================== */}
+        {/* PROTECTED TEACHER ROUTES */}
+        {/* ====================================== */}
+
+        <Route
+
+          path="/teacher"
+
+          element={
+
+            <TeacherPrivateRoute>
+
+              <TeacherLayout />
+
+            </TeacherPrivateRoute>
+
+          }
+
+        >
+
+
+          {/* TEACHER DASHBOARD */}
+
+          <Route
+            path="dashboard"
+            element={<TeacherDashboard />}
+          />
+
+
+          {/* MY CLASSES */}
+
+          <Route
+            path="classes"
+            element={<TeacherClasses />}
+          />
+
+
+          {/* STUDENTS */}
+
+          <Route
+            path="students"
+            element={<TeacherStudents />}
+          />
+
+
+          {/* ATTENDANCE */}
+
+          <Route
+            path="attendance"
+            element={<TeacherAttendance />}
+          />
+
+
+          {/* ASSIGNMENTS */}
+
+          <Route
+            path="assignments"
+            element={<TeacherAssignments />}
+          />
+
+
+          {/* MARKS & EXAMS */}
+
+          <Route
+            path="exams"
+            element={<TeacherExams />}
+          />
+
+
+          {/* STUDY MATERIALS */}
+
+          <Route
+            path="materials"
+            element={<TeacherMaterials />}
+          />
+
+
+          {/* TIMETABLE */}
+
+          <Route
+            path="timetable"
+            element={<TeacherTimetable />}
+          />
+
+
+          {/* ANNOUNCEMENTS */}
+
+          <Route
+            path="announcements"
+            element={<TeacherAnnouncements />}
+          />
+
+
+          {/* MESSAGES */}
+
+          <Route
+            path="messages"
+            element={<TeacherMessages />}
+          />
+
+
+          {/* REPORTS */}
+
+          <Route
+            path="reports"
+            element={<TeacherReports />}
+          />
+
+
+          {/* MY PROFILE */}
+
+          <Route
+            path="profile"
+            element={<TeacherProfile />}
+          />
+
+        </Route>
+
+
+        {/* ====================================== */}
+        {/* PROTECTED STUDENT ROUTES */}
+        {/* ====================================== */}
+
+        <Route
+
+          path="/student"
+
+          element={
+
+            <StudentPrivateRoute>
+
+              <StudentLayout />
+
+            </StudentPrivateRoute>
+
+          }
+
+        >
+
+
+          {/* STUDENT DASHBOARD */}
+
+          <Route
+            path="dashboard"
+            element={<StudentDashboard />}
+          />
+
+
+          {/* MY COURSES */}
+
+          <Route
+            path="courses"
+            element={<StudentCourses />}
+          />
+
+
+          {/* TIMETABLE */}
+
+          <Route
+            path="timetable"
+            element={<StudentTimetable />}
+          />
+
+
+          {/* ATTENDANCE */}
+
+          <Route
+            path="attendance"
+            element={<StudentAttendance />}
+          />
+
+
+          {/* ASSIGNMENTS */}
+
+          <Route
+            path="assignments"
+            element={<StudentAssignments />}
+          />
+
+
+          {/* STUDY MATERIALS */}
+
+          <Route
+            path="study-materials"
+            element={<StudentStudyMaterials />}
+          />
+
+
+          {/* MARKS & EXAM */}
+
+          <Route
+            path="marks"
+            element={<StudentMarks />}
+          />
+
+
+          {/* ANNOUNCEMENTS */}
+
+          <Route
+            path="announcements"
+            element={<StudentAnnouncements />}
+          />
+
+
+          {/* MESSAGES */}
+
+          <Route
+            path="messages"
+            element={<StudentMessages />}
+          />
+
+
+          {/* FEES / PAYMENT */}
+
+          <Route
+            path="fees"
+            element={<StudentFees />}
+          />
+
+
+          {/* REPORTS */}
+
+          <Route
+            path="reports"
+            element={<StudentReports />}
+          />
+
+
+          {/* MY PROFILE */}
+
+          <Route
+            path="profile"
+            element={<StudentProfile />}
+          />
+
+        </Route>
+
+
         {/* ====================================== */}
         {/* MAIN WEBSITE ROUTES */}
         {/* ====================================== */}
 
         <Route
+
           path="/"
+
           element={<MainLayout />}
+
         >
 
-          {/* Home */}
+
+          {/* HOME */}
+
           <Route
             index
             element={<Home />}
           />
 
-          {/* About */}
+
+          {/* ABOUT */}
+
           <Route
             path="about"
             element={<About />}
           />
 
-          {/* Faculty */}
+
+          {/* FACULTY */}
+
           <Route
             path="faculty"
             element={<Faculty />}
           />
 
-          {/* Gallery */}
+
+          {/* GALLERY */}
+
           <Route
             path="gallery"
             element={<Gallery />}
           />
 
-          {/* Achievements */}
+
+          {/* ACHIEVEMENTS */}
+
           <Route
             path="achievements"
             element={<Achievements />}
           />
 
-          {/* Contact */}
+
+          {/* CONTACT */}
+
           <Route
             path="contact"
             element={<Contact />}
           />
-      
-           {/* Download */}
+
+
+          {/* DOWNLOADS */}
+
           <Route
             path="downloads"
-            element={<DownloadsPage />}
+            element={<Downloads />}
           />
 
-          {/* Services */}
+
+          {/* SERVICES */}
+
           <Route
             path="services"
             element={<Services />}
           />
 
-          {/* Testimonials */}
+
+          {/* TESTIMONIALS */}
+
           <Route
             path="testimonials"
             element={<Testimonials />}
           />
 
-          {/* Apply */}
+
+          {/* ADMISSION */}
+
           <Route
             path="apply"
             element={<Apply />}
           />
 
-          {/* Existing Student */}
-          <Route
-            path="existing-student"
-            element={<ExistingStudent />}
-          />
-
         </Route>
 
+
+        {/* ====================================== */}
+        {/* RECEIPT */}
+        {/* ====================================== */}
+
         <Route
+
           path="/receipt/:receiptNumber"
+
           element={<Receipt />}
+
         />
+
 
         {/* ====================================== */}
         {/* 404 PAGE */}
         {/* ====================================== */}
 
         <Route
+
           path="*"
+
           element={<NotFound />}
+
         />
+
 
       </Routes>
 
@@ -330,5 +811,6 @@ function AppRoutes() {
   )
 
 }
+
 
 export default AppRoutes

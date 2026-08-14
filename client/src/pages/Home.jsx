@@ -17,7 +17,6 @@ import {
   getSettings,
 } from '../services/settingsService'
 
-// Import Home CSS
 import '../assets/styles/home.css'
 
 
@@ -40,7 +39,7 @@ function Home() {
 
 
   // ======================================
-  // IMPORTANT NOTICE AUTO POPUP
+  // IMPORTANT NOTICE POPUP
   // ======================================
 
   const [showPopup, setShowPopup] =
@@ -84,7 +83,7 @@ function Home() {
 
 
   // ======================================
-  // HOME DATA LOADING
+  // HOME LOADING
   // ======================================
 
   const [homeLoading, setHomeLoading] =
@@ -103,7 +102,7 @@ function Home() {
 
 
   // ======================================
-  // FETCH HOME SLIDERS + SETTINGS
+  // FETCH HOME DATA
   // ======================================
 
   useEffect(() => {
@@ -164,7 +163,7 @@ function Home() {
 
 
         // ==================================
-        // RESET ACTIVE SLIDE
+        // RESET SLIDE
         // ==================================
 
         setActiveSlide(0)
@@ -195,10 +194,6 @@ function Home() {
 
   useEffect(() => {
 
-    // ==================================
-    // NO SLIDER
-    // ==================================
-
     if (
       sliders.length === 0
     ) {
@@ -207,10 +202,6 @@ function Home() {
 
     }
 
-
-    // ==================================
-    // CURRENT SLIDE
-    // ==================================
 
     const currentSlider =
       sliders[activeSlide]
@@ -289,7 +280,7 @@ function Home() {
 
 
   // ======================================
-  // KEEP ACTIVE SLIDE VALID
+  // KEEP SLIDE VALID
   // ======================================
 
   useEffect(() => {
@@ -343,7 +334,7 @@ function Home() {
 
 
   // ======================================
-  // IMPORTANT NOTICE AUTO POPUP
+  // IMPORTANT NOTICE POPUP
   // ======================================
 
   useEffect(() => {
@@ -425,11 +416,6 @@ function Home() {
   // ======================================
   // IMAGE URL
   // ======================================
-  //
-  // Supports:
-  // Cloudinary complete URL
-  // Old /uploads/filename.jpg
-  // ======================================
 
   const getImageUrl =
     (image) => {
@@ -442,7 +428,7 @@ function Home() {
 
 
       // ==================================
-      // CLOUDINARY / EXTERNAL URL
+      // EXTERNAL URL
       // ==================================
 
       if (
@@ -463,7 +449,7 @@ function Home() {
 
 
       // ==================================
-      // OLD LOCAL UPLOAD
+      // LOCAL UPLOAD
       // ==================================
 
       return `${API_BASE_URL}${
@@ -480,7 +466,7 @@ function Home() {
 
 
   // ======================================
-  // NOTICE IMAGE URL
+  // NOTICE IMAGE
   // ======================================
 
   const getNoticeImageUrl =
@@ -494,7 +480,7 @@ function Home() {
 
 
   // ======================================
-  // OPEN NOTICE DETAILS
+  // OPEN NOTICE
   // ======================================
 
   const openNoticeDetails =
@@ -515,7 +501,7 @@ function Home() {
 
 
   // ======================================
-  // CLOSE NOTICE DETAILS
+  // CLOSE NOTICE
   // ======================================
 
   const closeNoticeDetails =
@@ -529,7 +515,7 @@ function Home() {
 
 
   // ======================================
-  // CLOSE DETAILS ON ESC
+  // ESC CLOSE
   // ======================================
 
   useEffect(() => {
@@ -567,7 +553,7 @@ function Home() {
 
 
   // ======================================
-  // CLOSE AUTO IMPORTANT POPUP
+  // CLOSE IMPORTANT POPUP
   // ======================================
 
   const closeImportantPopup =
@@ -682,20 +668,6 @@ function Home() {
   // ======================================
   // SPLIT INSTITUTE NAME
   // ======================================
-  //
-  // First word:
-  //     hero-edu
-  //
-  // Remaining words:
-  //     hero-portal
-  //
-  // Example:
-  //
-  // Prerna Institute Of Excellence
-  //
-  // Prerna
-  // Institute Of Excellence
-  // ======================================
 
   const instituteWords =
     instituteName
@@ -717,7 +689,7 @@ function Home() {
 
 
       {/* ==================================================
-          IMPORTANT NOTICE AUTO POPUP
+          IMPORTANT NOTICE POPUP
       ================================================== */}
 
       {
@@ -742,8 +714,6 @@ function Home() {
               }
             >
 
-              {/* CLOSE */}
-
               <button
                 type="button"
                 className="
@@ -762,16 +732,12 @@ function Home() {
               </button>
 
 
-              {/* BADGE */}
-
               <h3>
 
                 ⚠ Important Notice
 
               </h3>
 
-
-              {/* TITLE */}
 
               <h4>
 
@@ -781,8 +747,6 @@ function Home() {
 
               </h4>
 
-
-              {/* DATE */}
 
               {
                 importantNotice.createdAt && (
@@ -801,8 +765,6 @@ function Home() {
               }
 
 
-              {/* DESCRIPTION */}
-
               <p>
 
                 {
@@ -811,8 +773,6 @@ function Home() {
 
               </p>
 
-
-              {/* IMAGE */}
 
               {
                 importantNotice.image && (
@@ -834,8 +794,6 @@ function Home() {
                 )
               }
 
-
-              {/* CLOSE BUTTON */}
 
               <button
                 type="button"
@@ -887,8 +845,6 @@ function Home() {
               }
             >
 
-              {/* CLOSE */}
-
               <button
                 type="button"
                 className="
@@ -907,8 +863,6 @@ function Home() {
               </button>
 
 
-              {/* TITLE */}
-
               <h2>
 
                 {
@@ -917,8 +871,6 @@ function Home() {
 
               </h2>
 
-
-              {/* DATE */}
 
               {
                 selectedNotice.createdAt && (
@@ -937,8 +889,6 @@ function Home() {
               }
 
 
-              {/* DESCRIPTION */}
-
               <div
                 className="
                   notice-details-description
@@ -951,8 +901,6 @@ function Home() {
 
               </div>
 
-
-              {/* NOTICE IMAGE */}
 
               {
                 selectedNotice.image && (
@@ -989,8 +937,6 @@ function Home() {
 
               }
 
-
-              {/* CLOSE BUTTON */}
 
               <div
                 className="
@@ -1111,11 +1057,7 @@ function Home() {
             "
           >
 
-            <div
-              className="
-                container
-              "
-            >
+            <div className="container">
 
               <button
                 type="button"
@@ -1211,6 +1153,7 @@ function Home() {
                     role="status"
                   ></div>
 
+
                   <p className="mt-3">
 
                     Loading...
@@ -1270,9 +1213,7 @@ function Home() {
                     `}
                   >
 
-                    {/* ==============================
-                        IMAGE
-                    ============================== */}
+                    {/* IMAGE */}
 
                     {
                       slider.mediaType ===
@@ -1294,9 +1235,7 @@ function Home() {
                     }
 
 
-                    {/* ==============================
-                        VIDEO
-                    ============================== */}
+                    {/* VIDEO */}
 
                     {
                       slider.mediaType ===
@@ -1357,9 +1296,7 @@ function Home() {
                     }
 
 
-                    {/* ==============================
-                        OPTIONAL TITLE
-                    ============================== */}
+                    {/* SLIDE TITLE */}
 
                     {
                       (
@@ -1417,9 +1354,7 @@ function Home() {
           }
 
 
-          {/* ==================================================
-              PREVIOUS
-          ================================================== */}
+          {/* PREVIOUS */}
 
           {
             sliders.length > 1 && (
@@ -1443,9 +1378,7 @@ function Home() {
           }
 
 
-          {/* ==================================================
-              NEXT
-          ================================================== */}
+          {/* NEXT */}
 
           {
             sliders.length > 1 && (
@@ -1469,9 +1402,7 @@ function Home() {
           }
 
 
-          {/* ==================================================
-              INDICATORS
-          ================================================== */}
+          {/* INDICATORS */}
 
           {
             sliders.length > 1 && (
@@ -1678,11 +1609,7 @@ function Home() {
                 "
               >
 
-                <div
-                  className="
-                    col-md-6
-                  "
-                >
+                <div className="col-md-6">
 
                   <p>
                     ✔ Experienced Faculty Members
@@ -1699,11 +1626,7 @@ function Home() {
                 </div>
 
 
-                <div
-                  className="
-                    col-md-6
-                  "
-                >
+                <div className="col-md-6">
 
                   <p>
                     ✔ Career Guidance
@@ -1747,12 +1670,7 @@ function Home() {
 
           <div className="row">
 
-            <div
-              className="
-                col-md-3
-                mb-3
-              "
-            >
+            <div className="col-md-3 mb-3">
 
               <h3
                 className="
@@ -1771,12 +1689,7 @@ function Home() {
             </div>
 
 
-            <div
-              className="
-                col-md-3
-                mb-3
-              "
-            >
+            <div className="col-md-3 mb-3">
 
               <h3
                 className="
@@ -1795,12 +1708,7 @@ function Home() {
             </div>
 
 
-            <div
-              className="
-                col-md-3
-                mb-3
-              "
-            >
+            <div className="col-md-3 mb-3">
 
               <h3
                 className="
@@ -1819,12 +1727,7 @@ function Home() {
             </div>
 
 
-            <div
-              className="
-                col-md-3
-                mb-3
-              "
-            >
+            <div className="col-md-3 mb-3">
 
               <h3
                 className="
@@ -1958,11 +1861,7 @@ function Home() {
               "
             >
 
-              <h2
-                className="
-                  mb-4
-                "
-              >
+              <h2 className="mb-4">
 
                 Director's Message
 
@@ -2033,11 +1932,7 @@ function Home() {
 
         <div className="container">
 
-          <h2
-            className="
-              mb-3
-            "
-          >
+          <h2 className="mb-3">
 
             Our Achievements
 
@@ -2093,11 +1988,7 @@ function Home() {
           "
         >
 
-          <h2
-            className="
-              mb-4
-            "
-          >
+          <h2 className="mb-4">
 
             Why Choose Prerna Institute
             Of Excellence?
@@ -2105,11 +1996,7 @@ function Home() {
           </h2>
 
 
-          <p
-            className="
-              mb-5
-            "
-          >
+          <p className="mb-5">
 
             Prerna Institute Of Excellence
             is committed to delivering quality
@@ -2137,11 +2024,7 @@ function Home() {
               ></i>
 
 
-              <h5
-                className="
-                  mt-3
-                "
-              >
+              <h5 className="mt-3">
 
                 Modern Curriculum
 
@@ -2170,11 +2053,7 @@ function Home() {
               ></i>
 
 
-              <h5
-                className="
-                  mt-3
-                "
-              >
+              <h5 className="mt-3">
 
                 Experienced Faculty
 
@@ -2203,11 +2082,7 @@ function Home() {
               ></i>
 
 
-              <h5
-                className="
-                  mt-3
-                "
-              >
+              <h5 className="mt-3">
 
                 Smart Infrastructure
 
@@ -2222,6 +2097,230 @@ function Home() {
               </p>
 
             </div>
+
+          </div>
+
+        </div>
+
+      </section>
+
+
+      {/* ==================================================
+          STUDENT & TEACHER PORTAL
+      ================================================== */}
+
+      <section
+        className="
+          py-5
+          bg-white
+        "
+        data-aos="fade-up"
+      >
+
+        <div className="container">
+
+
+          {/* ==========================================
+              HEADING
+          ========================================== */}
+
+          <div className="text-center mb-5">
+
+            <h2 className="fw-bold">
+
+              Student & Teacher Portal
+
+            </h2>
+
+
+            <p className="text-muted mb-0">
+
+              Access your dedicated portal for
+              learning, communication, and
+              academic management.
+
+            </p>
+
+          </div>
+
+
+          <div
+            className="
+              row
+              justify-content-center
+              g-4
+            "
+          >
+
+
+            {/* ==========================================
+                STUDENT LOGIN
+            ========================================== */}
+
+            <div
+              className="
+                col-md-5
+                col-lg-4
+              "
+            >
+
+              <div
+                className="
+                  card
+                  border-0
+                  shadow-sm
+                  h-100
+                  text-center
+                "
+                style={{
+                  borderRadius: '16px',
+                }}
+              >
+
+                <div className="card-body p-4">
+
+
+                  <div
+                    style={{
+                      width: '75px',
+                      height: '75px',
+                      borderRadius: '50%',
+                      backgroundColor: '#e8f1ff',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      margin: '0 auto 20px',
+                      fontSize: '36px',
+                    }}
+                  >
+
+                    🎓
+
+                  </div>
+
+
+                  <h4 className="fw-bold">
+
+                    Student Login
+
+                  </h4>
+
+
+                  <p className="text-muted">
+
+                    Access your student dashboard,
+                    attendance, study materials,
+                    exams, marks, fees, messages
+                    and reports.
+
+                  </p>
+
+
+                  <Link
+                    to="/student/login"
+                    className="
+                      btn
+                      btn-primary
+                      px-4
+                      mt-2
+                    "
+                  >
+
+                    Student Login
+
+                  </Link>
+
+                </div>
+
+              </div>
+
+            </div>
+
+
+            {/* ==========================================
+                TEACHER LOGIN
+            ========================================== */}
+
+            <div
+              className="
+                col-md-5
+                col-lg-4
+              "
+            >
+
+              <div
+                className="
+                  card
+                  border-0
+                  shadow-sm
+                  h-100
+                  text-center
+                "
+                style={{
+                  borderRadius: '16px',
+                }}
+              >
+
+                <div className="card-body p-4">
+
+
+                  <div
+                    style={{
+                      width: '75px',
+                      height: '75px',
+                      borderRadius: '50%',
+                      backgroundColor: '#eaf8ef',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      margin: '0 auto 20px',
+                      fontSize: '36px',
+                    }}
+                  >
+
+                    👨‍🏫
+
+                  </div>
+
+
+                  <h4 className="fw-bold">
+
+                    Teacher Login
+
+                  </h4>
+
+
+                  <p className="text-muted">
+
+                    Access your teacher dashboard,
+                    attendance, assignments, study
+                    materials, exams, marks,
+                    announcements and student
+                    communication.
+
+                  </p>
+
+
+                  <Link
+                    to="/teacher/login"
+                    className="
+                      btn
+                      btn-success
+                      px-4
+                      mt-2
+                    "
+                  >
+
+                    Teacher Login
+
+                  </Link>
+
+                </div>
+
+              </div>
+
+            </div>
+
 
           </div>
 

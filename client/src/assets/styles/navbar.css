@@ -1,12 +1,173 @@
 /* ============================
-   ✅ Navbar Styling
+   NAVBAR STYLING
 ============================ */
 
 .custom-navbar {
-  background-color: #222831 !important;
-  padding: 12px 0;
-  margin-bottom: 0 !important;
-  z-index: 999;
+
+  background-color:
+    #222831 !important;
+
+  padding:
+    12px 0;
+
+  margin-bottom:
+    0 !important;
+
+  z-index:
+    999;
+}
+
+
+/* ==================================================
+   TOP LOGIN BAR
+   Separate from Navbar
+================================================== */
+
+.top-login-bar {
+
+  width:
+    100%;
+
+  background-color:
+    #222831;
+
+  border-bottom:
+    1px solid
+    rgba(
+      255,
+      255,
+      255,
+      0.08
+    );
+
+}
+
+
+/* ============================
+   Top Login Content
+============================ */
+
+.top-login-content {
+
+  display:
+    flex;
+
+  justify-content:
+    flex-end;
+
+  align-items:
+    center;
+
+  gap:
+    8px;
+
+  padding:
+    5px 0;
+
+}
+
+
+/* ============================
+   Top Login Buttons
+============================ */
+
+.top-login-btn {
+
+  display:
+    inline-flex;
+
+  align-items:
+    center;
+
+  justify-content:
+    center;
+
+  padding:
+    4px 12px;
+
+  border:
+    1px solid
+    rgba(
+      255,
+      255,
+      255,
+      0.20
+    );
+
+  border-radius:
+    5px;
+
+  background-color:
+    rgba(
+      255,
+      255,
+      255,
+      0.08
+    );
+
+  color:
+    #fff;
+
+  font-size:
+    13px;
+
+  font-weight:
+    600;
+
+  line-height:
+    1.4;
+
+  text-decoration:
+    none;
+
+  transition:
+    all 0.3s ease;
+
+}
+
+
+/* ============================
+   Top Login Button Hover
+============================ */
+
+.top-login-btn:hover {
+
+  background-color:
+    #00adb5;
+
+  border-color:
+    #00adb5;
+
+  color:
+    #fff;
+
+  transform:
+    translateY(-1px);
+
+}
+
+
+/* ============================
+   Student Login
+============================ */
+
+.student-login-btn {
+
+  color:
+    #fff;
+
+}
+
+
+/* ============================
+   Teacher Login
+============================ */
+
+.teacher-login-btn {
+
+  color:
+    #fff;
+
 }
 
 
@@ -15,10 +176,19 @@
 ============================ */
 
 .navbar .nav-link {
-  color: #fff !important;
-  font-weight: 500;
-  margin-left: 15px;
-  transition: color 0.3s ease;
+
+  color:
+    #fff !important;
+
+  font-weight:
+    500;
+
+  margin-left:
+    15px;
+
+  transition:
+    color 0.3s ease;
+
 }
 
 
@@ -27,7 +197,10 @@
 ============================ */
 
 .navbar .nav-link:hover {
-  color: #00adb5 !important;
+
+  color:
+    #00adb5 !important;
+
 }
 
 
@@ -36,7 +209,10 @@
 ============================ */
 
 .collapse {
-  transition: max-height 0.4s ease;
+
+  transition:
+    max-height 0.4s ease;
+
 }
 
 
@@ -47,7 +223,10 @@
 @media (min-width: 992px) {
 
   .navbar-collapse {
-    overflow: visible !important;
+
+    overflow:
+      visible !important;
+
   }
 
 }
@@ -60,11 +239,18 @@
 @media (max-width: 991.98px) {
 
   .collapse {
-    overflow: hidden;
+
+    overflow:
+      hidden;
+
   }
 
+
   .collapse.show {
-    max-height: 500px;
+
+    max-height:
+      500px;
+
   }
 
 }
@@ -75,13 +261,24 @@
 ============================ */
 
 .brand-text .edu {
-  color: #ffc107;
-  font-weight: bold;
+
+  color:
+    #ffc107;
+
+  font-weight:
+    bold;
+
 }
 
+
 .brand-text .portal {
-  color: #00adb5;
-  font-weight: bold;
+
+  color:
+    #00adb5;
+
+  font-weight:
+    bold;
+
 }
 
 
@@ -90,10 +287,19 @@
 ================================================== */
 
 .navbar-toggler {
-  border: none !important;
-  outline: none !important;
-  box-shadow: none !important;
-  padding: 5px !important;
+
+  border:
+    none !important;
+
+  outline:
+    none !important;
+
+  box-shadow:
+    none !important;
+
+  padding:
+    5px !important;
+
 }
 
 
@@ -103,9 +309,16 @@
 
 .navbar-toggler:focus,
 .navbar-toggler:active {
-  border: none !important;
-  outline: none !important;
-  box-shadow: none !important;
+
+  border:
+    none !important;
+
+  outline:
+    none !important;
+
+  box-shadow:
+    none !important;
+
 }
 
 
@@ -114,14 +327,22 @@
 ================================================== */
 
 .navbar-toggler-icon {
-  background-image: none !important;
 
-  position: relative;
+  background-image:
+    none !important;
 
-  display: block;
+  position:
+    relative;
 
-  width: 24px;
-  height: 18px;
+  display:
+    block;
+
+  width:
+    24px;
+
+  height:
+    18px;
+
 }
 
 
@@ -131,23 +352,34 @@
 
 .navbar-toggler-icon::before {
 
-  content: '';
+  content:
+    '';
 
-  position: absolute;
+  position:
+    absolute;
 
-  left: 0;
-  top: 0;
+  left:
+    0;
 
-  width: 24px;
-  height: 2px;
+  top:
+    0;
 
-  background-color: #00adb5;
+  width:
+    24px;
 
-  border-radius: 2px;
+  height:
+    2px;
+
+  background-color:
+    #00adb5;
+
+  border-radius:
+    2px;
 
   box-shadow:
     0 8px 0 #00adb5,
     0 16px 0 #00adb5;
+
 }
 
 
@@ -156,293 +388,50 @@
 ============================ */
 
 .nav-link.active-nav {
-  color: #00adb5 !important;
 
-  font-weight: 700 !important;
+  color:
+    #00adb5 !important;
 
-  border-bottom: 2px solid #00adb5;
+  font-weight:
+    700 !important;
 
-  padding-bottom: 3px;
-}
+  border-bottom:
+    2px solid #00adb5;
 
-
-/* ==================================================
-   ADMISSION DROPDOWN
-================================================== */
-
-.admission-dropdown {
-  position: relative;
-}
-
-
-/* ============================
-   Admission Button
-============================ */
-
-.admission-dropdown-btn {
-  border: none !important;
-
-  background: transparent !important;
-
-  color: #fff !important;
-
-  font-weight: 500;
-
-  margin-left: 15px;
-
-  padding: 8px 0;
-
-  cursor: pointer;
-
-  transition: color 0.3s ease;
-}
-
-
-/* ============================
-   Admission Button Hover
-============================ */
-
-.admission-dropdown-btn:hover {
-  color: #00adb5 !important;
-}
-
-
-/* ==================================================
-   DESKTOP DROPDOWN
-================================================== */
-
-@media (min-width: 992px) {
-
-  .admission-dropdown-menu {
-
-    position: absolute !important;
-
-    top: 100% !important;
-
-    left: 15px !important;
-
-    width: 190px !important;
-
-    min-width: 190px !important;
-
-    height: auto !important;
-
-    margin: 0 !important;
-
-    padding: 8px 0 !important;
-
-    background-color: #222831 !important;
-
-    border: none !important;
-
-    border-radius: 6px;
-
-    box-shadow:
-      0 6px 15px rgba(
-        0,
-        0,
-        0,
-        0.25
-      );
-
-    z-index: 99999 !important;
-
-    opacity: 0;
-
-    visibility: hidden;
-
-    pointer-events: none;
-
-    transform: translateY(8px);
-
-    transition:
-      opacity 0.2s ease,
-      visibility 0.2s ease,
-      transform 0.2s ease;
-  }
-
-
-  /* ============================
-     Desktop Hover
-  ============================ */
-
-  .admission-dropdown:hover
-  .admission-dropdown-menu {
-
-    opacity: 1;
-
-    visibility: visible;
-
-    pointer-events: auto;
-
-    transform: translateY(0);
-  }
-
-
-  /* ============================
-     Desktop Click
-  ============================ */
-
-  .admission-dropdown.dropdown-open
-  .admission-dropdown-menu {
-
-    opacity: 1;
-
-    visibility: visible;
-
-    pointer-events: auto;
-
-    transform: translateY(0);
-  }
+  padding-bottom:
+    3px;
 
 }
 
 
 /* ==================================================
-   DROPDOWN ITEMS
+   MOBILE TOP LOGIN BAR
 ================================================== */
 
-.admission-dropdown-item {
+@media (max-width: 767px) {
 
-  display: block;
+  .top-login-content {
 
-  width: 100%;
+    justify-content:
+      center;
 
-  padding: 10px 18px;
-
-  margin: 0;
-
-  background-color: transparent !important;
-
-  color: #fff !important;
-
-  text-decoration: none;
-
-  font-weight: 500;
-
-  white-space: nowrap;
-
-  box-sizing: border-box;
-
-  transition:
-    background-color 0.2s ease,
-    color 0.2s ease;
-}
-
-
-/* ============================
-   Dropdown Item Hover
-============================ */
-
-.admission-dropdown-item:hover {
-
-  background-color: #393e46 !important;
-
-  color: #00adb5 !important;
-}
-
-
-/* ============================
-   Active Dropdown Item
-============================ */
-
-.active-dropdown-item {
-
-  background-color: transparent !important;
-
-  color: #00adb5 !important;
-
-  font-weight: 700;
-}
-
-
-/* ==================================================
-   MOBILE DROPDOWN
-================================================== */
-
-@media (max-width: 991.98px) {
-
-  .admission-dropdown-menu {
-
-    position: static !important;
-
-    width: 100% !important;
-
-    min-width: 100% !important;
-
-    height: auto !important;
-
-    margin: 0 !important;
+    gap:
+      6px;
 
     padding:
-      5px 0 5px 15px !important;
+      5px 0;
 
-    background-color: transparent !important;
-
-    border: none !important;
-
-    box-shadow: none;
-
-    border-radius: 0;
-
-    display: none;
-
-    opacity: 1;
-
-    visibility: visible;
-
-    pointer-events: auto;
-
-    transform: none;
   }
 
 
-  /* ============================
-     Mobile Dropdown Open
-  ============================ */
+  .top-login-btn {
 
-  .admission-dropdown.dropdown-open
-  .admission-dropdown-menu {
+    padding:
+      4px 9px;
 
-    display: block;
-  }
+    font-size:
+      12px;
 
-
-  /* ============================
-     Mobile Admission Button
-  ============================ */
-
-  .admission-dropdown-btn {
-
-    margin-left: 15px;
-
-    padding: 8px 0;
-  }
-
-
-  /* ============================
-     Mobile Dropdown Items
-  ============================ */
-
-  .admission-dropdown-item {
-
-    padding: 8px 15px;
-
-    background-color: transparent !important;
-
-    color: #fff !important;
-  }
-
-
-  /* ============================
-     Mobile Dropdown Hover
-  ============================ */
-
-  .admission-dropdown-item:hover {
-
-    background-color: transparent !important;
-
-    color: #00adb5 !important;
   }
 
 }
