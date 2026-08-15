@@ -1,10 +1,15 @@
-import { useEffect, useState } from 'react'
+import {
+  useEffect,
+  useState,
+} from 'react'
+
 
 import {
   getPayments,
   getPaymentRevenue,
   getRevenueReport,
 } from '../../services/paymentService'
+
 
 import {
   Chart as ChartJS,
@@ -16,474 +21,538 @@ import {
   Legend,
 } from 'chart.js'
 
+
 import { Line } from 'react-chartjs-2'
+
 
 import '../../assets/styles/admin.css'
 
 
 // ======================================
-// CHART.JS
+// CHART JS
 // ======================================
 
 ChartJS.register(
+
   CategoryScale,
+
   LinearScale,
+
   PointElement,
+
   LineElement,
+
   Tooltip,
+
   Legend
+
 )
 
 
 function Payments() {
 
+
   // ======================================
   // PAYMENTS
   // ======================================
 
-  const [payments, setPayments] =
-    useState([])
+  const [
+    payments,
+    setPayments,
+  ] = useState([])
 
 
   // ======================================
   // SEARCH
   // ======================================
 
-  const [searchTerm, setSearchTerm] =
-    useState('')
+  const [
+    searchTerm,
+    setSearchTerm,
+  ] = useState('')
 
 
   // ======================================
   // REVENUE
   // ======================================
 
-  const [revenue, setRevenue] =
-    useState({
+  const [
+    revenue,
+    setRevenue,
+  ] = useState({
 
-      totalRevenue: 0,
+    totalRevenue: 0,
 
-      todayRevenue: 0,
+    todayRevenue: 0,
 
-      monthlyRevenue: 0,
+    monthlyRevenue: 0,
 
-      totalPayments: 0,
+    totalPayments: 0,
 
-      todayPayments: 0,
+    todayPayments: 0,
 
-      monthlyPayments: 0,
+    monthlyPayments: 0,
 
-      registrationRevenue: 0,
+    registrationRevenue: 0,
 
-      courseFeeRevenue: 0,
+    courseFeeRevenue: 0,
 
-      onlineRevenue: 0,
+    onlineRevenue: 0,
 
-      offlineRevenue: 0,
+    offlineRevenue: 0,
 
-    })
+  })
 
 
   // ======================================
   // REVENUE REPORT
   // ======================================
 
-  const [revenueReport, setRevenueReport] =
-    useState({
+  const [
+    revenueReport,
+    setRevenueReport,
+  ] = useState({
 
-      dailyRevenue: [],
+    dailyRevenue: [],
 
-      monthlyRevenue: [],
+    monthlyRevenue: [],
 
-    })
+  })
 
 
   // ======================================
   // REPORT TYPE
   // ======================================
 
-  const [reportType, setReportType] =
-    useState('daily')
+  const [
+    reportType,
+    setReportType,
+  ] = useState('monthly')
+
+
+  // ======================================
+  // CURRENT DATE
+  // ======================================
+
+  const currentDate =
+    new Date()
+
+
+  // ======================================
+  // SELECTED MONTH
+  // ======================================
+
+  const [
+    selectedMonth,
+    setSelectedMonth,
+  ] = useState(
+
+    currentDate.getMonth() + 1
+
+  )
+
+
+  // ======================================
+  // SELECTED YEAR
+  // ======================================
+
+  const [
+    selectedYear,
+    setSelectedYear,
+  ] = useState(
+
+    currentDate.getFullYear()
+
+  )
 
 
   // ======================================
   // LOADING
   // ======================================
 
-  const [loading, setLoading] =
-    useState(true)
+  const [
+    loading,
+    setLoading,
+  ] = useState(true)
+
+
+  // ======================================
+  // REVENUE LOADING
+  // ======================================
+
+  const [
+    revenueLoading,
+    setRevenueLoading,
+  ] = useState(false)
 
 
   // ======================================
   // PAGINATION
   // ======================================
 
-  const [currentPage, setCurrentPage] =
-    useState(1)
+  const [
+    currentPage,
+    setCurrentPage,
+  ] = useState(1)
 
-  const paymentsPerPage = 15
+
+  const paymentsPerPage =
+    15
 
 
   // ======================================
-  // FETCH DATA
+  // MONTHS
+  // ======================================
+
+  const months = [
+
+    {
+      value: 1,
+      label: 'January',
+    },
+
+    {
+      value: 2,
+      label: 'February',
+    },
+
+    {
+      value: 3,
+      label: 'March',
+    },
+
+    {
+      value: 4,
+      label: 'April',
+    },
+
+    {
+      value: 5,
+      label: 'May',
+    },
+
+    {
+      value: 6,
+      label: 'June',
+    },
+
+    {
+      value: 7,
+      label: 'July',
+    },
+
+    {
+      value: 8,
+      label: 'August',
+    },
+
+    {
+      value: 9,
+      label: 'September',
+    },
+
+    {
+      value: 10,
+      label: 'October',
+    },
+
+    {
+      value: 11,
+      label: 'November',
+    },
+
+    {
+      value: 12,
+      label: 'December',
+    },
+
+  ]
+
+
+  // ======================================
+  // YEARS
+  // ======================================
+
+  const years = []
+
+
+  for (
+
+    let year =
+      currentDate.getFullYear() - 5;
+
+    year <=
+      currentDate.getFullYear() + 1;
+
+    year++
+
+  ) {
+
+    years.push(year)
+
+  }
+
+
+  // ======================================
+  // FETCH PAYMENTS
   // ======================================
 
   useEffect(() => {
 
-    fetchData()
+    fetchPayments()
 
   }, [])
 
 
-  const fetchData = async () => {
+  const fetchPayments =
+    async () => {
 
-    try {
+      try {
 
-      setLoading(true)
-
-
-      const [
-        paymentResponse,
-        revenueResponse,
-        reportResponse,
-      ] = await Promise.all([
-
-        getPayments(),
-
-        getPaymentRevenue(),
-
-        getRevenueReport(),
-
-      ])
+        setLoading(true)
 
 
-      // ==================================
-      // PAYMENTS
-      // ==================================
-
-      const paymentList =
-
-        Array.isArray(paymentResponse)
-
-          ? paymentResponse
-
-          : []
+        const response =
+          await getPayments()
 
 
-      setPayments(paymentList)
+        const paymentList =
+
+          Array.isArray(response)
+
+            ? response
+
+            : Array.isArray(
+                response?.payments
+              )
+
+              ? response.payments
+
+              : []
 
 
-      // ==================================
-      // BACKEND REVENUE
-      // ==================================
-
-      let backendRevenue = {
-
-        totalRevenue: 0,
-
-        todayRevenue: 0,
-
-        monthlyRevenue: 0,
-
-        totalPayments: 0,
-
-        todayPayments: 0,
-
-        monthlyPayments: 0,
-
-        registrationRevenue: 0,
-
-        courseFeeRevenue: 0,
-
-        onlineRevenue: 0,
-
-        offlineRevenue: 0,
+        setPayments(
+          paymentList
+        )
 
       }
 
+      catch (error) {
 
-      if (
-        revenueResponse?.success
-      ) {
+        console.error(
 
-        backendRevenue = {
+          'Payment Fetch Error:',
 
-          totalRevenue:
-            Number(
-              revenueResponse.revenue
-                ?.totalRevenue || 0
-            ),
-
-          todayRevenue:
-            Number(
-              revenueResponse.revenue
-                ?.todayRevenue || 0
-            ),
-
-          monthlyRevenue:
-            Number(
-              revenueResponse.revenue
-                ?.monthlyRevenue || 0
-            ),
-
-          totalPayments:
-            Number(
-              revenueResponse.revenue
-                ?.totalPayments || 0
-            ),
-
-          todayPayments:
-            Number(
-              revenueResponse.revenue
-                ?.todayPayments || 0
-            ),
-
-          monthlyPayments:
-            Number(
-              revenueResponse.revenue
-                ?.monthlyPayments || 0
-            ),
-
-          registrationRevenue:
-            Number(
-              revenueResponse.revenue
-                ?.registrationRevenue || 0
-            ),
-
-          courseFeeRevenue:
-            Number(
-              revenueResponse.revenue
-                ?.courseFeeRevenue || 0
-            ),
-
-          onlineRevenue:
-            Number(
-              revenueResponse.revenue
-                ?.onlineRevenue || 0
-            ),
-
-          offlineRevenue:
-            Number(
-              revenueResponse.revenue
-                ?.offlineRevenue || 0
-            ),
-
-        }
-
-      }
-
-
-      // ==================================
-      // CALCULATE MODE REVENUE FROM
-      // PAYMENT LIST
-      // ==================================
-      //
-      // This is an additional safety layer.
-      //
-      // New records:
-      //
-      // paymentMode = Online
-      // paymentMode = Offline
-      //
-      // Old records:
-      //
-      // paymentMode missing
-      //
-      // In that case:
-      //
-      // Razorpay -> Online
-      // Cash      -> Offline
-      // ==================================
-
-      const successfulPayments =
-        paymentList.filter(
-
-          (payment) =>
-
-            payment.paymentStatus ===
-            'Success'
+          error
 
         )
 
+      }
 
-      let calculatedOnlineRevenue =
-        0
+      finally {
 
-      let calculatedOfflineRevenue =
-        0
-
-
-      successfulPayments.forEach(
-        (payment) => {
-
-          const amount =
-            Number(
-              payment.amountPaid || 0
-            )
-
-
-          const mode =
-            String(
-              payment.paymentMode || ''
-            )
-              .trim()
-              .toLowerCase()
-
-
-          const method =
-            String(
-              payment.paymentMethod || ''
-            )
-              .trim()
-              .toLowerCase()
-
-
-          // ==================================
-          // ONLINE
-          // ==================================
-
-          if (
-            mode === 'online'
-          ) {
-
-            calculatedOnlineRevenue +=
-              amount
-
-            return
-
-          }
-
-
-          // ==================================
-          // OFFLINE
-          // ==================================
-
-          if (
-            mode === 'offline'
-          ) {
-
-            calculatedOfflineRevenue +=
-              amount
-
-            return
-
-          }
-
-
-          // ==================================
-          // OLD RECORD FALLBACK
-          // ==================================
-
-          if (
-            method === 'razorpay' ||
-
-            method === 'online'
-          ) {
-
-            calculatedOnlineRevenue +=
-              amount
-
-          }
-
-          else {
-
-            calculatedOfflineRevenue +=
-              amount
-
-          }
-
-        }
-      )
-
-
-      // ==================================
-      // MODE REVENUE
-      // ==================================
-      //
-      // Payment list ko primary source
-      // rakha gaya hai because usme
-      // individual payment records hain.
-      //
-      // Agar payment list available hai,
-      // uske according Online/Offline
-      // calculate hoga.
-      //
-      // Agar payment list empty hai,
-      // backend revenue use hoga.
-      // ==================================
-
-      const finalOnlineRevenue =
-
-        successfulPayments.length > 0
-
-          ? calculatedOnlineRevenue
-
-          : backendRevenue.onlineRevenue
-
-
-      const finalOfflineRevenue =
-
-        successfulPayments.length > 0
-
-          ? calculatedOfflineRevenue
-
-          : backendRevenue.offlineRevenue
-
-
-      // ==================================
-      // FINAL REVENUE STATE
-      // ==================================
-
-      setRevenue({
-
-        ...backendRevenue,
-
-        onlineRevenue:
-          finalOnlineRevenue,
-
-        offlineRevenue:
-          finalOfflineRevenue,
-
-      })
-
-
-      // ==================================
-      // REVENUE REPORT
-      // ==================================
-
-      if (
-        reportResponse?.success
-      ) {
-
-        setRevenueReport({
-
-          dailyRevenue:
-            reportResponse.dailyRevenue || [],
-
-          monthlyRevenue:
-            reportResponse.monthlyRevenue || [],
-
-        })
+        setLoading(false)
 
       }
 
     }
 
-    catch (error) {
 
-      console.error(
-        'Payment Fetch Error:',
-        error
-      )
+  // ======================================
+  // FETCH REVENUE
+  // ======================================
+
+  useEffect(() => {
+
+    fetchRevenue()
+
+  }, [
+
+    reportType,
+
+    selectedMonth,
+
+    selectedYear,
+
+  ])
+
+
+  const fetchRevenue =
+    async () => {
+
+      try {
+
+        setRevenueLoading(true)
+
+
+        // ==================================
+        // REVENUE FILTER
+        // ==================================
+
+        const revenueFilters = {}
+
+
+        // ==================================
+        // MONTHLY
+        // ==================================
+
+        if (
+          reportType === 'monthly'
+        ) {
+
+          revenueFilters.month =
+            selectedMonth
+
+          revenueFilters.year =
+            selectedYear
+
+        }
+
+
+        // ==================================
+        // YEARLY
+        // ==================================
+
+        if (
+          reportType === 'yearly'
+        ) {
+
+          revenueFilters.year =
+            selectedYear
+
+        }
+
+
+        // ==================================
+        // GET REVENUE
+        // ==================================
+
+        const revenueResponse =
+          await getPaymentRevenue(
+
+            revenueFilters
+
+          )
+
+
+        if (
+          revenueResponse?.success
+        ) {
+
+          const data =
+            revenueResponse.revenue ||
+            {}
+
+
+          setRevenue({
+
+            totalRevenue:
+              Number(
+                data.totalRevenue || 0
+              ),
+
+            todayRevenue:
+              Number(
+                data.todayRevenue || 0
+              ),
+
+            monthlyRevenue:
+              Number(
+                data.monthlyRevenue || 0
+              ),
+
+            totalPayments:
+              Number(
+                data.totalPayments || 0
+              ),
+
+            todayPayments:
+              Number(
+                data.todayPayments || 0
+              ),
+
+            monthlyPayments:
+              Number(
+                data.monthlyPayments || 0
+              ),
+
+            registrationRevenue:
+              Number(
+                data.registrationRevenue || 0
+              ),
+
+            courseFeeRevenue:
+              Number(
+                data.courseFeeRevenue || 0
+              ),
+
+            onlineRevenue:
+              Number(
+                data.onlineRevenue || 0
+              ),
+
+            offlineRevenue:
+              Number(
+                data.offlineRevenue || 0
+              ),
+
+          })
+
+        }
+
+
+        // ==================================
+        // REVENUE REPORT
+        // ==================================
+
+        const reportResponse =
+          await getRevenueReport({
+
+            year:
+              selectedYear,
+
+          })
+
+
+        if (
+          reportResponse?.success
+        ) {
+
+          setRevenueReport({
+
+            dailyRevenue:
+              reportResponse.dailyRevenue ||
+              [],
+
+            monthlyRevenue:
+              reportResponse.monthlyRevenue ||
+              [],
+
+          })
+
+        }
+
+      }
+
+      catch (error) {
+
+        console.error(
+
+          'Revenue Fetch Error:',
+
+          error
+
+        )
+
+      }
+
+      finally {
+
+        setRevenueLoading(false)
+
+      }
 
     }
-
-    finally {
-
-      setLoading(false)
-
-    }
-
-  }
 
 
   // ======================================
@@ -491,42 +560,55 @@ function Payments() {
   // ======================================
 
   const filteredPayments =
-    payments.filter((payment) => {
+    payments.filter(
 
-      const search =
-        searchTerm
-          .toLowerCase()
-          .trim()
+      (payment) => {
+
+        const search =
+          searchTerm
+            .toLowerCase()
+            .trim()
 
 
-      if (!search) {
+        if (!search) {
 
-        return true
+          return true
+
+        }
+
+
+        return (
+
+          String(
+            payment.admissionNumber ||
+            ''
+          )
+            .toLowerCase()
+            .includes(search)
+
+          ||
+
+          String(
+            payment.studentName ||
+            ''
+          )
+            .toLowerCase()
+            .includes(search)
+
+          ||
+
+          String(
+            payment.course ||
+            ''
+          )
+            .toLowerCase()
+            .includes(search)
+
+        )
 
       }
 
-
-      return (
-
-        payment.admissionNumber
-          ?.toLowerCase()
-          .includes(search)
-
-        ||
-
-        payment.studentName
-          ?.toLowerCase()
-          .includes(search)
-
-        ||
-
-        payment.course
-          ?.toLowerCase()
-          .includes(search)
-
-      )
-
-    })
+    )
 
 
   // ======================================
@@ -535,8 +617,10 @@ function Payments() {
 
   const totalPages =
     Math.ceil(
+
       filteredPayments.length /
       paymentsPerPage
+
     )
 
 
@@ -557,18 +641,23 @@ function Payments() {
 
 
   // ======================================
-  // CURRENCY
+  // FORMAT CURRENCY
   // ======================================
 
   const formatCurrency =
-    (amount) =>
-      `₹ ${Number(
+    (amount) => {
+
+      return `₹ ${Number(
         amount || 0
-      ).toLocaleString('en-IN')}`
+      ).toLocaleString(
+        'en-IN'
+      )}`
+
+    }
 
 
   // ======================================
-  // DATE
+  // FORMAT DATE
   // ======================================
 
   const formatDate =
@@ -581,39 +670,140 @@ function Payments() {
       }
 
 
-      return new Date(date)
-        .toLocaleDateString(
-          'en-IN'
-        )
+      return new Date(
+        date
+      ).toLocaleDateString(
+        'en-IN'
+      )
 
     }
 
 
   // ======================================
-  // SEARCH HANDLER
+  // SEARCH
   // ======================================
 
-  const handleSearch = (e) => {
+  const handleSearch =
+    (e) => {
 
-    setSearchTerm(
-      e.target.value
-    )
+      setSearchTerm(
+        e.target.value
+      )
 
-    setCurrentPage(1)
+      setCurrentPage(1)
+
+    }
+
+
+  // ======================================
+  // MONTH CHANGE
+  // ======================================
+
+  const handleMonthChange =
+    (e) => {
+
+      setSelectedMonth(
+
+        Number(
+          e.target.value
+        )
+
+      )
+
+    }
+
+
+  // ======================================
+  // YEAR CHANGE
+  // ======================================
+
+  const handleYearChange =
+    (e) => {
+
+      setSelectedYear(
+
+        Number(
+          e.target.value
+        )
+
+      )
+
+    }
+
+
+  // ======================================
+  // SELECTED MONTH NAME
+  // ======================================
+
+  const selectedMonthName =
+    months.find(
+
+      (month) =>
+
+        month.value ===
+        Number(
+          selectedMonth
+        )
+
+    )?.label || ''
+
+
+  // ======================================
+  // REPORT DATA
+  // ======================================
+
+  let currentReport = []
+
+
+  if (
+    reportType === 'monthly'
+  ) {
+
+    currentReport =
+      revenueReport.dailyRevenue.filter(
+
+        (item) =>
+
+          Number(
+            item._id.month
+          ) ===
+          Number(
+            selectedMonth
+          )
+
+          &&
+
+          Number(
+            item._id.year
+          ) ===
+          Number(
+            selectedYear
+          )
+
+      )
 
   }
 
 
-  // ======================================
-  // CURRENT REPORT
-  // ======================================
+  else if (
+    reportType === 'yearly'
+  ) {
 
-  const currentReport =
-    reportType === 'daily'
+    currentReport =
+      revenueReport.monthlyRevenue.filter(
 
-      ? revenueReport.dailyRevenue
+        (item) =>
 
-      : revenueReport.monthlyRevenue
+          Number(
+            item._id.year
+          ) ===
+          Number(
+            selectedYear
+          )
+
+      )
+
+  }
 
 
   // ======================================
@@ -621,20 +811,35 @@ function Payments() {
   // ======================================
 
   const chartLabels =
-    currentReport.map((item) => {
+    currentReport.map(
 
-      if (
-        reportType === 'daily'
-      ) {
+      (item) => {
 
-        return `${item._id.day}/${item._id.month}`
+        if (
+          reportType === 'monthly'
+        ) {
+
+          return String(
+            item._id.day
+          )
+
+        }
+
+
+        return months.find(
+
+          (month) =>
+
+            month.value ===
+            Number(
+              item._id.month
+            )
+
+        )?.label || ''
 
       }
 
-
-      return `${item._id.month}/${item._id.year}`
-
-    })
+    )
 
 
   // ======================================
@@ -643,10 +848,13 @@ function Payments() {
 
   const chartValues =
     currentReport.map(
+
       (item) =>
+
         Number(
           item.revenue || 0
         )
+
     )
 
 
@@ -664,16 +872,24 @@ function Payments() {
       {
 
         label:
-          reportType === 'daily'
 
-            ? 'Daily Revenue'
+          reportType === 'monthly'
 
-            : 'Monthly Revenue',
+            ? `${selectedMonthName} ${selectedYear} Daily Revenue`
+
+            : `${selectedYear} Monthly Revenue`,
 
         data:
           chartValues,
 
-        tension: 0.3,
+        tension:
+          0.3,
+
+        borderWidth:
+          2,
+
+        pointRadius:
+          4,
 
       },
 
@@ -710,11 +926,14 @@ function Payments() {
 
         ticks: {
 
-          callback: (value) =>
+          callback:
+            (value) =>
 
-            `₹ ${Number(
-              value
-            ).toLocaleString('en-IN')}`,
+              `₹ ${Number(
+                value
+              ).toLocaleString(
+                'en-IN'
+              )}`,
 
         },
 
@@ -729,24 +948,27 @@ function Payments() {
   // PAGE CHANGE
   // ======================================
 
-  const goToPage = (page) => {
+  const goToPage =
+    (page) => {
 
-    if (
+      if (
 
-      page < 1 ||
+        page < 1 ||
 
-      page > totalPages
+        page > totalPages
 
-    ) {
+      ) {
 
-      return
+        return
+
+      }
+
+
+      setCurrentPage(
+        page
+      )
 
     }
-
-
-    setCurrentPage(page)
-
-  }
 
 
   // ======================================
@@ -758,7 +980,8 @@ function Payments() {
 
       {
 
-        length: totalPages,
+        length:
+          totalPages,
 
       },
 
@@ -773,55 +996,315 @@ function Payments() {
     <div className="applications-section">
 
 
-      {/* ====================================== */}
-      {/* HEADER */}
-      {/* ====================================== */}
+      {/* ======================================
+          HEADER
+      ====================================== */}
 
       <div className="applications-header">
 
         <h2>
+
           Payment & Revenue Management
+
         </h2>
 
         <p>
-          Monitor payments and track institute revenue.
+
+          Monitor payments and track
+          institute revenue.
+
         </p>
 
       </div>
 
 
-      {/* ====================================== */}
-      {/* REVENUE CARDS */}
-      {/* ====================================== */}
+      {/* ======================================
+          REVENUE FILTER
+      ====================================== */}
+
+      <div className="card border-0 shadow-sm mb-4">
+
+        <div className="card-body">
+
+          <div className="
+            d-flex
+            justify-content-between
+            align-items-center
+            flex-wrap
+            gap-3
+          ">
+
+
+            <div>
+
+              <h5 className="fw-bold mb-1">
+
+                Revenue Period
+
+              </h5>
+
+              <p className="
+                text-muted
+                mb-0
+              ">
+
+                Select a month or year
+                to view revenue.
+
+              </p>
+
+            </div>
+
+
+            <div className="
+              d-flex
+              align-items-center
+              flex-wrap
+              gap-2
+            ">
+
+
+              {/* ==============================
+                  MONTHLY
+              ============================== */}
+
+              <button
+
+                type="button"
+
+                className={
+
+                  reportType === 'monthly'
+
+                    ? 'btn btn-primary'
+
+                    : 'btn btn-outline-primary'
+
+                }
+
+                onClick={() =>
+                  setReportType(
+                    'monthly'
+                  )
+                }
+
+              >
+
+                Monthly
+
+              </button>
+
+
+              {/* ==============================
+                  YEARLY
+              ============================== */}
+
+              <button
+
+                type="button"
+
+                className={
+
+                  reportType === 'yearly'
+
+                    ? 'btn btn-primary'
+
+                    : 'btn btn-outline-primary'
+
+                }
+
+                onClick={() =>
+                  setReportType(
+                    'yearly'
+                  )
+                }
+
+              >
+
+                Yearly
+
+              </button>
+
+
+              {/* ==============================
+                  MONTH
+              ============================== */}
+
+              {reportType === 'monthly' && (
+
+                <select
+
+                  className="form-select"
+
+                  style={{
+                    minWidth:
+                      '170px',
+                  }}
+
+                  value={
+                    selectedMonth
+                  }
+
+                  onChange={
+                    handleMonthChange
+                  }
+
+                >
+
+                  {months.map(
+                    (month) => (
+
+                      <option
+
+                        key={
+                          month.value
+                        }
+
+                        value={
+                          month.value
+                        }
+
+                      >
+
+                        {
+                          month.label
+                        }
+
+                        {' '}
+
+                        {
+                          selectedYear
+                        }
+
+                      </option>
+
+                    )
+                  )}
+
+                </select>
+
+              )}
+
+
+              {/* ==============================
+                  YEAR
+              ============================== */}
+
+              {reportType === 'yearly' && (
+
+                <select
+
+                  className="form-select"
+
+                  style={{
+                    minWidth:
+                      '120px',
+                  }}
+
+                  value={
+                    selectedYear
+                  }
+
+                  onChange={
+                    handleYearChange
+                  }
+
+                >
+
+                  {years.map(
+                    (year) => (
+
+                      <option
+
+                        key={year}
+
+                        value={year}
+
+                      >
+
+                        {year}
+
+                      </option>
+
+                    )
+                  )}
+
+                </select>
+
+              )}
+
+            </div>
+
+          </div>
+
+        </div>
+
+      </div>
+
+
+      {/* ======================================
+          REVENUE CARDS
+      ====================================== */}
 
       <div className="row g-4 mb-5">
 
 
         {/* TOTAL REVENUE */}
 
-        <div className="col-md-6 col-xl-3">
+        <div className="
+          col-md-6
+          col-xl-3
+        ">
 
-          <div className="card border-0 shadow-sm h-100">
+          <div className="
+            card
+            border-0
+            shadow-sm
+            h-100
+          ">
 
             <div className="card-body">
 
-              <p className="text-muted mb-2">
+              <p className="
+                text-muted
+                mb-2
+              ">
 
-                Total Revenue
+                {reportType === 'monthly'
+
+                  ? `${selectedMonthName} ${selectedYear} Revenue`
+
+                  : `${selectedYear} Revenue`
+
+                }
 
               </p>
 
-              <h3 className="fw-bold text-success">
 
-                {formatCurrency(
-                  revenue.totalRevenue
-                )}
+              <h3 className="
+                fw-bold
+                text-success
+              ">
+
+                {revenueLoading
+
+                  ? 'Loading...'
+
+                  : formatCurrency(
+                      revenue.totalRevenue
+                    )
+
+                }
 
               </h3>
 
-              <small className="text-muted">
 
-                All successful payments
+              <small className="
+                text-muted
+              ">
+
+                Successful payments
+                for selected period
 
               </small>
 
@@ -834,19 +1317,34 @@ function Payments() {
 
         {/* TODAY */}
 
-        <div className="col-md-6 col-xl-3">
+        <div className="
+          col-md-6
+          col-xl-3
+        ">
 
-          <div className="card border-0 shadow-sm h-100">
+          <div className="
+            card
+            border-0
+            shadow-sm
+            h-100
+          ">
 
             <div className="card-body">
 
-              <p className="text-muted mb-2">
+              <p className="
+                text-muted
+                mb-2
+              ">
 
                 Today's Revenue
 
               </p>
 
-              <h3 className="fw-bold text-primary">
+
+              <h3 className="
+                fw-bold
+                text-primary
+              ">
 
                 {formatCurrency(
                   revenue.todayRevenue
@@ -854,9 +1352,15 @@ function Payments() {
 
               </h3>
 
-              <small className="text-muted">
 
-                {revenue.todayPayments || 0}
+              <small className="
+                text-muted
+              ">
+
+                {
+                  revenue.todayPayments ||
+                  0
+                }
 
                 {' '}
 
@@ -871,21 +1375,42 @@ function Payments() {
         </div>
 
 
-        {/* THIS MONTH */}
+        {/* PERIOD */}
 
-        <div className="col-md-6 col-xl-3">
+        <div className="
+          col-md-6
+          col-xl-3
+        ">
 
-          <div className="card border-0 shadow-sm h-100">
+          <div className="
+            card
+            border-0
+            shadow-sm
+            h-100
+          ">
 
             <div className="card-body">
 
-              <p className="text-muted mb-2">
+              <p className="
+                text-muted
+                mb-2
+              ">
 
-                This Month
+                {reportType === 'monthly'
+
+                  ? 'Selected Month'
+
+                  : 'Selected Year'
+
+                }
 
               </p>
 
-              <h3 className="fw-bold text-warning">
+
+              <h3 className="
+                fw-bold
+                text-warning
+              ">
 
                 {formatCurrency(
                   revenue.monthlyRevenue
@@ -893,13 +1418,19 @@ function Payments() {
 
               </h3>
 
-              <small className="text-muted">
 
-                {revenue.monthlyPayments || 0}
+              <small className="
+                text-muted
+              ">
+
+                {
+                  revenue.monthlyPayments ||
+                  0
+                }
 
                 {' '}
 
-                payment(s) this month
+                payment(s)
 
               </small>
 
@@ -910,27 +1441,45 @@ function Payments() {
         </div>
 
 
-        {/* TOTAL PAYMENTS */}
+        {/* PAYMENTS */}
 
-        <div className="col-md-6 col-xl-3">
+        <div className="
+          col-md-6
+          col-xl-3
+        ">
 
-          <div className="card border-0 shadow-sm h-100">
+          <div className="
+            card
+            border-0
+            shadow-sm
+            h-100
+          ">
 
             <div className="card-body">
 
-              <p className="text-muted mb-2">
+              <p className="
+                text-muted
+                mb-2
+              ">
 
-                Total Payments
+                Payments
 
               </p>
 
+
               <h3 className="fw-bold">
 
-                {revenue.totalPayments || 0}
+                {
+                  revenue.totalPayments ||
+                  0
+                }
 
               </h3>
 
-              <small className="text-muted">
+
+              <small className="
+                text-muted
+              ">
 
                 Successful transactions
 
@@ -945,26 +1494,42 @@ function Payments() {
       </div>
 
 
-      {/* ====================================== */}
-      {/* REVENUE BREAKDOWN */}
-      {/* ====================================== */}
+      {/* ======================================
+          REVENUE BREAKDOWN
+      ====================================== */}
 
-      <div className="row g-4 mb-5">
+      <div className="
+        row
+        g-4
+        mb-5
+      ">
 
 
         {/* REGISTRATION */}
 
-        <div className="col-md-6 col-xl-3">
+        <div className="
+          col-md-6
+          col-xl-3
+        ">
 
-          <div className="card border-0 shadow-sm h-100">
+          <div className="
+            card
+            border-0
+            shadow-sm
+            h-100
+          ">
 
             <div className="card-body">
 
-              <p className="text-muted mb-2">
+              <p className="
+                text-muted
+                mb-2
+              ">
 
                 Registration Revenue
 
               </p>
+
 
               <h4 className="fw-bold">
 
@@ -983,17 +1548,29 @@ function Payments() {
 
         {/* COURSE FEE */}
 
-        <div className="col-md-6 col-xl-3">
+        <div className="
+          col-md-6
+          col-xl-3
+        ">
 
-          <div className="card border-0 shadow-sm h-100">
+          <div className="
+            card
+            border-0
+            shadow-sm
+            h-100
+          ">
 
             <div className="card-body">
 
-              <p className="text-muted mb-2">
+              <p className="
+                text-muted
+                mb-2
+              ">
 
                 Course Fee Revenue
 
               </p>
+
 
               <h4 className="fw-bold">
 
@@ -1012,19 +1589,34 @@ function Payments() {
 
         {/* ONLINE */}
 
-        <div className="col-md-6 col-xl-3">
+        <div className="
+          col-md-6
+          col-xl-3
+        ">
 
-          <div className="card border-0 shadow-sm h-100">
+          <div className="
+            card
+            border-0
+            shadow-sm
+            h-100
+          ">
 
             <div className="card-body">
 
-              <p className="text-muted mb-2">
+              <p className="
+                text-muted
+                mb-2
+              ">
 
                 Online Revenue
 
               </p>
 
-              <h4 className="fw-bold text-primary">
+
+              <h4 className="
+                fw-bold
+                text-primary
+              ">
 
                 {formatCurrency(
                   revenue.onlineRevenue
@@ -1032,9 +1624,12 @@ function Payments() {
 
               </h4>
 
-              <small className="text-muted">
 
-                Razorpay / Online Payments
+              <small className="
+                text-muted
+              ">
+
+                Online Payments
 
               </small>
 
@@ -1047,19 +1642,34 @@ function Payments() {
 
         {/* OFFLINE */}
 
-        <div className="col-md-6 col-xl-3">
+        <div className="
+          col-md-6
+          col-xl-3
+        ">
 
-          <div className="card border-0 shadow-sm h-100">
+          <div className="
+            card
+            border-0
+            shadow-sm
+            h-100
+          ">
 
             <div className="card-body">
 
-              <p className="text-muted mb-2">
+              <p className="
+                text-muted
+                mb-2
+              ">
 
                 Offline Revenue
 
               </p>
 
-              <h4 className="fw-bold text-success">
+
+              <h4 className="
+                fw-bold
+                text-success
+              ">
 
                 {formatCurrency(
                   revenue.offlineRevenue
@@ -1067,7 +1677,10 @@ function Payments() {
 
               </h4>
 
-              <small className="text-muted">
+
+              <small className="
+                text-muted
+              ">
 
                 Cash / Manual Payments
 
@@ -1079,105 +1692,78 @@ function Payments() {
 
         </div>
 
-
       </div>
 
 
-      {/* ====================================== */}
-      {/* REVENUE CHART */}
-      {/* ====================================== */}
+      {/* ======================================
+          REVENUE CHART
+      ====================================== */}
 
-      <div className="card border-0 shadow-sm mb-5">
+      <div className="
+        card
+        border-0
+        shadow-sm
+        mb-5
+      ">
 
         <div className="card-body">
 
 
-          <div className="d-flex justify-content-between align-items-center flex-wrap gap-3 mb-4">
+          <div className="
+            d-flex
+            justify-content-between
+            align-items-center
+            flex-wrap
+            gap-3
+            mb-4
+          ">
 
 
             <div>
 
-              <h5 className="fw-bold mb-1">
+              <h5 className="
+                fw-bold
+                mb-1
+              ">
 
                 Revenue Report
 
               </h5>
 
-              <p className="text-muted mb-0">
 
-                Track revenue over time.
+              <p className="
+                text-muted
+                mb-0
+              ">
+
+                {reportType === 'monthly'
+
+                  ? `Daily revenue for ${selectedMonthName} ${selectedYear}`
+
+                  : `Monthly revenue for ${selectedYear}`
+
+                }
 
               </p>
 
             </div>
-
-
-            <div>
-
-              <button
-
-                type="button"
-
-                className={
-
-                  reportType === 'daily'
-
-                    ? 'btn btn-primary me-2'
-
-                    : 'btn btn-outline-primary me-2'
-
-                }
-
-                onClick={() =>
-                  setReportType('daily')
-                }
-
-              >
-
-                Daily
-
-              </button>
-
-
-              <button
-
-                type="button"
-
-                className={
-
-                  reportType === 'monthly'
-
-                    ? 'btn btn-primary'
-
-                    : 'btn btn-outline-primary'
-
-                }
-
-                onClick={() =>
-                  setReportType('monthly')
-                }
-
-              >
-
-                Monthly
-
-              </button>
-
-            </div>
-
 
           </div>
 
 
           <div
             style={{
-              height: '350px',
+              height:
+                '350px',
             }}
           >
 
-            {loading ? (
+            {revenueLoading ? (
 
-              <div className="text-center pt-5">
+              <div className="
+                text-center
+                pt-5
+              ">
 
                 Loading Revenue...
 
@@ -1185,9 +1771,14 @@ function Payments() {
 
             ) : currentReport.length === 0 ? (
 
-              <div className="text-center pt-5 text-muted">
+              <div className="
+                text-center
+                pt-5
+                text-muted
+              ">
 
-                No revenue data available.
+                No revenue data available
+                for this period.
 
               </div>
 
@@ -1195,9 +1786,13 @@ function Payments() {
 
               <Line
 
-                data={chartData}
+                data={
+                  chartData
+                }
 
-                options={chartOptions}
+                options={
+                  chartOptions
+                }
 
               />
 
@@ -1205,15 +1800,14 @@ function Payments() {
 
           </div>
 
-
         </div>
 
       </div>
 
 
-      {/* ====================================== */}
-      {/* SEARCH */}
-      {/* ====================================== */}
+      {/* ======================================
+          SEARCH
+      ====================================== */}
 
       <div className="mb-3">
 
@@ -1223,29 +1817,37 @@ function Payments() {
 
           className="form-control"
 
-          placeholder="Search by Admission Number, Student Name or Course"
+          placeholder="
+            Search by Admission Number,
+            Student Name or Course
+          "
 
-          value={searchTerm}
+          value={
+            searchTerm
+          }
 
-          onChange={handleSearch}
+          onChange={
+            handleSearch
+          }
 
         />
 
       </div>
 
 
-      {/* ====================================== */}
-      {/* PAYMENT COUNT */}
-      {/* ====================================== */}
+      {/* ======================================
+          PAYMENT COUNT
+      ====================================== */}
 
       <div className="mb-3">
 
-        <small className="text-muted">
+        <small className="
+          text-muted
+        ">
 
           Showing{' '}
 
           {
-
             filteredPayments.length === 0
 
               ? 0
@@ -1259,7 +1861,6 @@ function Payments() {
           {Math.min(
 
             startIndex +
-
               paymentsPerPage,
 
             filteredPayments.length
@@ -1268,7 +1869,9 @@ function Payments() {
 
           {' of '}
 
-          {filteredPayments.length}
+          {
+            filteredPayments.length
+          }
 
           {' payments'}
 
@@ -1277,13 +1880,16 @@ function Payments() {
       </div>
 
 
-      {/* ====================================== */}
-      {/* PAYMENT TABLE */}
-      {/* ====================================== */}
+      {/* ======================================
+          PAYMENT TABLE
+      ====================================== */}
 
       <div className="table-responsive">
 
-        <table className="table applications-table">
+        <table className="
+          table
+          applications-table
+        ">
 
           <thead>
 
@@ -1365,11 +1971,8 @@ function Payments() {
             ) : (
 
               currentPayments.map(
-                (payment) => {
 
-                  // ==================================
-                  // DISPLAY PAYMENT MODE
-                  // ==================================
+                (payment) => {
 
                   const paymentMode =
 
@@ -1384,7 +1987,9 @@ function Payments() {
                           ''
                         )
                           .toLowerCase()
-                          .includes('razorpay')
+                          .includes(
+                            'razorpay'
+                          )
 
                           ? 'Online'
 
@@ -1410,6 +2015,7 @@ function Payments() {
 
                       </td>
 
+
                       <td>
 
                         {
@@ -1418,6 +2024,7 @@ function Payments() {
                         }
 
                       </td>
+
 
                       <td>
 
@@ -1428,6 +2035,7 @@ function Payments() {
 
                       </td>
 
+
                       <td>
 
                         {
@@ -1437,17 +2045,21 @@ function Payments() {
 
                       </td>
 
+
                       <td>
 
                         <strong>
 
                           {formatCurrency(
+
                             payment.amountPaid
+
                           )}
 
                         </strong>
 
                       </td>
+
 
                       <td>
 
@@ -1457,6 +2069,7 @@ function Payments() {
                         }
 
                       </td>
+
 
                       <td>
 
@@ -1482,6 +2095,7 @@ function Payments() {
                         </span>
 
                       </td>
+
 
                       <td>
 
@@ -1514,10 +2128,13 @@ function Payments() {
 
                       </td>
 
+
                       <td>
 
                         {formatDate(
+
                           payment.createdAt
+
                         )}
 
                       </td>
@@ -1539,20 +2156,30 @@ function Payments() {
       </div>
 
 
-      {/* ====================================== */}
-      {/* PAGINATION */}
-      {/* ====================================== */}
+      {/* ======================================
+          PAGINATION
+      ====================================== */}
 
       {totalPages > 1 && (
 
-        <div className="d-flex justify-content-center align-items-center gap-2 mt-4 flex-wrap">
+        <div className="
+          d-flex
+          justify-content-center
+          align-items-center
+          gap-2
+          mt-4
+          flex-wrap
+        ">
 
 
           <button
 
             type="button"
 
-            className="btn btn-outline-primary"
+            className="
+              btn
+              btn-outline-primary
+            "
 
             disabled={
               currentPage === 1
@@ -1572,6 +2199,7 @@ function Payments() {
 
 
           {pageNumbers.map(
+
             (page) => (
 
               <button
@@ -1601,6 +2229,7 @@ function Payments() {
               </button>
 
             )
+
           )}
 
 
@@ -1608,10 +2237,14 @@ function Payments() {
 
             type="button"
 
-            className="btn btn-outline-primary"
+            className="
+              btn
+              btn-outline-primary
+            "
 
             disabled={
-              currentPage === totalPages
+              currentPage ===
+              totalPages
             }
 
             onClick={() =>

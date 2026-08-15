@@ -86,13 +86,12 @@ router.get(
 // ======================================
 // ADD PAYMENT
 // ======================================
-// General payment route.
 //
-// If this route is used manually,
-// paymentMode will be respected.
+// General manual payment route.
 //
 // Default:
 // paymentMode = Offline
+//
 // ======================================
 
 router.post(
@@ -354,7 +353,7 @@ router.post(
 
       // ==================================
       // DUPLICATE PAYMENT CHECK
-      // ======================================
+      // ==================================
 
       const existingPayment =
         await Payment.findOne({
@@ -392,7 +391,7 @@ router.post(
 
       // ==================================
       // CHECK EXISTING STUDENT
-      // ======================================
+      // ==================================
 
       const alreadyExistingStudent =
         await Student.findOne({
@@ -432,7 +431,7 @@ router.post(
 
       // ==================================
       // FIND COURSE
-      // ======================================
+      // ==================================
 
       const course =
         await Course.findOne({
@@ -459,7 +458,7 @@ router.post(
 
       // ==================================
       // COURSE FEES
-      // ======================================
+      // ==================================
 
       const totalFee =
         Number(
@@ -475,7 +474,7 @@ router.post(
 
       // ==================================
       // REGISTRATION PAYMENT
-      // ======================================
+      // ==================================
 
       const amountPaid =
         Number(
@@ -503,7 +502,7 @@ router.post(
       // ==================================
       // PAYMENT AMOUNT MUST MATCH
       // REGISTRATION FEE
-      // ======================================
+      // ==================================
 
       if (
         amountPaid !==
@@ -531,9 +530,7 @@ router.post(
       // PIE001
       // PIE002
       // PIE003
-      // PIE004
       //
-      // Existing admission numbers are not changed.
       // ======================================
 
       const existingStudents =
@@ -554,10 +551,6 @@ router.post(
 
           .lean()
 
-
-      // ======================================
-      // FIND HIGHEST PIE NUMBER
-      // ======================================
 
       let highestAdmissionNumber =
         0
@@ -593,10 +586,6 @@ router.post(
 
       }
 
-
-      // ======================================
-      // NEXT ADMISSION NUMBER
-      // ======================================
 
       const nextAdmissionNumber =
         highestAdmissionNumber + 1
@@ -641,10 +630,6 @@ router.post(
 
       const student =
         new Student({
-
-          // ==================================
-          // BASIC
-          // ==================================
 
           name:
             req.body.studentName || '',
@@ -782,25 +767,13 @@ router.post(
             ),
 
 
-          // ==================================
-          // PAYMENT PLAN
-          // ==================================
-
           paymentPlan:
             '',
 
 
-          // ==================================
-          // DUE DATE
-          // ==================================
-
           dueDate:
             '',
 
-
-          // ==================================
-          // PAYMENT MODE
-          // ==================================
 
           paymentMode:
             'Online',
@@ -954,13 +927,7 @@ router.post(
 
 
       // ======================================
-      // CREATE ADMIN NOTIFICATION
-      // ======================================
-      //
-      // This notification appears in the
-      // admin notification bell.
-      //
-      // This is for a NEW ONLINE ADMISSION.
+      // ADMIN NOTIFICATION
       // ======================================
 
       try {
@@ -1047,7 +1014,7 @@ router.post(
 
 
       // ==================================
-      // ADMIN / TEACHER EMAIL
+      // ADMIN EMAIL
       // ==================================
 
       sendAdminNotification({
@@ -1115,10 +1082,6 @@ router.post(
       } = req.body
 
 
-      // ==================================
-      // VALIDATION
-      // ==================================
-
       if (
         !admissionNumber ||
         !name ||
@@ -1136,10 +1099,6 @@ router.post(
 
       }
 
-
-      // ==================================
-      // FIND STUDENT
-      // ==================================
 
       const student =
         await Student.findOne({
@@ -1169,10 +1128,6 @@ router.post(
 
       }
 
-
-      // ==================================
-      // RESPONSE
-      // ==================================
 
       res.status(200).json({
 
@@ -1523,10 +1478,6 @@ router.post(
         )
 
 
-      // ==================================
-      // CANNOT EXCEED REMAINING
-      // ==================================
-
       if (
         amount >
         remaining
@@ -1745,7 +1696,7 @@ router.post(
 
       // ==================================
       // INSTALLMENT
-      // ======================================
+      // ==================================
 
       else {
 
@@ -1821,7 +1772,7 @@ router.post(
 
 
       // ==================================
-      // ONLINE PAYMENT
+      // PAYMENT MODE
       // ==================================
 
       const finalPaymentMethod =
@@ -2039,14 +1990,7 @@ router.post(
 
 
       // ======================================
-      // CREATE ADMIN NOTIFICATION
-      // ======================================
-      //
-      // This notification appears in the
-      // admin notification bell.
-      //
-      // This is for an EXISTING STUDENT
-      // course-fee payment.
+      // ADMIN NOTIFICATION
       // ======================================
 
       try {
@@ -2130,9 +2074,24 @@ router.post(
 )
 
 
-// ======================================
+// ============================================================
 // GET PAYMENT REVENUE
-// ======================================
+// ============================================================
+//
+// Supported:
+//
+// 1. Current/default:
+//    /payments/revenue
+//
+// 2. Custom Monthly:
+//    /payments/revenue?month=8&year=2026
+//
+// 3. Custom Yearly:
+//    /payments/revenue?year=2026
+//
+// Only successful payments are counted.
+//
+// ============================================================
 
 router.get(
   '/payments/revenue',
@@ -2140,52 +2099,15 @@ router.get(
 
     try {
 
-      // ==================================
-      // TOTAL REVENUE
-      // ==================================
-
-      const totalRevenueResult =
-        await Payment.aggregate([
-
-          {
-            $match: {
-              paymentStatus:
-                'Success',
-            },
-          },
-
-          {
-            $group: {
-
-              _id: null,
-
-              totalRevenue: {
-                $sum: '$amountPaid',
-              },
-
-              totalPayments: {
-                $sum: 1,
-              },
-
-            },
-
-          },
-
-        ])
+      const {
+        month,
+        year,
+      } = req.query
 
 
-      const totalRevenue =
-        totalRevenueResult[0]?.totalRevenue || 0
-
-
-      const totalPayments =
-        totalRevenueResult[0]?.totalPayments || 0
-
-
-      // ==================================
-      // TODAY REVENUE
-      // INDIA TIMEZONE
-      // ==================================
+      // ======================================
+      // CURRENT INDIA DATE
+      // ======================================
 
       const todayIST =
         new Date()
@@ -2198,108 +2120,203 @@ router.get(
           )
 
 
-      const todayRevenueResult =
-        await Payment.aggregate([
-
-          {
-            $match: {
-              paymentStatus:
-                'Success',
-            },
-          },
-
-          {
-            $addFields: {
-
-              paymentDateIST: {
-
-                $dateToString: {
-
-                  format:
-                    '%Y-%m-%d',
-
-                  date:
-                    '$createdAt',
-
-                  timezone:
-                    'Asia/Kolkata',
-
-                },
-
-              },
-
-            },
-
-          },
-
-          {
-            $match: {
-
-              paymentDateIST:
-                todayIST,
-
-            },
-
-          },
-
-          {
-            $group: {
-
-              _id: null,
-
-              revenue: {
-                $sum: '$amountPaid',
-              },
-
-              payments: {
-                $sum: 1,
-              },
-
-            },
-
-          },
-
-        ])
-
-
-      const todayRevenue =
-        todayRevenueResult[0]?.revenue || 0
-
-
-      const todayPayments =
-        todayRevenueResult[0]?.payments || 0
-
-
-      // ==================================
-      // THIS MONTH REVENUE
-      // ==================================
-
-      const currentMonth =
-        todayIST.substring(
-          0,
-          7
+      const currentYear =
+        Number(
+          todayIST.substring(
+            0,
+            4
+          )
         )
 
 
-      const monthRevenueResult =
+      const currentMonth =
+        Number(
+          todayIST.substring(
+            5,
+            7
+          )
+        )
+
+
+      // ======================================
+      // SELECTED YEAR
+      // ======================================
+      //
+      // If year is provided:
+      // use selected year.
+      //
+      // Otherwise:
+      // current year.
+      //
+      // ======================================
+
+      const selectedYear =
+        year
+          ? Number(year)
+          : currentYear
+
+
+      // ======================================
+      // SELECTED MONTH
+      // ======================================
+      //
+      // month provided:
+      // Monthly report.
+      //
+      // month not provided:
+      // Yearly report.
+      //
+      // ======================================
+
+      const selectedMonth =
+        month
+          ? Number(month)
+          : null
+
+
+      // ======================================
+      // VALIDATE YEAR
+      // ======================================
+
+      if (
+
+        !Number.isInteger(
+          selectedYear
+        )
+
+        ||
+
+        selectedYear < 2000
+
+        ||
+
+        selectedYear > 2100
+
+      ) {
+
+        return res.status(400).json({
+
+          success: false,
+
+          message:
+            'Invalid year.',
+
+        })
+
+      }
+
+
+      // ======================================
+      // VALIDATE MONTH
+      // ======================================
+
+      if (
+
+        selectedMonth !== null
+
+        &&
+
+        (
+
+          !Number.isInteger(
+            selectedMonth
+          )
+
+          ||
+
+          selectedMonth < 1
+
+          ||
+
+          selectedMonth > 12
+
+        )
+
+      ) {
+
+        return res.status(400).json({
+
+          success: false,
+
+          message:
+            'Invalid month.',
+
+        })
+
+      }
+
+
+      // ======================================
+      // COMMON SUCCESSFUL PAYMENT MATCH
+      // ======================================
+
+      const baseMatch = {
+
+        paymentStatus:
+          'Success',
+
+      }
+
+
+      // ======================================
+      // DATE MATCH
+      // ======================================
+
+      const dateMatch = {
+
+        revenueYear:
+          selectedYear,
+
+        ...(
+
+          selectedMonth !== null
+
+            ? {
+
+                revenueMonth:
+                  selectedMonth,
+
+              }
+
+            : {}
+
+        ),
+
+      }
+
+
+      // ======================================
+      // TOTAL REVENUE
+      // ======================================
+
+      const totalRevenueResult =
         await Payment.aggregate([
 
           {
-            $match: {
-              paymentStatus:
-                'Success',
-            },
+            $match:
+              baseMatch,
           },
 
           {
             $addFields: {
 
-              paymentMonthIST: {
+              revenueYear: {
 
-                $dateToString: {
+                $year: {
 
-                  format:
-                    '%Y-%m',
+                  date:
+                    '$createdAt',
+
+                  timezone:
+                    'Asia/Kolkata',
+
+                },
+
+              },
+
+              revenueMonth: {
+
+                $month: {
 
                   date:
                     '$createdAt',
@@ -2316,13 +2333,8 @@ router.get(
           },
 
           {
-            $match: {
-
-              paymentMonthIST:
-                currentMonth,
-
-            },
-
+            $match:
+              dateMatch,
           },
 
           {
@@ -2331,11 +2343,16 @@ router.get(
               _id: null,
 
               revenue: {
-                $sum: '$amountPaid',
+
+                $sum:
+                  '$amountPaid',
+
               },
 
               payments: {
+
                 $sum: 1,
+
               },
 
             },
@@ -2345,17 +2362,17 @@ router.get(
         ])
 
 
-      const monthlyRevenue =
-        monthRevenueResult[0]?.revenue || 0
+      const totalRevenue =
+        totalRevenueResult[0]?.revenue || 0
 
 
-      const monthlyPayments =
-        monthRevenueResult[0]?.payments || 0
+      const totalPayments =
+        totalRevenueResult[0]?.payments || 0
 
 
-      // ==================================
+      // ======================================
       // REGISTRATION REVENUE
-      // ==================================
+      // ======================================
 
       const registrationResult =
         await Payment.aggregate([
@@ -2363,8 +2380,7 @@ router.get(
           {
             $match: {
 
-              paymentStatus:
-                'Success',
+              ...baseMatch,
 
               paymentCategory:
                 'Registration',
@@ -2374,12 +2390,55 @@ router.get(
           },
 
           {
+            $addFields: {
+
+              revenueYear: {
+
+                $year: {
+
+                  date:
+                    '$createdAt',
+
+                  timezone:
+                    'Asia/Kolkata',
+
+                },
+
+              },
+
+              revenueMonth: {
+
+                $month: {
+
+                  date:
+                    '$createdAt',
+
+                  timezone:
+                    'Asia/Kolkata',
+
+                },
+
+              },
+
+            },
+
+          },
+
+          {
+            $match:
+              dateMatch,
+          },
+
+          {
             $group: {
 
               _id: null,
 
               revenue: {
-                $sum: '$amountPaid',
+
+                $sum:
+                  '$amountPaid',
+
               },
 
             },
@@ -2393,9 +2452,9 @@ router.get(
         registrationResult[0]?.revenue || 0
 
 
-      // ==================================
+      // ======================================
       // COURSE FEE REVENUE
-      // ==================================
+      // ======================================
 
       const courseFeeResult =
         await Payment.aggregate([
@@ -2403,8 +2462,7 @@ router.get(
           {
             $match: {
 
-              paymentStatus:
-                'Success',
+              ...baseMatch,
 
               paymentCategory:
                 'CourseFee',
@@ -2414,12 +2472,55 @@ router.get(
           },
 
           {
+            $addFields: {
+
+              revenueYear: {
+
+                $year: {
+
+                  date:
+                    '$createdAt',
+
+                  timezone:
+                    'Asia/Kolkata',
+
+                },
+
+              },
+
+              revenueMonth: {
+
+                $month: {
+
+                  date:
+                    '$createdAt',
+
+                  timezone:
+                    'Asia/Kolkata',
+
+                },
+
+              },
+
+            },
+
+          },
+
+          {
+            $match:
+              dateMatch,
+          },
+
+          {
             $group: {
 
               _id: null,
 
               revenue: {
-                $sum: '$amountPaid',
+
+                $sum:
+                  '$amountPaid',
+
               },
 
             },
@@ -2433,9 +2534,9 @@ router.get(
         courseFeeResult[0]?.revenue || 0
 
 
-      // ==================================
+      // ======================================
       // ONLINE REVENUE
-      // ==================================
+      // ======================================
 
       const onlineRevenueResult =
         await Payment.aggregate([
@@ -2443,8 +2544,7 @@ router.get(
           {
             $match: {
 
-              paymentStatus:
-                'Success',
+              ...baseMatch,
 
               paymentMode:
                 'Online',
@@ -2454,12 +2554,55 @@ router.get(
           },
 
           {
+            $addFields: {
+
+              revenueYear: {
+
+                $year: {
+
+                  date:
+                    '$createdAt',
+
+                  timezone:
+                    'Asia/Kolkata',
+
+                },
+
+              },
+
+              revenueMonth: {
+
+                $month: {
+
+                  date:
+                    '$createdAt',
+
+                  timezone:
+                    'Asia/Kolkata',
+
+                },
+
+              },
+
+            },
+
+          },
+
+          {
+            $match:
+              dateMatch,
+          },
+
+          {
             $group: {
 
               _id: null,
 
               revenue: {
-                $sum: '$amountPaid',
+
+                $sum:
+                  '$amountPaid',
+
               },
 
             },
@@ -2473,9 +2616,9 @@ router.get(
         onlineRevenueResult[0]?.revenue || 0
 
 
-      // ==================================
+      // ======================================
       // OFFLINE REVENUE
-      // ==================================
+      // ======================================
 
       const offlineRevenueResult =
         await Payment.aggregate([
@@ -2483,8 +2626,7 @@ router.get(
           {
             $match: {
 
-              paymentStatus:
-                'Success',
+              ...baseMatch,
 
               paymentMode:
                 'Offline',
@@ -2494,12 +2636,55 @@ router.get(
           },
 
           {
+            $addFields: {
+
+              revenueYear: {
+
+                $year: {
+
+                  date:
+                    '$createdAt',
+
+                  timezone:
+                    'Asia/Kolkata',
+
+                },
+
+              },
+
+              revenueMonth: {
+
+                $month: {
+
+                  date:
+                    '$createdAt',
+
+                  timezone:
+                    'Asia/Kolkata',
+
+                },
+
+              },
+
+            },
+
+          },
+
+          {
+            $match:
+              dateMatch,
+          },
+
+          {
             $group: {
 
               _id: null,
 
               revenue: {
-                $sum: '$amountPaid',
+
+                $sum:
+                  '$amountPaid',
+
               },
 
             },
@@ -2513,13 +2698,137 @@ router.get(
         offlineRevenueResult[0]?.revenue || 0
 
 
-      // ==================================
+      // ======================================
+      // TODAY REVENUE
+      // ======================================
+      //
+      // Only show today's revenue when the
+      // selected period contains today.
+      //
+      // Otherwise:
+      // 0
+      //
+      // ======================================
+
+      let todayRevenue = 0
+
+      let todayPayments = 0
+
+
+      if (
+
+        selectedYear ===
+          currentYear
+
+        &&
+
+        (
+
+          selectedMonth === null
+
+          ||
+
+          selectedMonth ===
+            currentMonth
+
+        )
+
+      ) {
+
+        const todayRevenueResult =
+          await Payment.aggregate([
+
+            {
+              $match:
+                baseMatch,
+            },
+
+            {
+              $addFields: {
+
+                paymentDateIST: {
+
+                  $dateToString: {
+
+                    format:
+                      '%Y-%m-%d',
+
+                    date:
+                      '$createdAt',
+
+                    timezone:
+                      'Asia/Kolkata',
+
+                  },
+
+                },
+
+              },
+
+            },
+
+            {
+              $match: {
+
+                paymentDateIST:
+                  todayIST,
+
+              },
+
+            },
+
+            {
+              $group: {
+
+                _id: null,
+
+                revenue: {
+
+                  $sum:
+                    '$amountPaid',
+
+                },
+
+                payments: {
+
+                  $sum: 1,
+
+                },
+
+              },
+
+            },
+
+          ])
+
+
+        todayRevenue =
+          todayRevenueResult[0]?.revenue || 0
+
+
+        todayPayments =
+          todayRevenueResult[0]?.payments || 0
+
+      }
+
+
+      // ======================================
       // RESPONSE
-      // ==================================
+      // ======================================
 
       res.status(200).json({
 
         success: true,
+
+        filters: {
+
+          year:
+            selectedYear,
+
+          month:
+            selectedMonth,
+
+        },
 
         revenue: {
 
@@ -2527,13 +2836,15 @@ router.get(
 
           todayRevenue,
 
-          monthlyRevenue,
+          monthlyRevenue:
+            totalRevenue,
 
           totalPayments,
 
           todayPayments,
 
-          monthlyPayments,
+          monthlyPayments:
+            totalPayments,
 
           registrationRevenue,
 
@@ -2571,9 +2882,22 @@ router.get(
 )
 
 
-// ======================================
+// ============================================================
 // GET REVENUE REPORT
-// ======================================
+// ============================================================
+//
+// Supported:
+//
+// /payments/revenue-report
+//
+// /payments/revenue-report?year=2026
+//
+// Returns:
+//
+// dailyRevenue
+// monthlyRevenue
+//
+// ============================================================
 
 router.get(
   '/payments/revenue-report',
@@ -2581,18 +2905,98 @@ router.get(
 
     try {
 
-      // ==================================
+      // ======================================
+      // CURRENT INDIA DATE
+      // ======================================
+
+      const todayIST =
+        new Date()
+          .toLocaleDateString(
+            'en-CA',
+            {
+              timeZone:
+                'Asia/Kolkata',
+            }
+          )
+
+
+      const currentYear =
+        Number(
+          todayIST.substring(
+            0,
+            4
+          )
+        )
+
+
+      // ======================================
+      // SELECTED YEAR
+      // ======================================
+
+      const selectedYear =
+        req.query.year
+          ? Number(
+              req.query.year
+            )
+          : currentYear
+
+
+      // ======================================
+      // VALIDATE YEAR
+      // ======================================
+
+      if (
+
+        !Number.isInteger(
+          selectedYear
+        )
+
+        ||
+
+        selectedYear < 2000
+
+        ||
+
+        selectedYear > 2100
+
+      ) {
+
+        return res.status(400).json({
+
+          success: false,
+
+          message:
+            'Invalid year.',
+
+        })
+
+      }
+
+
+      // ======================================
       // DAILY REVENUE
-      // ==================================
+      // ======================================
+      //
+      // Example:
+      //
+      // 2026
+      //   August
+      //     13 -> ₹5000
+      //     14 -> ₹3000
+      //
+      // ======================================
 
       const dailyRevenue =
         await Payment.aggregate([
 
           {
             $match: {
+
               paymentStatus:
                 'Success',
+
             },
+
           },
 
           {
@@ -2645,12 +3049,27 @@ router.get(
               },
 
               revenue: {
-                $sum: '$amountPaid',
+
+                $sum:
+                  '$amountPaid',
+
               },
 
               payments: {
+
                 $sum: 1,
+
               },
+
+            },
+
+          },
+
+          {
+            $match: {
+
+              '_id.year':
+                selectedYear,
 
             },
 
@@ -2675,18 +3094,29 @@ router.get(
         ])
 
 
-      // ==================================
+      // ======================================
       // MONTHLY REVENUE
-      // ==================================
+      // ======================================
+      //
+      // Example:
+      //
+      // January  -> ₹20,000
+      // February -> ₹35,000
+      // March    -> ₹10,000
+      //
+      // ======================================
 
       const monthlyRevenue =
         await Payment.aggregate([
 
           {
             $match: {
+
               paymentStatus:
                 'Success',
+
             },
+
           },
 
           {
@@ -2725,12 +3155,27 @@ router.get(
               },
 
               revenue: {
-                $sum: '$amountPaid',
+
+                $sum:
+                  '$amountPaid',
+
               },
 
               payments: {
+
                 $sum: 1,
+
               },
+
+            },
+
+          },
+
+          {
+            $match: {
+
+              '_id.year':
+                selectedYear,
 
             },
 
@@ -2752,13 +3197,16 @@ router.get(
         ])
 
 
-      // ==================================
+      // ======================================
       // RESPONSE
-      // ==================================
+      // ======================================
 
       res.status(200).json({
 
         success: true,
+
+        year:
+          selectedYear,
 
         dailyRevenue,
 
