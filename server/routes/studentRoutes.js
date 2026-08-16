@@ -1,9 +1,17 @@
-const express = require('express')
+const express =
+  require('express')
 
-const router = express.Router()
+const crypto =
+  require('crypto')
+
+const router =
+  express.Router()
 
 const upload =
   require('../middleware/upload')
+
+const razorpay =
+  require('../config/razorpay')
 
 const Student =
   require('../models/Student')
@@ -42,7 +50,6 @@ const calculateFeesStatus = (
   let status =
     'Pending'
 
-
   if (
     total > 0 &&
     remaining === 0
@@ -63,7 +70,6 @@ const calculateFeesStatus = (
 
   }
 
-
   return {
 
     remaining,
@@ -79,13 +85,10 @@ const calculateFeesStatus = (
 // HELPER: CALCULATE ACADEMIC SESSION
 // ======================================
 //
-// Session April -> March
+// April -> March
 //
 // 01-04-2026 to 31-03-2027
-//          = 2026-2027
-//
-// 01-04-2027 to 31-03-2028
-//          = 2027-2028
+// = 2026-2027
 //
 // ======================================
 
@@ -98,18 +101,15 @@ const calculateAcademicSession =
 
     }
 
-
     const value =
       String(admissionDate)
         .trim()
-
 
     if (!value) {
 
       return ''
 
     }
-
 
     let date
 
@@ -132,7 +132,6 @@ const calculateAcademicSession =
         value
           .split('-')
           .map(Number)
-
 
       date =
         new Date(
@@ -163,7 +162,6 @@ const calculateAcademicSession =
           .split('-')
           .map(Number)
 
-
       date =
         new Date(
           year,
@@ -193,7 +191,6 @@ const calculateAcademicSession =
           .split('/')
           .map(Number)
 
-
       date =
         new Date(
           year,
@@ -205,7 +202,7 @@ const calculateAcademicSession =
 
 
     // ==================================
-    // OTHER VALID DATE
+    // OTHER DATE
     // ==================================
 
     else {
@@ -215,10 +212,6 @@ const calculateAcademicSession =
 
     }
 
-
-    // ==================================
-    // INVALID DATE
-    // ==================================
 
     if (
       Number.isNaN(
@@ -234,13 +227,12 @@ const calculateAcademicSession =
     const year =
       date.getFullYear()
 
-
     const month =
       date.getMonth() + 1
 
 
     // ==================================
-    // APRIL = NEW SESSION
+    // APRIL - DECEMBER
     // ==================================
 
     if (
@@ -253,7 +245,7 @@ const calculateAcademicSession =
 
 
     // ==================================
-    // JANUARY-MARCH
+    // JANUARY - MARCH
     // ==================================
 
     return `${year - 1}-${year}`
@@ -268,15 +260,30 @@ const calculateAcademicSession =
 const getCurrentAcademicSession =
   () => {
 
-    return calculateAcademicSession(
+    const now =
       new Date()
-    )
+
+    const year =
+      now.getFullYear()
+
+    const month =
+      now.getMonth() + 1
+
+    if (
+      month >= 4
+    ) {
+
+      return `${year}-${year + 1}`
+
+    }
+
+    return `${year - 1}-${year}`
 
   }
 
 
 // ======================================
-// HELPER: GENERATE NEXT ADMISSION NUMBER
+// HELPER: GENERATE ADMISSION NUMBER
 // ======================================
 
 const generateAdmissionNumber =
@@ -288,7 +295,7 @@ const generateAdmissionNumber =
         admissionNumber: {
 
           $regex:
-            /^PIE\d+$/,
+            /^PIE\d+$/i,
 
         },
 
@@ -316,7 +323,7 @@ const generateAdmissionNumber =
             student.admissionNumber || ''
           )
             .replace(
-              'PIE',
+              /^PIE/i,
               ''
             ),
 
@@ -431,9 +438,63 @@ router.post(
       } = req.body
 
 
-      // ======================================
+      // ==================================
+      // REQUIRED BASIC FIELDS
+      // ==================================
+
+      if (
+        !name ||
+        !String(name).trim()
+      ) {
+
+        return res.status(400).json({
+
+          success: false,
+
+          message:
+            'Student name is required.',
+
+        })
+
+      }
+
+
+      if (
+        !contact ||
+        !String(contact).trim()
+      ) {
+
+        return res.status(400).json({
+
+          success: false,
+
+          message:
+            'Student mobile number is required.',
+
+        })
+
+      }
+
+
+      if (
+        !admissionDate
+      ) {
+
+        return res.status(400).json({
+
+          success: false,
+
+          message:
+            'Admission date is required.',
+
+        })
+
+      }
+
+
+      // ==================================
       // GENERATE ADMISSION NUMBER
-      // ======================================
+      // ==================================
 
       const admissionNumber =
         await generateAdmissionNumber()
@@ -445,9 +506,9 @@ router.post(
       )
 
 
-      // ======================================
-      // CALCULATE SESSION
-      // ======================================
+      // ==================================
+      // SESSION
+      // ==================================
 
       const session =
         calculateAcademicSession(
@@ -469,15 +530,9 @@ router.post(
       }
 
 
-      console.log(
-        'Academic Session:',
-        session
-      )
-
-
-      // ======================================
+      // ==================================
       // IMAGE
-      // ======================================
+      // ==================================
 
       const image =
         req.file
@@ -485,9 +540,9 @@ router.post(
           : ''
 
 
-      // ======================================
+      // ==================================
       // NUMERIC VALUES
-      // ======================================
+      // ==================================
 
       const totalFee =
         Number(
@@ -513,9 +568,25 @@ router.post(
         )
 
 
-      // ======================================
+      // ==================================
       // VALIDATION
-      // ======================================
+      // ==================================
+
+      if (
+        totalFee < 0
+      ) {
+
+        return res.status(400).json({
+
+          success: false,
+
+          message:
+            'Total fee cannot be negative.',
+
+        })
+
+      }
+
 
       if (
         paidFee < 0
@@ -544,6 +615,22 @@ router.post(
 
           message:
             'Paid fee cannot be greater than total course fee.',
+
+        })
+
+      }
+
+
+      if (
+        registration < 0
+      ) {
+
+        return res.status(400).json({
+
+          success: false,
+
+          message:
+            'Registration fee cannot be negative.',
 
         })
 
@@ -583,9 +670,9 @@ router.post(
       }
 
 
-      // ======================================
+      // ==================================
       // COURSE FEE STATUS
-      // ======================================
+      // ==================================
 
       const {
 
@@ -603,9 +690,9 @@ router.post(
         )
 
 
-      // ======================================
+      // ==================================
       // REGISTRATION STATUS
-      // ======================================
+      // ==================================
 
       const registrationStatus =
 
@@ -618,15 +705,15 @@ router.post(
           : 'Pending'
 
 
-      // ======================================
+      // ==================================
       // CREATE STUDENT
-      // ======================================
+      // ==================================
 
       const newStudent =
         new Student({
 
           name:
-            name || '',
+            String(name).trim(),
 
           dob:
             dob || '',
@@ -634,48 +721,39 @@ router.post(
           aadharNumber:
             aadharNumber || '',
 
-          admissionNumber:
-            admissionNumber,
+          admissionNumber,
 
-          // ==================================
           // COURSE OPTIONAL
-          // ==================================
-
           course:
             course || '',
 
           batchTime:
             batchTime || '',
 
-          // ==================================
-          // CONTACT REQUIRED
-          // ==================================
-
           contact:
-            contact || '',
+            String(contact).trim(),
 
-          // ==================================
           // EMAIL OPTIONAL
-          // ==================================
-
           email:
-            email || '',
+            email
+              ? String(email)
+                  .trim()
+                  .toLowerCase()
+              : '',
 
-          admissionDate:
-            admissionDate,
+          admissionDate,
 
-          session:
-            session,
+          session,
 
-          // ==================================
-          // NEW STUDENT STATUS
-          // ==================================
-
+          // NEW STUDENT ACTIVE
           studentStatus:
             'Active',
 
-          image:
-            image,
+          image,
+
+          // ==================================
+          // PARENTS
+          // ==================================
 
           fatherName:
             fatherName || '',
@@ -695,20 +773,32 @@ router.post(
           motherMobile:
             motherMobile || '',
 
+          // ==================================
+          // ADDRESS
+          // ==================================
+
           permanentAddress:
             permanentAddress || '',
 
           currentAddress:
             currentAddress || '',
 
+          // ==================================
+          // EDUCATION
+          // ==================================
+
           schoolCollegeName:
             schoolCollegeName || '',
+
+          // ==================================
+          // ADMISSION
+          // ==================================
 
           admissionType:
             admissionType || 'Offline',
 
           // ==================================
-          // REGISTRATION FEE OPTIONAL
+          // REGISTRATION
           // ==================================
 
           registrationFee:
@@ -721,7 +811,7 @@ router.post(
             registrationStatus,
 
           // ==================================
-          // COURSE FEE OPTIONAL
+          // COURSE FEE
           // ==================================
 
           totalFees:
@@ -737,7 +827,7 @@ router.post(
             status,
 
           // ==================================
-          // INSTALLMENTS OPTIONAL
+          // PAYMENT OPTIONS
           // ==================================
 
           monthlyInstallment:
@@ -760,10 +850,6 @@ router.post(
               fullPaymentFee || 0
             ),
 
-          // ==================================
-          // PAYMENT PLAN OPTIONAL
-          // ==================================
-
           paymentPlan:
             paymentPlan || '',
 
@@ -779,9 +865,9 @@ router.post(
         })
 
 
-      // ======================================
-      // OFFLINE REGISTRATION PAYMENT
-      // ======================================
+      // ==================================
+      // REGISTRATION PAYMENT HISTORY
+      // ==================================
 
       if (
         registrationPaid > 0
@@ -829,9 +915,9 @@ router.post(
       }
 
 
-      // ======================================
-      // OFFLINE COURSE FEE PAYMENT
-      // ======================================
+      // ==================================
+      // COURSE FEE PAYMENT HISTORY
+      // ==================================
 
       if (
         paidFee > 0
@@ -851,9 +937,7 @@ router.post(
           paymentType:
 
             paymentPlan === 'full'
-
               ? 'Full'
-
               : 'Installment',
 
           paymentPlan:
@@ -884,17 +968,17 @@ router.post(
       }
 
 
-      // ======================================
+      // ==================================
       // SAVE STUDENT
-      // ======================================
+      // ==================================
 
       const savedStudent =
         await newStudent.save()
 
 
-      // ======================================
+      // ==================================
       // SAVE REGISTRATION PAYMENT
-      // ======================================
+      // ==================================
 
       let registrationPayment =
         null
@@ -966,9 +1050,9 @@ router.post(
       }
 
 
-      // ======================================
-      // SAVE COURSE FEE PAYMENT
-      // ======================================
+      // ==================================
+      // SAVE COURSE PAYMENT
+      // ==================================
 
       let coursePayment =
         null
@@ -1012,9 +1096,7 @@ router.post(
 
               savedStudent.paymentPlan ===
               'full'
-
                 ? 'Full'
-
                 : 'Installment',
 
             amountPaid:
@@ -1046,9 +1128,9 @@ router.post(
       }
 
 
-      // ======================================
-      // CREATE ADMISSION NOTIFICATION
-      // ======================================
+      // ==================================
+      // NOTIFICATION
+      // ==================================
 
       try {
 
@@ -1094,11 +1176,11 @@ router.post(
       }
 
 
-      // ======================================
+      // ==================================
       // RESPONSE
-      // ======================================
+      // ==================================
 
-      res.status(201).json({
+      return res.status(201).json({
 
         success: true,
 
@@ -1141,7 +1223,7 @@ router.post(
       }
 
 
-      res.status(500).json({
+      return res.status(500).json({
 
         success: false,
 
@@ -1160,32 +1242,6 @@ router.post(
 
 // ======================================
 // GET ALL STUDENTS
-// ======================================
-//
-// Supported filters:
-//
-// ?session=2026-2027
-//
-// ?search=PIE0001
-//
-// ?course=SSC CGL
-//
-// ?batchTime=Morning
-//
-// ?feesStatus=Paid
-//
-// ?feesStatus=Partial
-//
-// ?feesStatus=Pending
-//
-// ?feesStatus=All
-//
-// ?studentStatus=Active
-//
-// ?studentStatus=Inactive
-//
-// ?studentStatus=All
-//
 // ======================================
 
 router.get(
@@ -1213,16 +1269,12 @@ router.get(
       } = req.query
 
 
-      // ======================================
-      // QUERY
-      // ======================================
-
       const query = {}
 
 
-      // ======================================
-      // SESSION FILTER
-      // ======================================
+      // ==================================
+      // SESSION
+      // ==================================
 
       if (
         session &&
@@ -1235,13 +1287,9 @@ router.get(
       }
 
 
-      // ======================================
+      // ==================================
       // SEARCH
-      // ======================================
-      //
-      // Name OR Admission Number
-      //
-      // ======================================
+      // ==================================
 
       if (
         search &&
@@ -1287,9 +1335,9 @@ router.get(
       }
 
 
-      // ======================================
-      // COURSE FILTER
-      // ======================================
+      // ==================================
+      // COURSE
+      // ==================================
 
       if (
         course &&
@@ -1302,9 +1350,9 @@ router.get(
       }
 
 
-      // ======================================
-      // BATCH FILTER
-      // ======================================
+      // ==================================
+      // BATCH
+      // ==================================
 
       if (
         batchTime &&
@@ -1317,9 +1365,9 @@ router.get(
       }
 
 
-      // ======================================
-      // FEE STATUS FILTER
-      // ======================================
+      // ==================================
+      // FEE STATUS
+      // ==================================
 
       if (
         feesStatus &&
@@ -1332,9 +1380,9 @@ router.get(
       }
 
 
-      // ======================================
-      // STUDENT STATUS FILTER
-      // ======================================
+      // ==================================
+      // STUDENT STATUS
+      // ==================================
 
       if (
         studentStatus &&
@@ -1345,38 +1393,32 @@ router.get(
           studentStatus === 'Active'
         ) {
 
-          query.$and = [
+          query.$or = [
 
-            ...(query.$and || []),
+            ...(query.$or || []),
 
             {
 
-              $or: [
+              studentStatus:
+                'Active',
 
-                {
+            },
 
-                  studentStatus:
-                    'Active',
+            {
 
-                },
+              studentStatus: {
 
-                {
+                $exists:
+                  false,
 
-                  studentStatus:
-                    {
-                      $exists: false,
-                    },
+              },
 
-                },
+            },
 
-                {
+            {
 
-                  studentStatus:
-                    '',
-
-                },
-
-              ],
+              studentStatus:
+                '',
 
             },
 
@@ -1394,15 +1436,14 @@ router.get(
       }
 
 
-      // ======================================
-      // FIND STUDENTS
-      // ======================================
+      // ==================================
+      // FIND
+      // ==================================
 
       let students =
         await Student.find(
           query
         )
-
           .sort({
 
             admissionDate:
@@ -1414,9 +1455,9 @@ router.get(
           })
 
 
-      // ======================================
-      // BACKFILL OLD STUDENT SESSION
-      // ======================================
+      // ==================================
+      // BACKFILL SESSION
+      // ==================================
 
       const updates = []
 
@@ -1443,7 +1484,6 @@ router.get(
             student.session =
               calculatedSession
 
-
             updates.push(
               student.save()
             )
@@ -1466,9 +1506,9 @@ router.get(
       }
 
 
-      // ======================================
+      // ==================================
       // SESSION FILTER AFTER BACKFILL
-      // ======================================
+      // ==================================
 
       if (
         session &&
@@ -1490,41 +1530,37 @@ router.get(
       }
 
 
-      // ======================================
-      // OLD STUDENT STATUS NORMALIZATION
-      // ======================================
+      // ==================================
+      // OLD STATUS NORMALIZATION
+      // ==================================
 
       students =
         students.map(
 
           (student) => {
 
-            const studentObject =
+            const data =
               student.toObject()
 
 
             if (
-              !studentObject.studentStatus
+              !data.studentStatus
             ) {
 
-              studentObject.studentStatus =
+              data.studentStatus =
                 'Active'
 
             }
 
 
-            return studentObject
+            return data
 
           }
 
         )
 
 
-      // ======================================
-      // RESPONSE
-      // ======================================
-
-      res.status(200).json(
+      return res.status(200).json(
         students
       )
 
@@ -1534,121 +1570,6 @@ router.get(
 
       console.log(
         'Get Students Error:',
-        error
-      )
-
-      res.status(500).json({
-
-        success: false,
-
-        message:
-          'Server Error',
-
-      })
-
-    }
-
-  }
-
-)
-
-
-// ======================================
-// DELETE STUDENT
-// ======================================
-
-router.delete(
-
-  '/students/:id',
-
-  async (req, res) => {
-
-    try {
-
-      // ==================================
-      // FIND STUDENT
-      // ==================================
-
-      const student =
-        await Student.findById(
-          req.params.id
-        )
-
-
-      if (!student) {
-
-        return res.status(404).json({
-
-          success: false,
-
-          message:
-            'Student Not Found',
-
-        })
-
-      }
-
-
-      // ==================================
-      // DELETE RECEIPTS
-      // ==================================
-
-      const receiptResult =
-        await Receipt.deleteMany({
-
-          studentId:
-            student._id,
-
-        })
-
-
-      // ==================================
-      // DELETE PAYMENTS
-      // ==================================
-
-      const paymentResult =
-        await Payment.deleteMany({
-
-          admissionNumber:
-            student.admissionNumber,
-
-        })
-
-
-      // ==================================
-      // DELETE STUDENT
-      // ==================================
-
-      await Student.findByIdAndDelete(
-        student._id
-      )
-
-
-      // ==================================
-      // RESPONSE
-      // ==================================
-
-      return res.status(200).json({
-
-        success: true,
-
-        message:
-          'Student Deleted Successfully',
-
-        deletedReceipts:
-          receiptResult.deletedCount,
-
-        deletedPayments:
-          paymentResult.deletedCount,
-
-      })
-
-    }
-
-    catch (error) {
-
-      console.log(
-        'Delete Student Error:',
         error
       )
 
@@ -1745,9 +1666,9 @@ router.put(
       } = req.body
 
 
-      // ======================================
+      // ==================================
       // FIND STUDENT
-      // ======================================
+      // ==================================
 
       const student =
         await Student.findById(
@@ -1769,9 +1690,9 @@ router.put(
       }
 
 
-      // ======================================
+      // ==================================
       // IMAGE
-      // ======================================
+      // ==================================
 
       const image =
         req.file
@@ -1779,9 +1700,9 @@ router.put(
           : student.image
 
 
-      // ======================================
-      // NUMERIC VALUES
-      // ======================================
+      // ==================================
+      // NUMBERS
+      // ==================================
 
       const totalFee =
         Number(
@@ -1807,12 +1728,15 @@ router.put(
         )
 
 
-      // ======================================
+      // ==================================
       // VALIDATION
-      // ======================================
+      // ==================================
 
       if (
-        paidFee < 0
+        totalFee < 0 ||
+        paidFee < 0 ||
+        registration < 0 ||
+        registrationPaid < 0
       ) {
 
         return res.status(400).json({
@@ -1820,7 +1744,7 @@ router.put(
           success: false,
 
           message:
-            'Paid fee cannot be negative.',
+            'Fee values cannot be negative.',
 
         })
 
@@ -1845,22 +1769,6 @@ router.put(
 
 
       if (
-        registrationPaid < 0
-      ) {
-
-        return res.status(400).json({
-
-          success: false,
-
-          message:
-            'Registration fee paid cannot be negative.',
-
-        })
-
-      }
-
-
-      if (
         registrationPaid >
         registration
       ) {
@@ -1877,9 +1785,9 @@ router.put(
       }
 
 
-      // ======================================
+      // ==================================
       // FEE STATUS
-      // ======================================
+      // ==================================
 
       const {
 
@@ -1897,9 +1805,9 @@ router.put(
         )
 
 
-      // ======================================
+      // ==================================
       // REGISTRATION STATUS
-      // ======================================
+      // ==================================
 
       const registrationStatus =
 
@@ -1912,9 +1820,9 @@ router.put(
           : 'Pending'
 
 
-      // ======================================
-      // CALCULATE SESSION
-      // ======================================
+      // ==================================
+      // SESSION
+      // ==================================
 
       const session =
         calculateAcademicSession(
@@ -1929,203 +1837,168 @@ router.put(
           success: false,
 
           message:
-            'Valid admission date is required to calculate academic session.',
+            'Valid admission date is required.',
 
         })
 
       }
 
 
-      // ======================================
-      // VALIDATE STUDENT STATUS
-      // ======================================
+      // ==================================
+      // STATUS
+      // ==================================
 
       const finalStudentStatus =
 
-        studentStatus === 'Inactive'
+        studentStatus ===
+        'Inactive'
 
           ? 'Inactive'
 
           : 'Active'
 
 
-      // ======================================
-      // UPDATE STUDENT
-      // ======================================
+      // ==================================
+      // UPDATE
+      // ==================================
 
       student.name =
         name || ''
 
-
       student.dob =
         dob || ''
-
 
       student.aadharNumber =
         aadharNumber || ''
 
-
-      // ======================================
-      // COURSE OPTIONAL
-      // ======================================
-
       student.course =
         course || ''
-
 
       student.batchTime =
         batchTime || ''
 
-
-      // ======================================
-      // CONTACT
-      // ======================================
-
       student.contact =
         contact || ''
 
-
-      // ======================================
-      // EMAIL OPTIONAL
-      // ======================================
-
       student.email =
-        email || ''
-
+        email
+          ? String(email)
+              .trim()
+              .toLowerCase()
+          : ''
 
       student.admissionDate =
         admissionDate
 
-
       student.session =
         session
 
-
-      // ======================================
-      // STUDENT STATUS
-      // ======================================
-
       student.studentStatus =
         finalStudentStatus
-
 
       student.image =
         image
 
 
-      // ======================================
+      // ==================================
       // PARENTS
-      // ======================================
+      // ==================================
 
       student.fatherName =
         fatherName || ''
 
-
       student.motherName =
         motherName || ''
-
 
       student.fatherOccupation =
         fatherOccupation || ''
 
-
       student.motherOccupation =
         motherOccupation || ''
 
-
       student.fatherMobile =
         fatherMobile || ''
-
 
       student.motherMobile =
         motherMobile || ''
 
 
-      // ======================================
+      // ==================================
       // ADDRESS
-      // ======================================
+      // ==================================
 
       student.permanentAddress =
         permanentAddress || ''
-
 
       student.currentAddress =
         currentAddress || ''
 
 
-      // ======================================
+      // ==================================
       // EDUCATION
-      // ======================================
+      // ==================================
 
       student.schoolCollegeName =
         schoolCollegeName || ''
 
 
-      // ======================================
+      // ==================================
       // ADMISSION
-      // ======================================
+      // ==================================
 
       student.admissionType =
         admissionType || 'Offline'
 
 
-      // ======================================
+      // ==================================
       // REGISTRATION
-      // ======================================
+      // ==================================
 
       student.registrationFee =
         registration
 
-
       student.registrationFeePaid =
         registrationPaid
-
 
       student.registrationFeeStatus =
         registrationStatus
 
 
-      // ======================================
+      // ==================================
       // COURSE FEE
-      // ======================================
+      // ==================================
 
       student.totalFees =
         totalFee
 
-
       student.paidFees =
         paidFee
 
-
       student.remainingFees =
         remaining
-
 
       student.feesStatus =
         status
 
 
-      // ======================================
-      // PAYMENT OPTIONS
-      // ======================================
+      // ==================================
+      // INSTALLMENTS
+      // ==================================
 
       student.monthlyInstallment =
         Number(
           monthlyInstallment || 0
         )
 
-
       student.threeMonthInstallment =
         Number(
           threeMonthInstallment || 0
         )
 
-
       student.sixMonthInstallment =
         Number(
           sixMonthInstallment || 0
         )
-
 
       student.fullPaymentFee =
         Number(
@@ -2133,35 +2006,27 @@ router.put(
         )
 
 
-      // ======================================
-      // PAYMENT PLAN
-      // ======================================
+      // ==================================
+      // PLAN
+      // ==================================
 
       student.paymentPlan =
         paymentPlan || ''
 
 
-      // ======================================
+      // ==================================
       // DUE DATE
-      // ======================================
+      // ==================================
 
       student.dueDate =
         dueDate || ''
 
 
-      // ======================================
-      // SAVE
-      // ======================================
-
       const updatedStudent =
         await student.save()
 
 
-      // ======================================
-      // RESPONSE
-      // ======================================
-
-      res.status(200).json({
+      return res.status(200).json({
 
         success: true,
 
@@ -2182,12 +2047,119 @@ router.put(
         error
       )
 
-      res.status(500).json({
+      return res.status(500).json({
 
         success: false,
 
         message:
           error.message ||
+          'Server Error',
+
+      })
+
+    }
+
+  }
+
+)
+
+
+// ======================================
+// DELETE STUDENT
+// ======================================
+
+router.delete(
+
+  '/students/:id',
+
+  async (req, res) => {
+
+    try {
+
+      const student =
+        await Student.findById(
+          req.params.id
+        )
+
+
+      if (!student) {
+
+        return res.status(404).json({
+
+          success: false,
+
+          message:
+            'Student Not Found',
+
+        })
+
+      }
+
+
+      // ==================================
+      // DELETE RECEIPTS
+      // ==================================
+
+      const receiptResult =
+        await Receipt.deleteMany({
+
+          studentId:
+            student._id,
+
+        })
+
+
+      // ==================================
+      // DELETE PAYMENTS
+      // ==================================
+
+      const paymentResult =
+        await Payment.deleteMany({
+
+          admissionNumber:
+            student.admissionNumber,
+
+        })
+
+
+      // ==================================
+      // DELETE STUDENT
+      // ==================================
+
+      await Student.findByIdAndDelete(
+        student._id
+      )
+
+
+      return res.status(200).json({
+
+        success: true,
+
+        message:
+          'Student Deleted Successfully',
+
+        deletedReceipts:
+          receiptResult.deletedCount,
+
+        deletedPayments:
+          paymentResult.deletedCount,
+
+      })
+
+    }
+
+    catch (error) {
+
+      console.log(
+        'Delete Student Error:',
+        error
+      )
+
+      return res.status(500).json({
+
+        success: false,
+
+        message:
           'Server Error',
 
       })
@@ -2224,9 +2196,9 @@ router.put(
       } = req.body
 
 
-      // ======================================
+      // ==================================
       // FIND STUDENT
-      // ======================================
+      // ==================================
 
       const student =
         await Student.findById(
@@ -2248,10 +2220,6 @@ router.put(
       }
 
 
-      // ======================================
-      // PAYMENT AMOUNT
-      // ======================================
-
       const paymentAmount =
         Number(amount)
 
@@ -2272,10 +2240,6 @@ router.put(
 
       }
 
-
-      // ======================================
-      // REMAINING COURSE FEE
-      // ======================================
 
       const remainingFee =
         Number(
@@ -2299,10 +2263,6 @@ router.put(
       }
 
 
-      // ======================================
-      // PAYMENT CANNOT EXCEED REMAINING
-      // ======================================
-
       if (
         paymentAmount >
         remainingFee
@@ -2320,43 +2280,35 @@ router.put(
       }
 
 
-      // ======================================
+      // ==================================
       // PAYMENT PLAN
-      // ======================================
+      // ==================================
 
       let selectedPlan =
         student.paymentPlan || ''
 
 
-      // ======================================
-      // FIRST PAYMENT PLAN
-      // ======================================
-
       if (!selectedPlan) {
 
-        if (!paymentPlan) {
-
-          return res.status(400).json({
-
-            success: false,
-
-            message:
-              'Please select a payment plan.',
-
-          })
-
-        }
-
-
         selectedPlan =
-          paymentPlan
+          paymentPlan || ''
 
       }
 
 
-      // ======================================
-      // PREVENT PLAN CHANGE
-      // ======================================
+      if (!selectedPlan) {
+
+        return res.status(400).json({
+
+          success: false,
+
+          message:
+            'Please select a payment plan.',
+
+        })
+
+      }
+
 
       if (
 
@@ -2381,9 +2333,9 @@ router.put(
       }
 
 
-      // ======================================
-      // PAYMENT MINIMUM
-      // ======================================
+      // ==================================
+      // MINIMUM PAYMENT
+      // ==================================
 
       let minimumAmount =
         0
@@ -2402,7 +2354,6 @@ router.put(
 
           break
 
-
         case 'three_month':
 
           minimumAmount =
@@ -2411,7 +2362,6 @@ router.put(
             )
 
           break
-
 
         case 'six_month':
 
@@ -2422,14 +2372,12 @@ router.put(
 
           break
 
-
         case 'full':
 
           minimumAmount =
             remainingFee
 
           break
-
 
         default:
 
@@ -2439,23 +2387,12 @@ router.put(
       }
 
 
-      // ======================================
-      // PAYABLE MINIMUM
-      // ======================================
-
       const payableMinimum =
         Math.min(
-
           minimumAmount,
-
           remainingFee
-
         )
 
-
-      // ======================================
-      // MINIMUM PAYMENT CHECK
-      // ======================================
 
       if (
 
@@ -2480,36 +2417,26 @@ router.put(
       }
 
 
-      // ======================================
-      // FULL PAYMENT CHECK
-      // ======================================
-
       if (
-        selectedPlan === 'full'
+        selectedPlan === 'full' &&
+        paymentAmount !== remainingFee
       ) {
 
-        if (
-          paymentAmount !==
-          remainingFee
-        ) {
+        return res.status(400).json({
 
-          return res.status(400).json({
+          success: false,
 
-            success: false,
+          message:
+            `Full payment amount must be ₹${remainingFee}.`,
 
-            message:
-              `Full payment amount must be ₹${remainingFee}.`,
-
-          })
-
-        }
+        })
 
       }
 
 
-      // ======================================
-      // PAYMENT DATE
-      // ======================================
+      // ==================================
+      // PAYMENT DETAILS
+      // ==================================
 
       const finalPaymentDate =
         paymentDate ||
@@ -2519,31 +2446,21 @@ router.put(
           .split('T')[0]
 
 
-      // ======================================
-      // PAYMENT METHOD
-      // ======================================
-
       const finalPaymentMethod =
         paymentMethod ||
         'Cash'
 
 
-      // ======================================
-      // PAYMENT TYPE
-      // ======================================
-
       const paymentType =
 
         selectedPlan === 'full'
-
           ? 'Full'
-
           : 'Installment'
 
 
-      // ======================================
-      // UPDATE PAYMENT HISTORY
-      // ======================================
+      // ==================================
+      // PAYMENT HISTORY
+      // ==================================
 
       student.paymentHistory.push({
 
@@ -2579,9 +2496,9 @@ router.put(
       })
 
 
-      // ======================================
-      // UPDATE PAID FEES
-      // ======================================
+      // ==================================
+      // UPDATE FEES
+      // ==================================
 
       student.paidFees =
 
@@ -2591,10 +2508,6 @@ router.put(
 
         paymentAmount
 
-
-      // ======================================
-      // UPDATE REMAINING
-      // ======================================
 
       student.remainingFees =
 
@@ -2612,10 +2525,6 @@ router.put(
 
         )
 
-
-      // ======================================
-      // UPDATE STATUS
-      // ======================================
 
       if (
         student.remainingFees === 0
@@ -2643,24 +2552,23 @@ router.put(
       }
 
 
-      // ======================================
-      // LAST PAYMENT MODE
-      // ======================================
+      student.paymentPlan =
+        selectedPlan
 
       student.paymentMode =
         'Offline'
 
 
-      // ======================================
+      // ==================================
       // SAVE STUDENT
-      // ======================================
+      // ==================================
 
       await student.save()
 
 
-      // ======================================
-      // SAVE PAYMENT COLLECTION
-      // ======================================
+      // ==================================
+      // SAVE PAYMENT
+      // ==================================
 
       const payment =
         await Payment.create({
@@ -2721,9 +2629,9 @@ router.put(
         })
 
 
-      // ======================================
-      // PAYMENT NOTIFICATION
-      // ======================================
+      // ==================================
+      // NOTIFICATION
+      // ==================================
 
       try {
 
@@ -2769,11 +2677,7 @@ router.put(
       }
 
 
-      // ======================================
-      // RESPONSE
-      // ======================================
-
-      res.status(200).json({
+      return res.status(200).json({
 
         success: true,
 
@@ -2795,13 +2699,1199 @@ router.put(
         error
       )
 
-      res.status(500).json({
+      return res.status(500).json({
 
         success: false,
 
         message:
           error.message ||
           'Server Error',
+
+      })
+
+    }
+
+  }
+
+)
+
+
+// ======================================
+// CREATE LIVE RAZORPAY COURSE FEE ORDER
+// ======================================
+//
+// POST
+// /api/student/fees/create-order
+//
+// ======================================
+
+router.post(
+
+  '/student/fees/create-order',
+
+  async (req, res) => {
+
+    try {
+
+      const {
+
+        studentId,
+
+        amount,
+
+        paymentPlan,
+
+      } = req.body
+
+
+      if (!studentId) {
+
+        return res.status(400).json({
+
+          success: false,
+
+          message:
+            'Student ID is required.',
+
+        })
+
+      }
+
+
+      const paymentAmount =
+        Number(amount)
+
+
+      if (
+        !paymentAmount ||
+        paymentAmount <= 0
+      ) {
+
+        return res.status(400).json({
+
+          success: false,
+
+          message:
+            'Invalid payment amount.',
+
+        })
+
+      }
+
+
+      // ==================================
+      // FIND STUDENT
+      // ==================================
+
+      const student =
+        await Student.findById(
+          studentId
+        )
+
+
+      if (!student) {
+
+        return res.status(404).json({
+
+          success: false,
+
+          message:
+            'Student not found.',
+
+        })
+
+      }
+
+
+      // ==================================
+      // REMAINING
+      // ==================================
+
+      const remainingFee =
+        Math.max(
+
+          0,
+
+          Number(
+            student.totalFees || 0
+          ) -
+
+          Number(
+            student.paidFees || 0
+          )
+
+        )
+
+
+      if (
+        remainingFee <= 0
+      ) {
+
+        return res.status(400).json({
+
+          success: false,
+
+          message:
+            'Course fee is already fully paid.',
+
+        })
+
+      }
+
+
+      if (
+        paymentAmount >
+        remainingFee
+      ) {
+
+        return res.status(400).json({
+
+          success: false,
+
+          message:
+            `Payment cannot be greater than remaining fee of ₹${remainingFee}.`,
+
+        })
+
+      }
+
+
+      // ==================================
+      // PAYMENT PLAN
+      // ==================================
+
+      let selectedPlan =
+        student.paymentPlan || ''
+
+
+      if (!selectedPlan) {
+
+        selectedPlan =
+          paymentPlan || ''
+
+      }
+
+
+      if (!selectedPlan) {
+
+        return res.status(400).json({
+
+          success: false,
+
+          message:
+            'Please select a payment plan.',
+
+        })
+
+      }
+
+
+      const allowedPlans = [
+
+        'monthly',
+
+        'three_month',
+
+        'six_month',
+
+        'full',
+
+      ]
+
+
+      if (
+        !allowedPlans.includes(
+          selectedPlan
+        )
+      ) {
+
+        return res.status(400).json({
+
+          success: false,
+
+          message:
+            'Invalid payment plan.',
+
+        })
+
+      }
+
+
+      if (
+
+        student.paymentPlan &&
+
+        paymentPlan &&
+
+        paymentPlan !==
+          student.paymentPlan
+
+      ) {
+
+        return res.status(400).json({
+
+          success: false,
+
+          message:
+            'Payment plan cannot be changed.',
+
+        })
+
+      }
+
+
+      // ==================================
+      // PLAN AMOUNT
+      // ==================================
+
+      let minimumAmount =
+        0
+
+
+      switch (
+        selectedPlan
+      ) {
+
+        case 'monthly':
+
+          minimumAmount =
+            Number(
+              student.monthlyInstallment || 0
+            )
+
+          break
+
+        case 'three_month':
+
+          minimumAmount =
+            Number(
+              student.threeMonthInstallment || 0
+            )
+
+          break
+
+        case 'six_month':
+
+          minimumAmount =
+            Number(
+              student.sixMonthInstallment || 0
+            )
+
+          break
+
+        case 'full':
+
+          minimumAmount =
+            remainingFee
+
+          break
+
+      }
+
+
+      const payableMinimum =
+        Math.min(
+
+          minimumAmount,
+
+          remainingFee
+
+        )
+
+
+      if (
+
+        selectedPlan !== 'full' &&
+
+        payableMinimum > 0 &&
+
+        paymentAmount <
+          payableMinimum
+
+      ) {
+
+        return res.status(400).json({
+
+          success: false,
+
+          message:
+            `Minimum payment for ${selectedPlan} is ₹${payableMinimum}.`,
+
+        })
+
+      }
+
+
+      if (
+        selectedPlan === 'full'
+      ) {
+
+        if (
+          paymentAmount !==
+          remainingFee
+        ) {
+
+          return res.status(400).json({
+
+            success: false,
+
+            message:
+              `Full payment amount must be ₹${remainingFee}.`,
+
+          })
+
+        }
+
+      }
+
+
+      // ==================================
+      // CREATE ORDER
+      // ==================================
+
+      const order =
+        await razorpay.orders.create({
+
+          amount:
+            Math.round(
+              paymentAmount * 100
+            ),
+
+          currency:
+            'INR',
+
+          receipt:
+
+            `PIE_${student.admissionNumber}_${Date.now()}`,
+
+          notes: {
+
+            studentId:
+              student._id.toString(),
+
+            admissionNumber:
+              student.admissionNumber,
+
+            paymentPlan:
+              selectedPlan,
+
+            paymentCategory:
+              'CourseFee',
+
+          },
+
+        })
+
+
+      return res.status(200).json({
+
+        success: true,
+
+        message:
+          'Razorpay order created successfully.',
+
+        order: {
+
+          id:
+            order.id,
+
+          amount:
+            order.amount,
+
+          currency:
+            order.currency,
+
+        },
+
+        keyId:
+          process.env.RAZORPAY_KEY_ID,
+
+        paymentPlan:
+          selectedPlan,
+
+        amount:
+          paymentAmount,
+
+      })
+
+    }
+
+    catch (error) {
+
+      console.log(
+        'Create Razorpay Order Error:',
+        error
+      )
+
+      return res.status(500).json({
+
+        success: false,
+
+        message:
+
+          error?.error?.description ||
+
+          error?.message ||
+
+          'Unable to create Razorpay order.',
+
+      })
+
+    }
+
+  }
+
+)
+
+
+// ======================================
+// VERIFY LIVE RAZORPAY COURSE PAYMENT
+// ======================================
+//
+// POST
+// /api/student/fees/verify
+//
+// ======================================
+
+router.post(
+
+  '/student/fees/verify',
+
+  async (req, res) => {
+
+    try {
+
+      const {
+
+        razorpay_payment_id,
+
+        razorpay_order_id,
+
+        razorpay_signature,
+
+      } = req.body
+
+
+      // ==================================
+      // BASIC VALIDATION
+      // ==================================
+
+      if (
+
+        !razorpay_payment_id ||
+
+        !razorpay_order_id ||
+
+        !razorpay_signature
+
+      ) {
+
+        return res.status(400).json({
+
+          success: false,
+
+          message:
+            'Incomplete Razorpay payment details.',
+
+        })
+
+      }
+
+
+      // ==================================
+      // FETCH ORDER FROM RAZORPAY
+      // ==================================
+
+      const order =
+        await razorpay.orders.fetch(
+          razorpay_order_id
+        )
+
+
+      if (!order) {
+
+        return res.status(404).json({
+
+          success: false,
+
+          message:
+            'Razorpay order not found.',
+
+        })
+
+      }
+
+
+      // ==================================
+      // SIGNATURE VERIFICATION
+      // ==================================
+
+      const signatureBody =
+
+        razorpay_order_id +
+        '|' +
+        razorpay_payment_id
+
+
+      const expectedSignature =
+
+        crypto
+
+          .createHmac(
+
+            'sha256',
+
+            process.env.RAZORPAY_KEY_SECRET
+
+          )
+
+          .update(
+            signatureBody
+          )
+
+          .digest('hex')
+
+
+      const receivedBuffer =
+        Buffer.from(
+          razorpay_signature,
+          'utf8'
+        )
+
+
+      const expectedBuffer =
+        Buffer.from(
+          expectedSignature,
+          'utf8'
+        )
+
+
+      if (
+
+        receivedBuffer.length !==
+        expectedBuffer.length ||
+
+        !crypto.timingSafeEqual(
+
+          receivedBuffer,
+
+          expectedBuffer
+
+        )
+
+      ) {
+
+        return res.status(400).json({
+
+          success: false,
+
+          message:
+            'Razorpay signature verification failed.',
+
+        })
+
+      }
+
+
+      // ==================================
+      // FETCH PAYMENT FROM RAZORPAY
+      // ==================================
+
+      const razorpayPayment =
+        await razorpay.payments.fetch(
+
+          razorpay_payment_id
+
+        )
+
+
+      if (!razorpayPayment) {
+
+        return res.status(404).json({
+
+          success: false,
+
+          message:
+            'Razorpay payment not found.',
+
+        })
+
+      }
+
+
+      // ==================================
+      // PAYMENT STATUS
+      // ==================================
+
+      if (
+        razorpayPayment.status !==
+        'captured'
+      ) {
+
+        return res.status(400).json({
+
+          success: false,
+
+          message:
+            `Razorpay payment status is ${razorpayPayment.status}.`,
+
+        })
+
+      }
+
+
+      // ==================================
+      // ORDER / PAYMENT AMOUNT
+      // ==================================
+
+      const orderAmount =
+        Number(
+          order.amount || 0
+        ) / 100
+
+
+      const paymentAmountFromRazorpay =
+        Number(
+          razorpayPayment.amount || 0
+        ) / 100
+
+
+      if (
+        !orderAmount ||
+        orderAmount <= 0
+      ) {
+
+        return res.status(400).json({
+
+          success: false,
+
+          message:
+            'Invalid Razorpay order amount.',
+
+        })
+
+      }
+
+
+      // ==================================
+      // PAYMENT AMOUNT MUST MATCH ORDER
+      // ==================================
+
+      if (
+        paymentAmountFromRazorpay !==
+        orderAmount
+      ) {
+
+        return res.status(400).json({
+
+          success: false,
+
+          message:
+            'Razorpay payment amount does not match order amount.',
+
+        })
+
+      }
+
+
+      // ==================================
+      // STUDENT ID
+      // ==================================
+
+      const studentId =
+        order?.notes?.studentId
+
+
+      if (!studentId) {
+
+        return res.status(400).json({
+
+          success: false,
+
+          message:
+            'Student information not found in Razorpay order.',
+
+        })
+
+      }
+
+
+      // ==================================
+      // FIND STUDENT
+      // ==================================
+
+      const student =
+        await Student.findById(
+          studentId
+        )
+
+
+      if (!student) {
+
+        return res.status(404).json({
+
+          success: false,
+
+          message:
+            'Student not found.',
+
+        })
+
+      }
+
+
+      // ==================================
+      // VERIFY ADMISSION NUMBER
+      // ==================================
+
+      if (
+
+        order?.notes?.admissionNumber &&
+
+        order.notes.admissionNumber !==
+          student.admissionNumber
+
+      ) {
+
+        return res.status(400).json({
+
+          success: false,
+
+          message:
+            'Student verification failed.',
+
+        })
+
+      }
+
+
+      // ==================================
+      // REMAINING FEE
+      // ==================================
+
+      const remainingFee =
+        Math.max(
+
+          0,
+
+          Number(
+            student.totalFees || 0
+          ) -
+
+          Number(
+            student.paidFees || 0
+          )
+
+        )
+
+
+      if (
+        remainingFee <= 0
+      ) {
+
+        return res.status(400).json({
+
+          success: false,
+
+          message:
+            'Course fee is already fully paid.',
+
+        })
+
+      }
+
+
+      if (
+        orderAmount >
+        remainingFee
+      ) {
+
+        return res.status(400).json({
+
+          success: false,
+
+          message:
+            'Payment amount is greater than current remaining fee.',
+
+        })
+
+      }
+
+
+      // ==================================
+      // DUPLICATE PAYMENT CHECK
+      // ==================================
+
+      const existingPayment =
+        await Payment.findOne({
+
+          $or: [
+
+            {
+
+              transactionId:
+                razorpay_payment_id,
+
+            },
+
+            {
+
+              razorpayPaymentId:
+                razorpay_payment_id,
+
+            },
+
+            {
+
+              razorpayOrderId:
+                razorpay_order_id,
+
+            },
+
+          ],
+
+        })
+
+
+      if (
+        existingPayment
+      ) {
+
+        return res.status(200).json({
+
+          success: true,
+
+          message:
+            'Payment has already been processed.',
+
+          alreadyProcessed:
+            true,
+
+          student,
+
+          payment:
+            existingPayment,
+
+        })
+
+      }
+
+
+      // ==================================
+      // PAYMENT PLAN
+      // ==================================
+
+      const selectedPlan =
+
+        student.paymentPlan ||
+
+        order?.notes?.paymentPlan ||
+
+        ''
+
+
+      if (!selectedPlan) {
+
+        return res.status(400).json({
+
+          success: false,
+
+          message:
+            'Payment plan not found.',
+
+        })
+
+      }
+
+
+      // ==================================
+      // PAYMENT TYPE
+      // ==================================
+
+      const paymentType =
+
+        selectedPlan === 'full'
+          ? 'Full'
+          : 'Installment'
+
+
+      // ==================================
+      // PAYMENT DATE
+      // ==================================
+
+      const paymentDate =
+
+        new Date()
+          .toISOString()
+          .split('T')[0]
+
+
+      // ==================================
+      // PAYMENT HISTORY
+      // ==================================
+
+      student.paymentHistory.push({
+
+        amount:
+          orderAmount,
+
+        paymentCategory:
+          'CourseFee',
+
+        paymentMethod:
+          'Razorpay',
+
+        paymentType,
+
+        paymentPlan:
+          selectedPlan,
+
+        paymentMode:
+          'Online',
+
+        paymentStatus:
+          'Success',
+
+        transactionId:
+          razorpay_payment_id,
+
+        orderId:
+          razorpay_order_id,
+
+        paymentDate,
+
+      })
+
+
+      // ==================================
+      // UPDATE PAID FEES
+      // ==================================
+
+      student.paidFees =
+
+        Number(
+          student.paidFees || 0
+        ) +
+
+        orderAmount
+
+
+      // ==================================
+      // UPDATE REMAINING
+      // ==================================
+
+      student.remainingFees =
+
+        Math.max(
+
+          0,
+
+          Number(
+            student.totalFees || 0
+          ) -
+
+          Number(
+            student.paidFees || 0
+          )
+
+        )
+
+
+      // ==================================
+      // FEE STATUS
+      // ==================================
+
+      if (
+        student.remainingFees === 0
+      ) {
+
+        student.feesStatus =
+          'Paid'
+
+      }
+
+      else if (
+        student.paidFees > 0
+      ) {
+
+        student.feesStatus =
+          'Partial'
+
+      }
+
+      else {
+
+        student.feesStatus =
+          'Pending'
+
+      }
+
+
+      // ==================================
+      // PAYMENT MODE
+      // ==================================
+
+      student.paymentMode =
+        'Online'
+
+
+      // ==================================
+      // SAVE STUDENT
+      // ==================================
+
+      await student.save()
+
+
+      // ==================================
+      // SAVE PAYMENT
+      // ==================================
+
+      const payment =
+        await Payment.create({
+
+          studentName:
+            student.name,
+
+          admissionNumber:
+            student.admissionNumber,
+
+          email:
+            student.email,
+
+          phone:
+            student.contact,
+
+          course:
+            student.course,
+
+          totalFee:
+            student.totalFees,
+
+          registrationFee:
+            student.registrationFee,
+
+          paymentCategory:
+            'CourseFee',
+
+          paymentPlan:
+            selectedPlan,
+
+          paymentType,
+
+          amountPaid:
+            orderAmount,
+
+          paymentMethod:
+            'Razorpay',
+
+          paymentMode:
+            'Online',
+
+          paymentStatus:
+            'Success',
+
+          transactionId:
+            razorpay_payment_id,
+
+          razorpayOrderId:
+            razorpay_order_id,
+
+          razorpayPaymentId:
+            razorpay_payment_id,
+
+          razorpaySignature:
+            razorpay_signature,
+
+        })
+
+
+      // ==================================
+      // NOTIFICATION
+      // ==================================
+
+      try {
+
+        await createNotification({
+
+          type:
+            'Payment',
+
+          title:
+            'Online Payment Received',
+
+          message:
+
+            `${student.name} paid ₹${orderAmount}` +
+
+            (
+
+              student.course
+                ? ` for ${student.course}`
+                : ''
+
+            ) +
+
+            ' through Razorpay.',
+
+          link:
+            '/admin/payments',
+
+          relatedId:
+            payment._id.toString(),
+
+        })
+
+      }
+
+      catch (
+        notificationError
+      ) {
+
+        console.log(
+          'Online Payment Notification Error:',
+          notificationError
+        )
+
+      }
+
+
+      // ==================================
+      // RESPONSE
+      // ==================================
+
+      return res.status(200).json({
+
+        success: true,
+
+        message:
+          'Payment verified successfully.',
+
+        student,
+
+        payment,
+
+      })
+
+    }
+
+    catch (error) {
+
+      console.log(
+        'Verify Razorpay Payment Error:',
+        error
+      )
+
+      return res.status(500).json({
+
+        success: false,
+
+        message:
+
+          error?.error?.description ||
+
+          error?.message ||
+
+          'Unable to verify Razorpay payment.',
 
       })
 
@@ -2882,7 +3972,23 @@ router.post(
       }
 
 
-      res.status(200).json({
+      // ==================================
+      // OLD STUDENT STATUS
+      // ==================================
+
+      if (
+        !student.studentStatus
+      ) {
+
+        student.studentStatus =
+          'Active'
+
+        await student.save()
+
+      }
+
+
+      return res.status(200).json({
 
         success: true,
 
@@ -2899,7 +4005,7 @@ router.post(
         error
       )
 
-      res.status(500).json({
+      return res.status(500).json({
 
         success: false,
 
@@ -2940,12 +4046,16 @@ router.post(
         []
 
 
-      if (email) {
+      if (
+        email &&
+        String(email).trim()
+      ) {
 
         conditions.push({
 
           email:
-            email
+
+            String(email)
               .trim()
               .toLowerCase(),
 
@@ -2954,12 +4064,17 @@ router.post(
       }
 
 
-      if (phone) {
+      if (
+        phone &&
+        String(phone).trim()
+      ) {
 
         conditions.push({
 
           contact:
-            phone.trim(),
+
+            String(phone)
+              .trim(),
 
         })
 
@@ -2991,7 +4106,7 @@ router.post(
         })
 
 
-      res.status(200).json({
+      return res.status(200).json({
 
         success: true,
 
@@ -3009,7 +4124,7 @@ router.post(
         error
       )
 
-      res.status(500).json({
+      return res.status(500).json({
 
         success: false,
 

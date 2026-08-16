@@ -1,11 +1,38 @@
+import {
+  useState,
+} from 'react'
+
 import '../../assets/styles/admin.css'
 
+import {
+  createRazorpayOrder,
+  verifyRazorpayPayment,
+} from '../../services/studentService'
+
+
 function PaymentForm({
+
   paymentData,
+
   setPaymentData,
+
   selectedStudent,
+
   addPayment,
+
 }) {
+
+
+  // ======================================
+  // RAZORPAY LOADING
+  // ======================================
+
+  const [
+    razorpayLoading,
+    setRazorpayLoading
+  ] =
+    useState(false)
+
 
   // ======================================
   // EXISTING PAYMENT PLAN
@@ -16,7 +43,7 @@ function PaymentForm({
 
 
   // ======================================
-  // SELECTED PLAN
+  // SELECTED PAYMENT PLAN
   // ======================================
 
   const selectedPlan =
@@ -26,7 +53,7 @@ function PaymentForm({
 
 
   // ======================================
-  // REMAINING FEE
+  // REMAINING COURSE FEE
   // ======================================
 
   const remainingFee =
@@ -83,208 +110,862 @@ function PaymentForm({
 
 
   // ======================================
-  // HANDLE PLAN CHANGE
+  // HANDLE PAYMENT PLAN CHANGE
   // ======================================
 
-  const handlePlanChange = (e) => {
+  const handlePlanChange =
+    (e) => {
 
-    setPaymentData({
+      const plan =
+        e.target.value
 
-      ...paymentData,
 
-      paymentPlan:
-        e.target.value,
+      let amount =
+        ''
 
-      // Automatically put minimum
-      // amount into payment field.
 
-      amount:
-        e.target.value === 'full'
+      if (
+        plan === 'full'
+      ) {
 
-          ? remainingFee
+        amount =
+          remainingFee
 
-          : e.target.value === 'monthly'
+      }
 
-            ? Number(
-                selectedStudent?.monthlyInstallment || 0
-              )
+      else if (
+        plan === 'monthly'
+      ) {
 
-            : e.target.value === 'three_month'
+        amount =
+          Number(
+            selectedStudent?.monthlyInstallment || 0
+          )
 
-              ? Number(
-                  selectedStudent?.threeMonthInstallment || 0
-                )
+      }
 
-              : e.target.value === 'six_month'
+      else if (
+        plan === 'three_month'
+      ) {
 
-                ? Number(
-                    selectedStudent?.sixMonthInstallment || 0
+        amount =
+          Number(
+            selectedStudent?.threeMonthInstallment || 0
+          )
+
+      }
+
+      else if (
+        plan === 'six_month'
+      ) {
+
+        amount =
+          Number(
+            selectedStudent?.sixMonthInstallment || 0
+          )
+
+      }
+
+
+      setPaymentData({
+
+        ...paymentData,
+
+        paymentPlan:
+          plan,
+
+        amount:
+          amount,
+
+      })
+
+    }
+
+
+  // ======================================
+  // HANDLE AMOUNT CHANGE
+  // ======================================
+
+  const handleAmountChange =
+    (e) => {
+
+      setPaymentData({
+
+        ...paymentData,
+
+        amount:
+          e.target.value,
+
+      })
+
+    }
+
+
+  // ======================================
+  // VALIDATE PAYMENT
+  // ======================================
+
+  const validatePayment =
+    () => {
+
+      const amount =
+        Number(
+          paymentData.amount || 0
+        )
+
+
+      // ==================================
+      // VALIDATE AMOUNT
+      // ==================================
+
+      if (
+        !amount ||
+        amount <= 0
+      ) {
+
+        alert(
+          'Please enter a valid payment amount.'
+        )
+
+        return false
+
+      }
+
+
+      // ==================================
+      // VALIDATE REMAINING FEE
+      // ==================================
+
+      if (
+        remainingFee <= 0
+      ) {
+
+        alert(
+          'Course fee is already fully paid.'
+        )
+
+        return false
+
+      }
+
+
+      // ==================================
+      // AMOUNT CANNOT EXCEED REMAINING
+      // ==================================
+
+      if (
+        amount >
+        remainingFee
+      ) {
+
+        alert(
+
+          `Payment cannot be greater than remaining fee of ₹${remainingFee}.`
+
+        )
+
+        return false
+
+      }
+
+
+      // ==================================
+      // PAYMENT PLAN
+      // ==================================
+
+      if (
+        !selectedPlan
+      ) {
+
+        alert(
+          'Please select a payment plan.'
+        )
+
+        return false
+
+      }
+
+
+      // ==================================
+      // MINIMUM PAYMENT
+      // ==================================
+
+      if (
+
+        selectedPlan !== 'full' &&
+
+        minimumAmount > 0 &&
+
+        amount < minimumAmount
+
+      ) {
+
+        alert(
+
+          `Minimum payment for this plan is ₹${minimumAmount}.`
+
+        )
+
+        return false
+
+      }
+
+
+      // ==================================
+      // FULL PAYMENT
+      // ==================================
+
+      if (
+
+        selectedPlan === 'full' &&
+
+        amount !== remainingFee
+
+      ) {
+
+        alert(
+
+          `Full payment must be ₹${remainingFee}.`
+
+        )
+
+        return false
+
+      }
+
+
+      return true
+
+    }
+
+
+  // ======================================
+  // LOAD RAZORPAY CHECKOUT SCRIPT
+  // ======================================
+
+  const loadRazorpayScript =
+    () => {
+
+      return new Promise(
+        (resolve) => {
+
+          const existingScript =
+            document.querySelector(
+              'script[src="https://checkout.razorpay.com/v1/checkout.js"]'
+            )
+
+
+          if (
+            existingScript
+          ) {
+
+            resolve(true)
+
+            return
+
+          }
+
+
+          const script =
+            document.createElement(
+              'script'
+            )
+
+
+          script.src =
+            'https://checkout.razorpay.com/v1/checkout.js'
+
+
+          script.onload =
+            () => {
+
+              resolve(true)
+
+            }
+
+
+          script.onerror =
+            () => {
+
+              resolve(false)
+
+            }
+
+
+          document.body.appendChild(
+            script
+          )
+
+        }
+      )
+
+    }
+
+
+  // ======================================
+  // RAZORPAY ONLINE PAYMENT
+  // ======================================
+
+  const handleRazorpayPayment =
+    async () => {
+
+      if (
+        razorpayLoading
+      ) {
+
+        return
+
+      }
+
+
+      // ==================================
+      // VALIDATE
+      // ==================================
+
+      const valid =
+        validatePayment()
+
+
+      if (!valid) {
+
+        return
+
+      }
+
+
+      try {
+
+        setRazorpayLoading(
+          true
+        )
+
+
+        // ==================================
+        // LOAD RAZORPAY
+        // ==================================
+
+        const scriptLoaded =
+          await loadRazorpayScript()
+
+
+        if (!scriptLoaded) {
+
+          alert(
+            'Unable to load Razorpay Checkout.'
+          )
+
+          setRazorpayLoading(
+            false
+          )
+
+          return
+
+        }
+
+
+        // ==================================
+        // CREATE ORDER
+        // ==================================
+
+        const orderResponse =
+          await createRazorpayOrder({
+
+            studentId:
+              selectedStudent._id,
+
+            amount:
+              Number(
+                paymentData.amount
+              ),
+
+            paymentPlan:
+              selectedPlan,
+
+          })
+
+
+        if (
+          !orderResponse?.success
+        ) {
+
+          alert(
+
+            orderResponse?.message ||
+
+            'Unable to create Razorpay order.'
+
+          )
+
+          setRazorpayLoading(
+            false
+          )
+
+          return
+
+        }
+
+
+        // ==================================
+        // RAZORPAY OPTIONS
+        // ==================================
+
+        const options = {
+
+          // ==================================
+          // LIVE KEY ID
+          // ==================================
+
+          key:
+            orderResponse.keyId,
+
+
+          // ==================================
+          // AMOUNT
+          // ==================================
+
+          amount:
+            orderResponse.order.amount,
+
+
+          // ==================================
+          // CURRENCY
+          // ==================================
+
+          currency:
+            orderResponse.order.currency,
+
+
+          // ==================================
+          // INSTITUTE NAME
+          // ==================================
+
+          name:
+            'Prerna Institute Of Excellence',
+
+
+          // ==================================
+          // DESCRIPTION
+          // ==================================
+
+          description:
+
+            `Course Fee - ${selectedStudent.name}`,
+
+
+          // ==================================
+          // ORDER ID
+          // ==================================
+
+          order_id:
+            orderResponse.order.id,
+
+
+          // ==================================
+          // PREFILL
+          // ==================================
+
+          prefill: {
+
+            name:
+              selectedStudent.name || '',
+
+            email:
+              selectedStudent.email || '',
+
+            contact:
+              selectedStudent.contact || '',
+
+          },
+
+
+          // ==================================
+          // NOTES
+          // ==================================
+
+          notes: {
+
+            admissionNumber:
+              selectedStudent.admissionNumber || '',
+
+            course:
+              selectedStudent.course || '',
+
+            paymentPlan:
+              selectedPlan || '',
+
+          },
+
+
+          // ==================================
+          // THEME
+          // ==================================
+
+          theme: {
+
+            color:
+              '#00adb5',
+
+          },
+
+
+          // ==================================
+          // PAYMENT SUCCESS
+          // ==================================
+
+          handler:
+            async (response) => {
+
+              try {
+
+                // ==========================
+                // VERIFY PAYMENT
+                // ==========================
+
+                const verifyResponse =
+                  await verifyRazorpayPayment({
+
+                    razorpay_payment_id:
+                      response.razorpay_payment_id,
+
+                    razorpay_order_id:
+                      response.razorpay_order_id,
+
+                    razorpay_signature:
+                      response.razorpay_signature,
+
+                  })
+
+
+                // ==========================
+                // VERIFICATION FAILED
+                // ==========================
+
+                if (
+                  !verifyResponse?.success
+                ) {
+
+                  alert(
+
+                    verifyResponse?.message ||
+
+                    'Payment verification failed.'
+
                   )
 
-                : '',
+                  setRazorpayLoading(
+                    false
+                  )
 
-    })
+                  return
 
-  }
+                }
+
+
+                // ==========================
+                // UPDATE PAYMENT DATA
+                // ==========================
+
+                if (
+                  verifyResponse.student
+                ) {
+
+                  setPaymentData({
+
+                    amount:
+                      '',
+
+                    paymentMethod:
+                      'Razorpay',
+
+                    paymentDate:
+
+                      new Date()
+                        .toISOString()
+                        .split('T')[0],
+
+                    paymentPlan:
+
+                      verifyResponse.student
+                        .paymentPlan ||
+
+                      selectedPlan ||
+
+                      '',
+
+                  })
+
+                }
+
+
+                // ==========================
+                // SUCCESS MESSAGE
+                // ==========================
+
+                alert(
+                  'Online Payment Successful.'
+                )
+
+
+                // ==========================
+                // RELOAD
+                // ==========================
+                //
+                // Existing parent component
+                // ko fresh student data mil jayega.
+                //
+                // ==========================
+
+                window.location.reload()
+
+              }
+
+              catch (error) {
+
+                console.log(
+
+                  'Razorpay Verification Error:',
+
+                  error
+
+                )
+
+
+                alert(
+
+                  error?.response?.data?.message ||
+
+                  'Payment was received but verification failed. Please contact admin.'
+
+                )
+
+              }
+
+              finally {
+
+                setRazorpayLoading(
+                  false
+                )
+
+              }
+
+            },
+
+
+          // ==================================
+          // CHECKOUT CLOSE
+          // ==================================
+
+          modal: {
+
+            ondismiss:
+              () => {
+
+                setRazorpayLoading(
+                  false
+                )
+
+              },
+
+          },
+
+        }
+
+
+        // ==================================
+        // CREATE RAZORPAY INSTANCE
+        // ==================================
+
+        if (
+          !window.Razorpay
+        ) {
+
+          alert(
+            'Razorpay Checkout is not available.'
+          )
+
+          setRazorpayLoading(
+            false
+          )
+
+          return
+
+        }
+
+
+        const razorpay =
+          new window.Razorpay(
+            options
+          )
+
+
+        // ==================================
+        // PAYMENT FAILED
+        // ==================================
+
+        razorpay.on(
+
+          'payment.failed',
+
+          (response) => {
+
+            console.log(
+
+              'Razorpay Payment Failed:',
+
+              response
+
+            )
+
+
+            alert(
+
+              response?.error?.description ||
+
+              'Razorpay payment failed.'
+
+            )
+
+
+            setRazorpayLoading(
+              false
+            )
+
+          }
+
+        )
+
+
+        // ==================================
+        // OPEN RAZORPAY
+        // ==================================
+
+        razorpay.open()
+
+      }
+
+      catch (error) {
+
+        console.log(
+
+          'Razorpay Payment Error:',
+
+          error
+
+        )
+
+
+        alert(
+
+          error?.response?.data?.message ||
+
+          'Unable to start Razorpay payment.'
+
+        )
+
+
+        setRazorpayLoading(
+          false
+        )
+
+      }
+
+    }
 
 
   // ======================================
-  // HANDLE AMOUNT
+  // OFFLINE PAYMENT
   // ======================================
 
-  const handleAmountChange = (e) => {
+  const handleOfflinePayment =
+    () => {
 
-    setPaymentData({
+      const valid =
+        validatePayment()
 
-      ...paymentData,
 
-      amount:
-        e.target.value,
+      if (!valid) {
 
-    })
+        return
 
-  }
+      }
+
+
+      addPayment(
+        selectedStudent._id
+      )
+
+    }
 
 
   // ======================================
-  // ADD PAYMENT CLICK
+  // PAYMENT PLAN LABEL
   // ======================================
 
-  const handleAddPayment = () => {
+  const getPlanLabel =
+    () => {
 
-    const amount =
-      Number(
-        paymentData.amount || 0
-      )
+      switch (
+        selectedPlan
+      ) {
 
+        case 'monthly':
 
-    // ==================================
-    // AMOUNT VALIDATION
-    // ==================================
-
-    if (
-      !amount ||
-      amount <= 0
-    ) {
-
-      alert(
-        'Please enter a valid payment amount.'
-      )
-
-      return
-
-    }
+          return 'Monthly'
 
 
-    // ==================================
-    // REMAINING VALIDATION
-    // ==================================
+        case 'three_month':
 
-    if (
-      amount >
-      remainingFee
-    ) {
+          return 'Every 3 Months'
 
-      alert(
 
-        `Payment cannot be greater than remaining fee of ₹${remainingFee}.`
+        case 'six_month':
 
-      )
+          return 'Every 6 Months'
 
-      return
+
+        case 'full':
+
+          return 'Full Payment'
+
+
+        default:
+
+          return ''
+
+      }
 
     }
-
-
-    // ==================================
-    // PLAN REQUIRED
-    // ==================================
-
-    if (
-      !selectedPlan
-    ) {
-
-      alert(
-        'Please select a payment plan.'
-      )
-
-      return
-
-    }
-
-
-    // ==================================
-    // MINIMUM PAYMENT
-    // ==================================
-
-    if (
-      selectedPlan !== 'full' &&
-      minimumAmount > 0 &&
-      amount < minimumAmount
-    ) {
-
-      alert(
-
-        `Minimum payment for this plan is ₹${minimumAmount}.`
-
-      )
-
-      return
-
-    }
-
-
-    // ==================================
-    // FULL PAYMENT
-    // ======================================
-
-    if (
-      selectedPlan === 'full' &&
-      amount !== remainingFee
-    ) {
-
-      alert(
-
-        `Full payment must be ₹${remainingFee}.`
-
-      )
-
-      return
-
-    }
-
-
-    // ==================================
-    // SEND PAYMENT
-    // ==================================
-
-    addPayment(
-      selectedStudent._id
-    )
-
-  }
 
 
   return (
 
     <div className="mb-4">
 
+
+      {/* ==================================
+          HEADING
+      ================================== */}
+
       <h4 className="mb-3">
+
         Add Course Fee Payment
+
       </h4>
 
 
       <div className="row">
 
 
-        {/* ================================== */}
-        {/* PAYMENT PLAN */}
-        {/* ================================== */}
+        {/* ==================================
+            PAYMENT PLAN
+        ================================== */}
 
         <div className="col-md-4 mb-3">
 
           <label className="form-label">
+
             Payment Plan
+
           </label>
 
 
@@ -301,19 +982,27 @@ function PaymentForm({
               >
 
                 <option value="monthly">
+
                   Monthly
+
                 </option>
 
                 <option value="three_month">
+
                   Every 3 Months
+
                 </option>
 
                 <option value="six_month">
+
                   Every 6 Months
+
                 </option>
 
                 <option value="full">
+
                   Full Payment
+
                 </option>
 
               </select>
@@ -342,23 +1031,33 @@ function PaymentForm({
               >
 
                 <option value="">
+
                   Select Payment Plan
+
                 </option>
 
                 <option value="monthly">
+
                   Monthly
+
                 </option>
 
                 <option value="three_month">
+
                   Every 3 Months
+
                 </option>
 
                 <option value="six_month">
+
                   Every 6 Months
+
                 </option>
 
                 <option value="full">
+
                   Full Payment
+
                 </option>
 
               </select>
@@ -378,15 +1077,18 @@ function PaymentForm({
         </div>
 
 
-        {/* ================================== */}
-        {/* AMOUNT */}
-        {/* ================================== */}
+        {/* ==================================
+            PAYMENT AMOUNT
+        ================================== */}
 
         <div className="col-md-4 mb-3">
 
           <label className="form-label">
+
             Payment Amount
+
           </label>
+
 
           <input
             type="number"
@@ -424,15 +1126,18 @@ function PaymentForm({
         </div>
 
 
-        {/* ================================== */}
-        {/* PAYMENT METHOD */}
-        {/* ================================== */}
+        {/* ==================================
+            PAYMENT METHOD
+        ================================== */}
 
         <div className="col-md-4 mb-3">
 
           <label className="form-label">
+
             Payment Method
+
           </label>
+
 
           <select
             className="form-control"
@@ -454,19 +1159,33 @@ function PaymentForm({
           >
 
             <option value="Cash">
+
               Cash
+
             </option>
 
             <option value="UPI">
+
               UPI
+
             </option>
 
             <option value="Card">
+
               Card
+
             </option>
 
             <option value="Bank Transfer">
+
               Bank Transfer
+
+            </option>
+
+            <option value="Razorpay">
+
+              Razorpay - Online
+
             </option>
 
           </select>
@@ -474,15 +1193,18 @@ function PaymentForm({
         </div>
 
 
-        {/* ================================== */}
-        {/* DATE */}
-        {/* ================================== */}
+        {/* ==================================
+            PAYMENT DATE
+        ================================== */}
 
         <div className="col-md-4 mb-3">
 
           <label className="form-label">
+
             Payment Date
+
           </label>
+
 
           <input
             type="date"
@@ -507,15 +1229,18 @@ function PaymentForm({
         </div>
 
 
-        {/* ================================== */}
-        {/* REMAINING FEE */}
-        {/* ================================== */}
+        {/* ==================================
+            REMAINING COURSE FEE
+        ================================== */}
 
         <div className="col-md-4 mb-3">
 
           <label className="form-label">
+
             Remaining Course Fee
+
           </label>
+
 
           <input
             type="number"
@@ -532,9 +1257,9 @@ function PaymentForm({
       </div>
 
 
-      {/* ====================================== */}
-      {/* PAYMENT SUMMARY */}
-      {/* ====================================== */}
+      {/* ======================================
+          PAYMENT SUMMARY
+      ====================================== */}
 
       {selectedPlan && (
 
@@ -545,25 +1270,15 @@ function PaymentForm({
             <div className="col-md-4">
 
               <strong>
+
                 Plan:
+
               </strong>
 
               <br />
 
               {
-                selectedPlan === 'monthly'
-
-                  ? 'Monthly'
-
-                  : selectedPlan === 'three_month'
-
-                    ? 'Every 3 Months'
-
-                    : selectedPlan === 'six_month'
-
-                      ? 'Every 6 Months'
-
-                      : 'Full Payment'
+                getPlanLabel()
               }
 
             </div>
@@ -572,7 +1287,9 @@ function PaymentForm({
             <div className="col-md-4">
 
               <strong>
+
                 Minimum:
+
               </strong>
 
               <br />
@@ -587,7 +1304,9 @@ function PaymentForm({
             <div className="col-md-4">
 
               <strong>
+
                 Remaining:
+
               </strong>
 
               <br />
@@ -605,35 +1324,113 @@ function PaymentForm({
       )}
 
 
-      {/* ====================================== */}
-      {/* ADD PAYMENT BUTTON */}
-      {/* ====================================== */}
+      {/* ======================================
+          PAYMENT BUTTONS
+      ====================================== */}
 
-      <button
-        type="button"
-        className="table-btn approve-btn"
-        onClick={
-          handleAddPayment
-        }
-        disabled={
-          remainingFee <= 0
-        }
-      >
+      <div className="d-flex gap-2 flex-wrap">
 
-        {
-          remainingFee <= 0
 
-            ? 'Course Fee Paid'
+        {/* ==================================
+            RAZORPAY BUTTON
+        ================================== */}
 
-            : 'Add Payment'
-        }
+        {paymentData.paymentMethod ===
+          'Razorpay' ? (
 
-      </button>
+          <button
+            type="button"
+            className="table-btn approve-btn"
+            onClick={
+              handleRazorpayPayment
+            }
+            disabled={
+              remainingFee <= 0 ||
+              razorpayLoading
+            }
+          >
+
+            {
+
+              razorpayLoading
+
+                ? 'Processing...'
+
+                : remainingFee <= 0
+
+                  ? 'Course Fee Paid'
+
+                  : 'Pay Online with Razorpay'
+
+            }
+
+          </button>
+
+        ) : (
+
+          /* ==================================
+             OFFLINE PAYMENT BUTTON
+          ================================== */
+
+          <button
+            type="button"
+            className="table-btn approve-btn"
+            onClick={
+              handleOfflinePayment
+            }
+            disabled={
+              remainingFee <= 0
+            }
+          >
+
+            {
+
+              remainingFee <= 0
+
+                ? 'Course Fee Paid'
+
+                : 'Add Payment'
+
+            }
+
+          </button>
+
+        )}
+
+      </div>
+
+
+      {/* ======================================
+          RAZORPAY INFORMATION
+      ====================================== */}
+
+      {paymentData.paymentMethod ===
+        'Razorpay' && (
+
+        <div className="alert alert-warning mt-3 mb-0">
+
+          <strong>
+
+            Online Payment:
+
+          </strong>
+
+          <br />
+
+          Student will pay securely through
+          Razorpay Checkout. The payment will be
+          added to the student's account only after
+          server-side verification.
+
+        </div>
+
+      )}
 
     </div>
 
   )
 
 }
+
 
 export default PaymentForm

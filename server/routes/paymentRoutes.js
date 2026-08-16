@@ -86,13 +86,12 @@ router.get(
 // ======================================
 // ADD PAYMENT
 // ======================================
-// General payment route.
 //
-// If this route is used manually,
-// paymentMode will be respected.
+// General offline/manual payment.
 //
 // Default:
 // paymentMode = Offline
+//
 // ======================================
 
 router.post(
@@ -158,6 +157,13 @@ router.post(
 
 // ======================================
 // CREATE RAZORPAY ORDER
+// ======================================
+//
+// NEW ONLINE ADMISSION
+//
+// POST
+// /api/payments/create-order
+//
 // ======================================
 
 router.post(
@@ -261,6 +267,13 @@ router.post(
 // ======================================
 // VERIFY ONLINE REGISTRATION PAYMENT
 // ======================================
+//
+// NEW ONLINE ADMISSION
+//
+// POST
+// /api/payments/verify
+//
+// ======================================
 
 router.post(
   '/payments/verify',
@@ -324,8 +337,11 @@ router.post(
         crypto
 
           .createHmac(
+
             'sha256',
+
             process.env.RAZORPAY_KEY_SECRET
+
           )
 
           .update(
@@ -354,7 +370,7 @@ router.post(
 
       // ==================================
       // DUPLICATE PAYMENT CHECK
-      // ======================================
+      // ==================================
 
       const existingPayment =
         await Payment.findOne({
@@ -376,7 +392,9 @@ router.post(
         })
 
 
-      if (existingPayment) {
+      if (
+        existingPayment
+      ) {
 
         return res.status(400).json({
 
@@ -391,25 +409,122 @@ router.post(
 
 
       // ==================================
+      // INPUT DATA
+      // ==================================
+
+      const studentEmail =
+        String(
+          req.body.email || ''
+        )
+          .trim()
+          .toLowerCase()
+
+
+      const studentPhone =
+        String(
+          req.body.phone || ''
+        )
+          .trim()
+
+
+      const studentName =
+        String(
+          req.body.studentName || ''
+        )
+          .trim()
+
+
+      // ==================================
+      // BASIC STUDENT VALIDATION
+      // ==================================
+
+      if (
+        !studentName
+      ) {
+
+        return res.status(400).json({
+
+          success: false,
+
+          message:
+            'Student name is required.',
+
+        })
+
+      }
+
+
+      if (
+        !studentPhone
+      ) {
+
+        return res.status(400).json({
+
+          success: false,
+
+          message:
+            'Mobile number is required.',
+
+        })
+
+      }
+
+
+      if (
+        !req.body.course
+      ) {
+
+        return res.status(400).json({
+
+          success: false,
+
+          message:
+            'Course is required for online admission.',
+
+        })
+
+      }
+
+
+      // ==================================
       // CHECK EXISTING STUDENT
-      // ======================================
+      // ==================================
+      //
+      // Email optional hai.
+      // Isliye email blank ho to
+      // email condition query mein nahi jayegi.
+      //
+      // ==================================
+
+      const existingConditions = [
+
+        {
+          contact:
+            studentPhone,
+        },
+
+      ]
+
+
+      if (
+        studentEmail
+      ) {
+
+        existingConditions.push({
+
+          email:
+            studentEmail,
+
+        })
+
+      }
+
 
       const alreadyExistingStudent =
         await Student.findOne({
 
-          $or: [
-
-            {
-              email:
-                req.body.email,
-            },
-
-            {
-              contact:
-                req.body.phone,
-            },
-
-          ],
+          $or:
+            existingConditions,
 
         })
 
@@ -432,7 +547,7 @@ router.post(
 
       // ==================================
       // FIND COURSE
-      // ======================================
+      // ==================================
 
       const course =
         await Course.findOne({
@@ -459,7 +574,7 @@ router.post(
 
       // ==================================
       // COURSE FEES
-      // ======================================
+      // ==================================
 
       const totalFee =
         Number(
@@ -475,7 +590,7 @@ router.post(
 
       // ==================================
       // REGISTRATION PAYMENT
-      // ======================================
+      // ==================================
 
       const amountPaid =
         Number(
@@ -502,8 +617,7 @@ router.post(
 
       // ==================================
       // PAYMENT AMOUNT MUST MATCH
-      // REGISTRATION FEE
-      // ======================================
+      // ==================================
 
       if (
         amountPaid !==
@@ -522,18 +636,14 @@ router.post(
       }
 
 
-      // ======================================
+      // ==================================
       // ADMISSION NUMBER
       // ======================================
-      //
-      // New online admission format:
       //
       // PIE001
       // PIE002
       // PIE003
-      // PIE004
       //
-      // Existing admission numbers are not changed.
       // ======================================
 
       const existingStudents =
@@ -554,10 +664,6 @@ router.post(
 
           .lean()
 
-
-      // ======================================
-      // FIND HIGHEST PIE NUMBER
-      // ======================================
 
       let highestAdmissionNumber =
         0
@@ -594,10 +700,6 @@ router.post(
       }
 
 
-      // ======================================
-      // NEXT ADMISSION NUMBER
-      // ======================================
-
       const nextAdmissionNumber =
         highestAdmissionNumber + 1
 
@@ -611,9 +713,9 @@ router.post(
         )}`
 
 
-      // ======================================
+      // ==================================
       // DATE
-      // ======================================
+      // ==================================
 
       const today =
         new Date()
@@ -625,9 +727,52 @@ router.post(
           .split('T')[0]
 
 
-      // ======================================
+      // ==================================
+      // ACADEMIC SESSION
+      // ==================================
+      //
+      // March to March
+      //
+      // March 2026 - February 2027
+      // => 2026-2027
+      //
+      // January / February 2027
+      // => 2026-2027
+      //
+      // March 2027
+      // => 2027-2028
+      //
+      // ==================================
+
+      const currentYear =
+        today.getFullYear()
+
+
+      const currentMonth =
+        today.getMonth() + 1
+
+
+      let sessionStartYear =
+        currentYear
+
+
+      if (
+        currentMonth < 3
+      ) {
+
+        sessionStartYear =
+          currentYear - 1
+
+      }
+
+
+      const session =
+        `${sessionStartYear}-${sessionStartYear + 1}`
+
+
+      // ==================================
       // IMAGE
-      // ======================================
+      // ==================================
 
       const image =
         req.file
@@ -635,9 +780,9 @@ router.post(
           : ''
 
 
-      // ======================================
+      // ==================================
       // CREATE STUDENT
-      // ======================================
+      // ==================================
 
       const student =
         new Student({
@@ -647,7 +792,7 @@ router.post(
           // ==================================
 
           name:
-            req.body.studentName || '',
+            studentName,
 
           dob:
             req.body.dob || '',
@@ -664,12 +809,21 @@ router.post(
             course.batchTime || '',
 
           contact:
-            req.body.phone || '',
+            studentPhone,
 
           email:
-            req.body.email || '',
+            studentEmail,
 
           admissionDate,
+
+          session,
+
+          // ==================================
+          // STUDENT STATUS
+          // ==================================
+
+          studentStatus:
+            'Active',
 
           image,
 
@@ -954,13 +1108,7 @@ router.post(
 
 
       // ======================================
-      // CREATE ADMIN NOTIFICATION
-      // ======================================
-      //
-      // This notification appears in the
-      // admin notification bell.
-      //
-      // This is for a NEW ONLINE ADMISSION.
+      // ADMIN NOTIFICATION
       // ======================================
 
       try {
@@ -1407,7 +1555,7 @@ router.post(
 
       // ==================================
       // DUPLICATE PAYMENT CHECK
-      // ======================================
+      // ==================================
 
       const duplicatePayment =
         await Payment.findOne({
@@ -2039,14 +2187,7 @@ router.post(
 
 
       // ======================================
-      // CREATE ADMIN NOTIFICATION
-      // ======================================
-      //
-      // This notification appears in the
-      // admin notification bell.
-      //
-      // This is for an EXISTING STUDENT
-      // course-fee payment.
+      // ADMIN NOTIFICATION
       // ======================================
 
       try {
@@ -2184,7 +2325,6 @@ router.get(
 
       // ==================================
       // TODAY REVENUE
-      // INDIA TIMEZONE
       // ==================================
 
       const todayIST =

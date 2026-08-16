@@ -1,59 +1,98 @@
 import axios from 'axios'
-import { API_URL } from '../config/api'
+
+import {
+  API_URL,
+} from '../config/api'
+
 
 // ===============================
 // GET ALL STUDENTS
 // ===============================
 
-export const getStudents = async () => {
-  const response = await axios.get(`${API_URL}/students`)
+export const getStudents =
+async () => {
+
+  const response =
+    await axios.get(
+      `${API_URL}/students`
+    )
+
   return response.data
+
 }
+
 
 // ===============================
 // CREATE STUDENT
 // ===============================
 
-export const createStudent = async (formData) => {
-  const response = await axios.post(
-    `${API_URL}/students`,
-    formData,
-    {
-      headers: {
-        'Content-Type': 'multipart/form-data',
-      },
-    }
-  )
+export const createStudent =
+async (formData) => {
+
+  const response =
+    await axios.post(
+
+      `${API_URL}/students`,
+
+      formData,
+
+      {
+
+        headers: {
+
+          'Content-Type':
+            'multipart/form-data',
+
+        },
+
+      }
+
+    )
+
 
   return response.data
+
 }
+
 
 // ===============================
 // UPDATE STUDENT
 // ===============================
 
-export const updateStudent = async (
+export const updateStudent =
+async (
+
   id,
+
   formData
+
 ) => {
 
-  const response = await axios.put(
+  const response =
+    await axios.put(
 
-    `${API_URL}/students/${id}`,
+      `${API_URL}/students/${id}`,
 
-    formData,
+      formData,
 
-    {
-      headers: {
-        'Content-Type': 'multipart/form-data',
-      },
-    }
+      {
 
-  )
+        headers: {
+
+          'Content-Type':
+            'multipart/form-data',
+
+        },
+
+      }
+
+    )
+
 
   return response.data
 
 }
+
 
 // ===============================
 // DELETE STUDENT
@@ -64,19 +103,29 @@ async (id) => {
 
   const response =
     await axios.delete(
+
       `${API_URL}/students/${id}`
+
     )
+
 
   return response.data
 
 }
 
+
 // ===============================
-// ADD PAYMENT
+// ADD OFFLINE PAYMENT
 // ===============================
 
 export const addStudentPayment =
-async (id, paymentData) => {
+async (
+
+  id,
+
+  paymentData
+
+) => {
 
   const response =
     await axios.put(
@@ -87,23 +136,82 @@ async (id, paymentData) => {
 
     )
 
+
   return response.data
 
 }
+
 
 // ======================================
 // VERIFY STUDENT
 // ======================================
 
-export const verifyStudent = async (data) => {
+export const verifyStudent =
+async (data) => {
 
-  const response = await axios.post(
+  const response =
+    await axios.post(
 
-    `${API_URL}/students/verify`,
+      `${API_URL}/students/verify`,
 
-    data
+      data
 
-  )
+    )
+
+
+  return response.data
+
+}
+
+
+// ======================================
+// CREATE LIVE RAZORPAY ORDER
+// ======================================
+//
+// POST
+// /api/student/fees/create-order
+//
+// ======================================
+
+export const createRazorpayOrder =
+async (data) => {
+
+  const response =
+    await axios.post(
+
+      `${API_URL}/student/fees/create-order`,
+
+      data
+
+    )
+
+
+  return response.data
+
+}
+
+
+// ======================================
+// VERIFY LIVE RAZORPAY PAYMENT
+// ======================================
+//
+// POST
+// /api/student/fees/verify
+//
+// ======================================
+
+export const verifyRazorpayPayment =
+async (data) => {
+
+  const response =
+    await axios.post(
+
+      `${API_URL}/student/fees/verify`,
+
+      data
+
+    )
+
 
   return response.data
 

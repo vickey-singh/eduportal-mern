@@ -4,20 +4,28 @@ import {
   checkStudent,
 } from '../services/paymentService'
 
-import { useState, useEffect } from 'react'
+import {
+  useState,
+  useEffect,
+} from 'react'
 
-import { useNavigate } from 'react-router-dom'
+import {
+  useNavigate,
+} from 'react-router-dom'
 
 import axios from 'axios'
 
-import { API_URL } from '../config/api'
+import {
+  API_URL,
+} from '../config/api'
 
 import '../assets/styles/apply.css'
 
 
 function Apply() {
 
-  const navigate = useNavigate()
+  const navigate =
+    useNavigate()
 
 
   // ======================================
@@ -46,34 +54,57 @@ function Apply() {
   const [formData, setFormData] = useState({
 
     // Student
+
     name: '',
+
     dob: '',
+
     aadharNumber: '',
 
+
     // Parents
+
     fatherName: '',
+
     motherName: '',
+
     fatherOccupation: '',
+
     motherOccupation: '',
+
     fatherMobile: '',
+
     motherMobile: '',
 
+
     // Contact
+
     email: '',
+
     phone: '',
 
+
     // Education
+
     schoolCollegeName: '',
 
+
     // Address
+
     permanentAddress: '',
+
     currentAddress: '',
 
+
     // Course
+
     course: '',
+
     batchTime: '',
 
+
     // Photo
+
     image: null,
 
   })
@@ -92,19 +123,29 @@ function Apply() {
           `${API_URL}/courses`
         )
 
+
       setCourses(
+
         Array.isArray(
           response.data
         )
+
           ? response.data
+
           : []
+
       )
 
-    } catch (error) {
+    }
+
+    catch (error) {
 
       console.log(
+
         'Fetch Courses Error:',
+
         error
+
       )
 
     }
@@ -135,12 +176,16 @@ function Apply() {
     // COURSE SELECT
     // ==================================
 
-    if (name === 'course') {
+    if (
+      name === 'course'
+    ) {
 
       const course =
         courses.find(
+
           (item) =>
             item.courseName === value
+
         )
 
 
@@ -158,7 +203,8 @@ function Apply() {
 
           ...previousData,
 
-          course: value,
+          course:
+            value,
 
           batchTime:
             course?.batchTime || '',
@@ -181,7 +227,8 @@ function Apply() {
 
         ...previousData,
 
-        [name]: value,
+        [name]:
+          value,
 
       })
     )
@@ -204,7 +251,8 @@ function Apply() {
 
         ...previousData,
 
-        image: file,
+        image:
+          file,
 
       })
     )
@@ -218,52 +266,102 @@ function Apply() {
 
   const openRazorpay = (order) => {
 
-    if (!window.Razorpay) {
+    if (
+      !window.Razorpay
+    ) {
 
       alert(
+
         'Razorpay is not loaded. Please refresh the page and try again.'
+
       )
 
-      setPaymentLoading(false)
+      setPaymentLoading(
+        false
+      )
 
       return
 
     }
 
 
+    // ======================================
+    // RAZORPAY OPTIONS
+    // ======================================
+
     const options = {
+
+      // ==================================
+      // RAZORPAY LIVE KEY
+      // ==================================
 
       key:
         import.meta.env
           .VITE_RAZORPAY_KEY_ID,
 
+
+      // ==================================
+      // ORDER AMOUNT
+      // ==================================
+
       amount:
         order.amount,
+
+
+      // ==================================
+      // CURRENCY
+      // ==================================
 
       currency:
         order.currency,
 
+
+      // ==================================
+      // INSTITUTE NAME
+      // ==================================
+
       name:
-        'Prerna Institute',
+        'Prerna Institute Of Excellence',
+
+
+      // ==================================
+      // DESCRIPTION
+      // ==================================
 
       description:
         'Admission Registration Fee',
 
+
+      // ==================================
+      // ORDER ID
+      // ==================================
+
       order_id:
         order.id,
 
-      prefill: {
 
-        name:
-          formData.name,
+      // ==================================
+      // PREFILL
+      // ==================================
+      //
+      // IMPORTANT:
+      //
+      // Student ka name / email / phone
+      // Razorpay Checkout me prefill nahi
+      // kiya ja raha hai.
+      //
+      // Isse student ka personal mobile
+      // number hum Razorpay ko send nahi
+      // kar rahe hain.
+      //
+      // ==================================
 
-        email:
-          formData.email,
+      prefill: {},
 
-        contact:
-          formData.phone,
 
-      },
+      // ==================================
+      // THEME
+      // ==================================
 
       theme: {
 
@@ -282,7 +380,9 @@ function Apply() {
 
           try {
 
-            setPaymentLoading(true)
+            setPaymentLoading(
+              true
+            )
 
 
             // ==================================
@@ -298,18 +398,29 @@ function Apply() {
             // ==================================
 
             paymentData.append(
+
               'razorpay_order_id',
+
               response.razorpay_order_id
+
             )
 
+
             paymentData.append(
+
               'razorpay_payment_id',
+
               response.razorpay_payment_id
+
             )
 
+
             paymentData.append(
+
               'razorpay_signature',
+
               response.razorpay_signature
+
             )
 
 
@@ -318,18 +429,29 @@ function Apply() {
             // ==================================
 
             paymentData.append(
+
               'studentName',
+
               formData.name
+
             )
 
+
             paymentData.append(
+
               'dob',
+
               formData.dob
+
             )
 
+
             paymentData.append(
+
               'aadharNumber',
+
               formData.aadharNumber
+
             )
 
 
@@ -338,33 +460,56 @@ function Apply() {
             // ==================================
 
             paymentData.append(
+
               'fatherName',
+
               formData.fatherName
+
             )
 
+
             paymentData.append(
+
               'motherName',
+
               formData.motherName
+
             )
 
+
             paymentData.append(
+
               'fatherOccupation',
+
               formData.fatherOccupation
+
             )
 
+
             paymentData.append(
+
               'motherOccupation',
+
               formData.motherOccupation
+
             )
 
+
             paymentData.append(
+
               'fatherMobile',
+
               formData.fatherMobile
+
             )
 
+
             paymentData.append(
+
               'motherMobile',
+
               formData.motherMobile
+
             )
 
 
@@ -373,13 +518,20 @@ function Apply() {
             // ==================================
 
             paymentData.append(
+
               'email',
+
               formData.email
+
             )
 
+
             paymentData.append(
+
               'phone',
+
               formData.phone
+
             )
 
 
@@ -388,8 +540,11 @@ function Apply() {
             // ==================================
 
             paymentData.append(
+
               'schoolCollegeName',
+
               formData.schoolCollegeName
+
             )
 
 
@@ -398,13 +553,20 @@ function Apply() {
             // ==================================
 
             paymentData.append(
+
               'permanentAddress',
+
               formData.permanentAddress
+
             )
 
+
             paymentData.append(
+
               'currentAddress',
+
               formData.currentAddress
+
             )
 
 
@@ -413,8 +575,11 @@ function Apply() {
             // ==================================
 
             paymentData.append(
+
               'course',
+
               formData.course
+
             )
 
 
@@ -423,8 +588,11 @@ function Apply() {
             // ==================================
 
             paymentData.append(
+
               'batchTime',
+
               formData.batchTime
+
             )
 
 
@@ -433,20 +601,33 @@ function Apply() {
             // ==================================
 
             paymentData.append(
+
               'paymentCategory',
+
               'Registration'
+
             )
 
+
             paymentData.append(
+
               'paymentType',
+
               'Full'
+
             )
 
+
             paymentData.append(
+
               'amountPaid',
+
               String(
+
                 selectedCourse.registrationFee
+
               )
+
             )
 
 
@@ -454,11 +635,16 @@ function Apply() {
             // IMAGE
             // ==================================
 
-            if (formData.image) {
+            if (
+              formData.image
+            ) {
 
               paymentData.append(
+
                 'image',
+
                 formData.image
+
               )
 
             }
@@ -470,13 +656,18 @@ function Apply() {
 
             const verifyResponse =
               await verifyPayment(
+
                 paymentData
+
               )
 
 
             console.log(
+
               'Payment verification:',
+
               verifyResponse
+
             )
 
 
@@ -485,8 +676,11 @@ function Apply() {
             ) {
 
               alert(
+
                 verifyResponse.message ||
+
                 'Payment Verification Failed'
+
               )
 
               return
@@ -499,8 +693,11 @@ function Apply() {
             // ==================================
 
             alert(
+
               verifyResponse.message ||
+
               'Admission Successful'
+
             )
 
 
@@ -513,17 +710,25 @@ function Apply() {
             ) {
 
               navigate(
+
                 `/receipt/${verifyResponse.receiptNumber}`
+
               )
 
             }
 
-          } catch (error) {
+          }
+
+          catch (error) {
 
             console.log(
+
               'Payment Verification Error:',
+
               error
+
             )
+
 
             alert(
 
@@ -533,9 +738,13 @@ function Apply() {
 
             )
 
-          } finally {
+          }
 
-            setPaymentLoading(false)
+          finally {
+
+            setPaymentLoading(
+              false
+            )
 
           }
 
@@ -551,7 +760,9 @@ function Apply() {
         ondismiss:
           function () {
 
-            setPaymentLoading(false)
+            setPaymentLoading(
+              false
+            )
 
           },
 
@@ -560,26 +771,45 @@ function Apply() {
     }
 
 
+    // ======================================
+    // CREATE RAZORPAY INSTANCE
+    // ======================================
+
     const razorpay =
       new window.Razorpay(
         options
       )
 
 
+    // ======================================
+    // PAYMENT FAILED
+    // ======================================
+
     razorpay.on(
+
       'payment.failed',
 
       function () {
 
-        setPaymentLoading(false)
+        setPaymentLoading(
+          false
+        )
+
 
         alert(
+
           'Payment Failed. Please try again.'
+
         )
 
       }
+
     )
 
+
+    // ======================================
+    // OPEN RAZORPAY
+    // ======================================
 
     razorpay.open()
 
@@ -600,7 +830,9 @@ function Apply() {
       // COURSE VALIDATION
       // ==================================
 
-      if (!selectedCourse) {
+      if (
+        !selectedCourse
+      ) {
 
         alert(
           'Please select a course.'
@@ -620,7 +852,9 @@ function Apply() {
       ) {
 
         alert(
+
           'Batch timing is not available for this course. Please contact the institute.'
+
         )
 
         return
@@ -634,7 +868,9 @@ function Apply() {
 
       const registrationFee =
         Number(
+
           selectedCourse.registrationFee
+
         )
 
 
@@ -644,7 +880,9 @@ function Apply() {
       ) {
 
         alert(
+
           'Registration fee is not available for this course.'
+
         )
 
         return
@@ -656,7 +894,9 @@ function Apply() {
       // PREVENT DOUBLE CLICK
       // ==================================
 
-      if (paymentLoading) {
+      if (
+        paymentLoading
+      ) {
 
         return
 
@@ -665,7 +905,9 @@ function Apply() {
 
       try {
 
-        setPaymentLoading(true)
+        setPaymentLoading(
+          true
+        )
 
 
         // ==================================
@@ -684,13 +926,19 @@ function Apply() {
           })
 
 
-        if (check.exists) {
+        if (
+          check.exists
+        ) {
 
           alert(
+
             'Student already exists.\n\nPlease use Existing Student Payment.'
+
           )
 
-          setPaymentLoading(false)
+          setPaymentLoading(
+            false
+          )
 
           return
 
@@ -715,7 +963,9 @@ function Apply() {
         ) {
 
           throw new Error(
+
             'Unable to create payment order.'
+
           )
 
         }
@@ -726,17 +976,28 @@ function Apply() {
         // ==================================
 
         openRazorpay(
+
           order.order
+
         )
 
-      } catch (error) {
+      }
+
+      catch (error) {
 
         console.log(
+
           'Admission Payment Error:',
+
           error
+
         )
 
-        setPaymentLoading(false)
+
+        setPaymentLoading(
+          false
+        )
+
 
         alert(
 
@@ -767,11 +1028,16 @@ function Apply() {
         <div className="apply-header text-center">
 
           <h1>
+
             Admission Form
+
           </h1>
 
+
           <p>
+
             Fill out the form below to apply for admission.
+
           </p>
 
         </div>
@@ -799,8 +1065,11 @@ function Apply() {
               <div className="col-md-6 mb-4">
 
                 <label className="form-label">
+
                   Student Name
+
                 </label>
+
 
                 <input
                   type="text"
@@ -826,8 +1095,11 @@ function Apply() {
               <div className="col-md-6 mb-4">
 
                 <label className="form-label">
+
                   Date of Birth
+
                 </label>
+
 
                 <input
                   type="date"
@@ -852,8 +1124,11 @@ function Apply() {
               <div className="col-md-6 mb-4">
 
                 <label className="form-label">
+
                   Aadhaar Number
+
                 </label>
+
 
                 <input
                   type="text"
@@ -881,8 +1156,11 @@ function Apply() {
               <div className="col-md-6 mb-4">
 
                 <label className="form-label">
+
                   Student Mobile Number
+
                 </label>
+
 
                 <input
                   type="tel"
@@ -908,8 +1186,11 @@ function Apply() {
               <div className="col-md-6 mb-4">
 
                 <label className="form-label">
+
                   Gmail / Email
+
                 </label>
+
 
                 <input
                   type="email"
@@ -935,8 +1216,11 @@ function Apply() {
               <div className="col-md-6 mb-4">
 
                 <label className="form-label">
+
                   Student Photo
+
                 </label>
+
 
                 <input
                   type="file"
@@ -957,8 +1241,11 @@ function Apply() {
               <div className="col-md-6 mb-4">
 
                 <label className="form-label">
+
                   Father's Name
+
                 </label>
+
 
                 <input
                   type="text"
@@ -984,8 +1271,11 @@ function Apply() {
               <div className="col-md-6 mb-4">
 
                 <label className="form-label">
+
                   Mother's Name
+
                 </label>
+
 
                 <input
                   type="text"
@@ -1011,8 +1301,11 @@ function Apply() {
               <div className="col-md-6 mb-4">
 
                 <label className="form-label">
+
                   Father's Occupation
+
                 </label>
+
 
                 <input
                   type="text"
@@ -1038,8 +1331,11 @@ function Apply() {
               <div className="col-md-6 mb-4">
 
                 <label className="form-label">
+
                   Mother's Occupation
+
                 </label>
+
 
                 <input
                   type="text"
@@ -1065,8 +1361,11 @@ function Apply() {
               <div className="col-md-6 mb-4">
 
                 <label className="form-label">
+
                   Father's Mobile Number
+
                 </label>
+
 
                 <input
                   type="tel"
@@ -1092,8 +1391,11 @@ function Apply() {
               <div className="col-md-6 mb-4">
 
                 <label className="form-label">
+
                   Mother's Mobile Number
+
                 </label>
+
 
                 <input
                   type="tel"
@@ -1119,8 +1421,11 @@ function Apply() {
               <div className="col-12 mb-4">
 
                 <label className="form-label">
+
                   School / College Name
+
                 </label>
+
 
                 <input
                   type="text"
@@ -1146,8 +1451,11 @@ function Apply() {
               <div className="col-md-6 mb-4">
 
                 <label className="form-label">
+
                   Select Course
+
                 </label>
+
 
                 <select
                   className="form-select"
@@ -1162,10 +1470,14 @@ function Apply() {
                 >
 
                   <option value="">
+
                     Choose Course
+
                   </option>
 
+
                   {courses.map(
+
                     (course) => (
 
                       <option
@@ -1184,6 +1496,7 @@ function Apply() {
                       </option>
 
                     )
+
                   )}
 
                 </select>
@@ -1198,8 +1511,11 @@ function Apply() {
               <div className="col-md-6 mb-4">
 
                 <label className="form-label">
+
                   Batch Time
+
                 </label>
+
 
                 <input
                   type="text"
@@ -1211,6 +1527,7 @@ function Apply() {
                   placeholder="Select course to see batch time"
                   readOnly
                 />
+
 
                 <small className="text-muted">
 
@@ -1229,8 +1546,11 @@ function Apply() {
               <div className="col-12 mb-4">
 
                 <label className="form-label">
+
                   Permanent Address
+
                 </label>
+
 
                 <textarea
                   className="form-control"
@@ -1256,8 +1576,11 @@ function Apply() {
               <div className="col-12 mb-4">
 
                 <label className="form-label">
+
                   Current Address
+
                 </label>
+
 
                 <textarea
                   className="form-control"
@@ -1292,8 +1615,11 @@ function Apply() {
                   <div className="card-body">
 
                     <h5 className="mb-3">
+
                       Course Details
+
                     </h5>
+
 
                     <div className="row">
 
@@ -1327,7 +1653,9 @@ function Apply() {
 
                           {
                             selectedCourse.batchTime ||
+
                             'Not Available'
+
                           }
 
                         </p>
@@ -1385,6 +1713,7 @@ function Apply() {
 
                       </div>
 
+
                     </div>
 
                   </div>
@@ -1407,10 +1736,14 @@ function Apply() {
                 <div className="alert alert-primary">
 
                   <h5>
+
                     Admission Payment
+
                   </h5>
 
+
                   <hr />
+
 
                   <p>
 
@@ -1433,7 +1766,9 @@ function Apply() {
 
                     {
                       selectedCourse.batchTime ||
+
                       'Not Available'
+
                     }
 
                   </p>
@@ -1449,7 +1784,9 @@ function Apply() {
                       selectedCourse.totalFee
                     }
 
+
                     <br />
+
 
                     <small className="text-muted">
 
@@ -1480,9 +1817,15 @@ function Apply() {
               }
             >
 
-              {paymentLoading
-                ? 'Processing...'
-                : 'Pay Registration Fee'}
+              {
+
+                paymentLoading
+
+                  ? 'Processing...'
+
+                  : 'Pay Registration Fee'
+
+              }
 
             </button>
 
@@ -1498,5 +1841,6 @@ function Apply() {
   )
 
 }
+
 
 export default Apply
