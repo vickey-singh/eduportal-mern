@@ -3757,8 +3757,11 @@ router.get(
 //
 // GET /api/student/fees/receipts
 //
-// Only receipts belonging to the
-// logged-in student will be returned.
+// IMPORTANT:
+// Receipts sirf logged-in student ke
+// MongoDB _id se fetch hongi.
+//
+// Admission number use nahi hoga.
 // ======================================
 
 router.get(
@@ -3772,7 +3775,7 @@ router.get(
     try {
 
       // ==================================
-      // GET STUDENT
+      // GET LOGGED-IN STUDENT
       // ==================================
 
       const student =
@@ -3780,6 +3783,10 @@ router.get(
           req.student.id
         )
 
+
+      // ==================================
+      // STUDENT NOT FOUND
+      // ==================================
 
       if (!student) {
 
@@ -3798,12 +3805,21 @@ router.get(
       // ==================================
       // GET RECEIPTS
       // ==================================
+      //
+      // IMPORTANT:
+      //
+      // studentId = student._id
+      //
+      // Isse same admission number wale
+      // old student ki receipts nahi aayengi.
+      //
+      // ==================================
 
       const receipts =
         await Receipt.find({
 
-          admissionNumber:
-            student.admissionNumber,
+          studentId:
+            student._id,
 
         })
 
@@ -3815,6 +3831,10 @@ router.get(
 
         })
 
+
+      // ==================================
+      // RESPONSE
+      // ==================================
 
       return res.status(200).json({
 
@@ -3860,10 +3880,15 @@ router.get(
 // GET SINGLE STUDENT RECEIPT
 // ======================================
 //
-// GET /api/student/fees/receipts/:receiptNumber
+// GET
+// /api/student/fees/receipts/:receiptNumber
 //
-// Receipt number ke saath bhi
-// student ownership verify hogi.
+// IMPORTANT:
+// Receipt number ke saath studentId
+// bhi verify hoga.
+//
+// Isse koi student doosre student ki
+// receipt access nahi kar sakta.
 // ======================================
 
 router.get(
@@ -3877,7 +3902,7 @@ router.get(
     try {
 
       // ==================================
-      // GET STUDENT
+      // GET LOGGED-IN STUDENT
       // ==================================
 
       const student =
@@ -3885,6 +3910,10 @@ router.get(
           req.student.id
         )
 
+
+      // ==================================
+      // STUDENT NOT FOUND
+      // ==================================
 
       if (!student) {
 
@@ -3903,6 +3932,11 @@ router.get(
       // ==================================
       // GET RECEIPT
       // ==================================
+      //
+      // Receipt number + studentId
+      // dono match hone chahiye.
+      //
+      // ==================================
 
       const receipt =
         await Receipt.findOne({
@@ -3910,11 +3944,15 @@ router.get(
           receiptNumber:
             req.params.receiptNumber,
 
-          admissionNumber:
-            student.admissionNumber,
+          studentId:
+            student._id,
 
         })
 
+
+      // ==================================
+      // RECEIPT NOT FOUND
+      // ==================================
 
       if (!receipt) {
 
@@ -3929,6 +3967,10 @@ router.get(
 
       }
 
+
+      // ==================================
+      // RESPONSE
+      // ==================================
 
       return res.status(200).json({
 

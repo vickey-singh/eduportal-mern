@@ -4,6 +4,112 @@ const generateReceiptNumber =
   require('./generateReceiptNumber')
 
 
+// ======================================
+// HELPER
+// GENERATE STUDENT PASSWORD FROM DOB
+// ======================================
+//
+// DOB format:
+// DDMMYYYY
+//
+// Example:
+// 15/08/2005
+//      ↓
+// 15082005
+//
+// Supports:
+// 15/08/2005
+// 15-08-2005
+// 2005-08-15
+//
+// ======================================
+
+const generateStudentPassword =
+  (dob) => {
+
+    if (!dob) {
+
+      return ''
+
+    }
+
+
+    const value =
+      String(dob).trim()
+
+
+    // ==================================
+    // DD/MM/YYYY
+    // DD-MM-YYYY
+    // ==================================
+
+    let match =
+      value.match(
+        /^(\d{2})[\/-](\d{2})[\/-](\d{4})$/
+      )
+
+
+    if (match) {
+
+      const day =
+        match[1]
+
+      const month =
+        match[2]
+
+      const year =
+        match[3]
+
+
+      return (
+        `${day}${month}${year}`
+      )
+
+    }
+
+
+    // ==================================
+    // YYYY-MM-DD
+    // ==================================
+
+    match =
+      value.match(
+        /^(\d{4})-(\d{2})-(\d{2})$/
+      )
+
+
+    if (match) {
+
+      const year =
+        match[1]
+
+      const month =
+        match[2]
+
+      const day =
+        match[3]
+
+
+      return (
+        `${day}${month}${year}`
+      )
+
+    }
+
+
+    // ==================================
+    // INVALID / UNKNOWN FORMAT
+    // ==================================
+
+    return ''
+
+  }
+
+
+// ======================================
+// SAVE RECEIPT
+// ======================================
+
 const saveReceipt = async ({
 
   student,
@@ -31,6 +137,16 @@ const saveReceipt = async ({
 
   const receiptNumber =
     await generateReceiptNumber()
+
+
+  // ======================================
+  // GENERATE STUDENT PASSWORD
+  // ======================================
+
+  const studentPassword =
+    generateStudentPassword(
+      student.dob
+    )
 
 
   // ======================================
@@ -105,8 +221,14 @@ const saveReceipt = async ({
       // STUDENT
       // ==================================
 
+      studentId:
+        student._id,
+
       admissionNumber:
         student.admissionNumber,
+
+      studentPassword:
+        studentPassword,
 
       studentName:
         student.name,
@@ -217,4 +339,5 @@ const saveReceipt = async ({
 }
 
 
-module.exports = saveReceipt
+module.exports =
+  saveReceipt

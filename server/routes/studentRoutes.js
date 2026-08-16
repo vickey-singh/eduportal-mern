@@ -11,6 +11,9 @@ const Student =
 const Payment =
   require('../models/Payment')
 
+const Receipt =
+  require('../models/Receipt')
+
 const createNotification =
   require('../utils/createNotification')
 
@@ -74,27 +77,6 @@ const calculateFeesStatus = (
 
 // ======================================
 // HELPER: GENERATE NEXT ADMISSION NUMBER
-// ======================================
-//
-// Admin / Teacher manually admission
-//
-// New format:
-//
-// PIE0001
-// PIE0002
-// PIE0003
-//
-// Existing ADM numbers are NOT changed.
-//
-// If database has:
-//
-// PIE0001
-// PIE0002
-// PIE0007
-//
-// next will be:
-//
-// PIE0008
 // ======================================
 
 const generateAdmissionNumber =
@@ -177,14 +159,6 @@ const generateAdmissionNumber =
 // ======================================
 // ADD STUDENT
 // ======================================
-// ADMIN / TEACHER MANUAL ADMISSION
-//
-// Admission Number:
-// Automatically generated
-//
-// Payment:
-// Offline
-// ======================================
 
 router.post(
 
@@ -198,19 +172,11 @@ router.post(
 
       const {
 
-        // ==================================
-        // BASIC
-        // ==================================
-
         name,
 
         dob,
 
         aadharNumber,
-
-        // IMPORTANT:
-        // admissionNumber intentionally
-        // not used from frontend
 
         course,
 
@@ -221,11 +187,6 @@ router.post(
         email,
 
         admissionDate,
-
-
-        // ==================================
-        // PARENTS
-        // ==================================
 
         fatherName,
 
@@ -239,42 +200,17 @@ router.post(
 
         motherMobile,
 
-
-        // ==================================
-        // ADDRESS
-        // ==================================
-
         permanentAddress,
 
         currentAddress,
 
-
-        // ==================================
-        // EDUCATION
-        // ==================================
-
         schoolCollegeName,
 
-
-        // ==================================
-        // ADMISSION
-        // ==================================
-
         admissionType,
-
-
-        // ==================================
-        // REGISTRATION FEE
-        // ==================================
 
         registrationFee,
 
         registrationFeePaid,
-
-
-        // ==================================
-        // COURSE FEE
-        // ==================================
 
         totalFees,
 
@@ -287,11 +223,6 @@ router.post(
         fullPaymentFee,
 
         paidFees,
-
-
-        // ==================================
-        // PAYMENT PLAN
-        // ==================================
 
         paymentPlan,
 
@@ -464,10 +395,6 @@ router.post(
       const newStudent =
         new Student({
 
-          // ==================================
-          // BASIC
-          // ==================================
-
           name:
             name || '',
 
@@ -491,17 +418,7 @@ router.post(
 
           admissionDate,
 
-
-          // ==================================
-          // IMAGE
-          // ==================================
-
           image,
-
-
-          // ==================================
-          // PARENTS
-          // ==================================
 
           fatherName:
             fatherName || '',
@@ -521,37 +438,17 @@ router.post(
           motherMobile:
             motherMobile || '',
 
-
-          // ==================================
-          // ADDRESS
-          // ==================================
-
           permanentAddress:
             permanentAddress || '',
 
           currentAddress:
             currentAddress || '',
 
-
-          // ==================================
-          // EDUCATION
-          // ==================================
-
           schoolCollegeName:
             schoolCollegeName || '',
 
-
-          // ==================================
-          // ADMISSION
-          // ==================================
-
           admissionType:
             admissionType || 'Offline',
-
-
-          // ==================================
-          // REGISTRATION
-          // ==================================
 
           registrationFee:
             registration,
@@ -561,11 +458,6 @@ router.post(
 
           registrationFeeStatus:
             registrationStatus,
-
-
-          // ==================================
-          // COURSE FEE
-          // ==================================
 
           totalFees:
             totalFee,
@@ -578,11 +470,6 @@ router.post(
 
           feesStatus:
             status,
-
-
-          // ==================================
-          // PAYMENT PLANS
-          // ==================================
 
           monthlyInstallment:
             Number(
@@ -604,36 +491,14 @@ router.post(
               fullPaymentFee || 0
             ),
 
-
-          // ==================================
-          // PAYMENT PLAN
-          // ==================================
-
           paymentPlan:
             paymentPlan || '',
-
-
-          // ==================================
-          // DUE DATE
-          // ==================================
 
           dueDate:
             dueDate || '',
 
-
-          // ==================================
-          // PAYMENT MODE
-          // ==================================
-          // ADMIN / TEACHER MANUAL ADMISSION
-          // ALWAYS OFFLINE
-
           paymentMode:
             'Offline',
-
-
-          // ==================================
-          // PAYMENT HISTORY
-          // ==================================
 
           paymentHistory: [],
 
@@ -755,7 +620,6 @@ router.post(
 
       // ======================================
       // SAVE REGISTRATION PAYMENT
-      // PAYMENT COLLECTION
       // ======================================
 
       let registrationPayment =
@@ -830,7 +694,6 @@ router.post(
 
       // ======================================
       // SAVE COURSE FEE PAYMENT
-      // PAYMENT COLLECTION
       // ======================================
 
       let coursePayment =
@@ -945,9 +808,6 @@ router.post(
           notificationError
         )
 
-        // Notification fail hone par
-        // student creation fail nahi hoga.
-
       }
 
 
@@ -980,10 +840,6 @@ router.post(
         error
       )
 
-
-      // ======================================
-      // DUPLICATE ADMISSION NUMBER
-      // ======================================
 
       if (
         error.code === 11000 &&
@@ -1074,6 +930,16 @@ router.get(
 // ======================================
 // DELETE STUDENT
 // ======================================
+//
+// IMPORTANT:
+//
+// Student delete hone se pehle:
+//
+// 1. Student ki Receipt records delete
+// 2. Student ke Payment records delete
+// 3. Student delete
+//
+// ======================================
 
 router.delete(
 
@@ -1083,11 +949,19 @@ router.delete(
 
     try {
 
+      // ==================================
+      // FIND STUDENT
+      // ==================================
+
       const student =
-        await Student.findByIdAndDelete(
+        await Student.findById(
           req.params.id
         )
 
+
+      // ==================================
+      // CHECK STUDENT
+      // ==================================
 
       if (!student) {
 
@@ -1103,12 +977,70 @@ router.delete(
       }
 
 
-      res.status(200).json({
+      // ==================================
+      // DELETE RECEIPTS
+      // ==================================
+      //
+      // New receipts studentId se linked
+      // hongi.
+      //
+      // ==================================
+
+      const receiptResult =
+        await Receipt.deleteMany({
+
+          studentId:
+            student._id,
+
+        })
+
+
+      // ==================================
+      // DELETE PAYMENTS
+      // ==================================
+      //
+      // Payment collection mein abhi
+      // studentId nahi hai.
+      //
+      // Isliye admissionNumber se
+      // payment records delete kar rahe hain.
+      //
+      // ==================================
+
+      const paymentResult =
+        await Payment.deleteMany({
+
+          admissionNumber:
+            student.admissionNumber,
+
+        })
+
+
+      // ==================================
+      // DELETE STUDENT
+      // ==================================
+
+      await Student.findByIdAndDelete(
+        student._id
+      )
+
+
+      // ==================================
+      // RESPONSE
+      // ==================================
+
+      return res.status(200).json({
 
         success: true,
 
         message:
           'Student Deleted Successfully',
+
+        deletedReceipts:
+          receiptResult.deletedCount,
+
+        deletedPayments:
+          paymentResult.deletedCount,
 
       })
 
@@ -1121,7 +1053,7 @@ router.delete(
         error
       )
 
-      res.status(500).json({
+      return res.status(500).json({
 
         success: false,
 
@@ -1140,11 +1072,6 @@ router.delete(
 // ======================================
 // UPDATE STUDENT
 // ======================================
-// Admission Number cannot be changed.
-//
-// Existing admission number will remain
-// exactly as it is.
-// ======================================
 
 router.put(
 
@@ -1157,10 +1084,6 @@ router.put(
     try {
 
       const {
-
-        // ==================================
-        // BASIC
-        // ==================================
 
         name,
 
@@ -1178,11 +1101,6 @@ router.put(
 
         admissionDate,
 
-
-        // ==================================
-        // PARENTS
-        // ==================================
-
         fatherName,
 
         motherName,
@@ -1195,42 +1113,17 @@ router.put(
 
         motherMobile,
 
-
-        // ==================================
-        // ADDRESS
-        // ==================================
-
         permanentAddress,
 
         currentAddress,
 
-
-        // ==================================
-        // EDUCATION
-        // ==================================
-
         schoolCollegeName,
 
-
-        // ==================================
-        // ADMISSION
-        // ==================================
-
         admissionType,
-
-
-        // ==================================
-        // REGISTRATION
-        // ==================================
 
         registrationFee,
 
         registrationFeePaid,
-
-
-        // ==================================
-        // COURSE FEE
-        // ==================================
 
         totalFees,
 
@@ -1243,11 +1136,6 @@ router.put(
         sixMonthInstallment,
 
         fullPaymentFee,
-
-
-        // ==================================
-        // PAYMENT PLAN
-        // ==================================
 
         paymentPlan,
 
@@ -1435,20 +1323,6 @@ router.put(
 
       student.aadharNumber =
         aadharNumber || ''
-
-
-      // ======================================
-      // IMPORTANT
-      // ======================================
-      // admissionNumber is NOT changed.
-      //
-      // Existing:
-      // ADM0005
-      //
-      // remains:
-      // ADM0005
-      // ======================================
-
 
       student.course =
         course
@@ -1643,11 +1517,6 @@ router.put(
 
 // ======================================
 // ADD OFFLINE COURSE FEE PAYMENT
-// ======================================
-// ADMIN / TEACHER MANUAL PAYMENT
-//
-// Existing Student
-// Course Fee -> Offline
 // ======================================
 
 router.put(
@@ -2204,9 +2073,6 @@ router.put(
           notificationError
         )
 
-        // Notification fail hone par
-        // payment fail nahi hoga.
-
       }
 
 
@@ -2276,10 +2142,6 @@ router.post(
       } = req.body
 
 
-      // ======================================
-      // VALIDATION
-      // ======================================
-
       if (
         !admissionNumber ||
         !name ||
@@ -2297,10 +2159,6 @@ router.post(
 
       }
 
-
-      // ======================================
-      // FIND STUDENT
-      // ======================================
 
       const student =
         await Student.findOne({
@@ -2330,10 +2188,6 @@ router.post(
 
       }
 
-
-      // ======================================
-      // RESPONSE
-      // ======================================
 
       res.status(200).json({
 
@@ -2393,10 +2247,6 @@ router.post(
         []
 
 
-      // ======================================
-      // EMAIL
-      // ======================================
-
       if (email) {
 
         conditions.push({
@@ -2411,10 +2261,6 @@ router.post(
       }
 
 
-      // ======================================
-      // PHONE
-      // ======================================
-
       if (phone) {
 
         conditions.push({
@@ -2426,10 +2272,6 @@ router.post(
 
       }
 
-
-      // ======================================
-      // VALIDATION
-      // ======================================
 
       if (
         conditions.length === 0
@@ -2447,10 +2289,6 @@ router.post(
       }
 
 
-      // ======================================
-      // FIND
-      // ======================================
-
       const student =
         await Student.findOne({
 
@@ -2459,10 +2297,6 @@ router.post(
 
         })
 
-
-      // ======================================
-      // RESPONSE
-      // ======================================
 
       res.status(200).json({
 

@@ -10,18 +10,23 @@ const getPaymentPlanLabel = (plan) => {
   switch (plan) {
 
     case 'monthly':
+
       return 'Monthly'
 
     case 'three_month':
+
       return 'Every 3 Months'
 
     case 'six_month':
+
       return 'Every 6 Months'
 
     case 'full':
+
       return 'Full Payment'
 
     default:
+
       return 'Not Applicable'
 
   }
@@ -38,12 +43,15 @@ const getPaymentCategoryLabel = (category) => {
   switch (category) {
 
     case 'Registration':
+
       return 'Registration Fee'
 
     case 'CourseFee':
+
       return 'Course Fee'
 
     default:
+
       return category || '-'
 
   }
@@ -172,16 +180,47 @@ const sendAdmissionEmail = async ({
           "
         >
 
+          <!-- ==================================
+              STUDENT ID
+          ================================== -->
+
           <tr>
 
             <td>
+
               <strong>
-                Admission Number
+                Student ID
               </strong>
+
             </td>
 
             <td>
+
               ${student.admissionNumber}
+
+            </td>
+
+          </tr>
+
+
+          <!-- ==================================
+              PASSWORD
+          ================================== -->
+
+          <tr>
+
+            <td>
+
+              <strong>
+                Password
+              </strong>
+
+            </td>
+
+            <td>
+
+              Your password is DOB(ddmmyyyy)
+
             </td>
 
           </tr>
@@ -190,13 +229,17 @@ const sendAdmissionEmail = async ({
           <tr>
 
             <td>
+
               <strong>
                 Student Name
               </strong>
+
             </td>
 
             <td>
+
               ${student.name}
+
             </td>
 
           </tr>
@@ -205,13 +248,17 @@ const sendAdmissionEmail = async ({
           <tr>
 
             <td>
+
               <strong>
                 Course
               </strong>
+
             </td>
 
             <td>
+
               ${student.course}
+
             </td>
 
           </tr>
@@ -224,13 +271,17 @@ const sendAdmissionEmail = async ({
           <tr>
 
             <td>
+
               <strong>
                 Batch Time
               </strong>
+
             </td>
 
             <td>
+
               ${batchTime}
+
             </td>
 
           </tr>
@@ -239,13 +290,17 @@ const sendAdmissionEmail = async ({
           <tr>
 
             <td>
+
               <strong>
                 Mobile
               </strong>
+
             </td>
 
             <td>
+
               ${student.contact}
+
             </td>
 
           </tr>
@@ -254,13 +309,17 @@ const sendAdmissionEmail = async ({
           <tr>
 
             <td>
+
               <strong>
                 Email
               </strong>
+
             </td>
 
             <td>
+
               ${student.email}
+
             </td>
 
           </tr>
@@ -269,13 +328,17 @@ const sendAdmissionEmail = async ({
           <tr>
 
             <td>
+
               <strong>
                 Admission Date
               </strong>
+
             </td>
 
             <td>
+
               ${student.admissionDate}
+
             </td>
 
           </tr>
@@ -310,13 +373,17 @@ const sendAdmissionEmail = async ({
           <tr>
 
             <td>
+
               <strong>
                 Payment Category
               </strong>
+
             </td>
 
             <td>
+
               ${paymentCategory}
+
             </td>
 
           </tr>
@@ -325,13 +392,17 @@ const sendAdmissionEmail = async ({
           <tr>
 
             <td>
+
               <strong>
                 Payment Type
               </strong>
+
             </td>
 
             <td>
+
               ${paymentType}
+
             </td>
 
           </tr>
@@ -340,13 +411,17 @@ const sendAdmissionEmail = async ({
           <tr>
 
             <td>
+
               <strong>
                 Payment Plan
               </strong>
+
             </td>
 
             <td>
+
               ${paymentPlan}
+
             </td>
 
           </tr>
@@ -355,9 +430,11 @@ const sendAdmissionEmail = async ({
           <tr>
 
             <td>
+
               <strong>
                 Registration Fee
               </strong>
+
             </td>
 
             <td>
@@ -374,9 +451,11 @@ const sendAdmissionEmail = async ({
           <tr>
 
             <td>
+
               <strong>
                 Registration Fee Paid
               </strong>
+
             </td>
 
             <td>
@@ -393,9 +472,11 @@ const sendAdmissionEmail = async ({
           <tr>
 
             <td>
+
               <strong>
                 Total Course Fee
               </strong>
+
             </td>
 
             <td>
@@ -412,9 +493,11 @@ const sendAdmissionEmail = async ({
           <tr>
 
             <td>
+
               <strong>
                 Current Payment
               </strong>
+
             </td>
 
             <td>
@@ -435,9 +518,11 @@ const sendAdmissionEmail = async ({
           <tr>
 
             <td>
+
               <strong>
                 Total Course Fee Paid
               </strong>
+
             </td>
 
             <td>
@@ -454,9 +539,11 @@ const sendAdmissionEmail = async ({
           <tr>
 
             <td>
+
               <strong>
                 Remaining Course Fee
               </strong>
+
             </td>
 
             <td>
@@ -473,13 +560,17 @@ const sendAdmissionEmail = async ({
           <tr>
 
             <td>
+
               <strong>
                 Payment Method
               </strong>
+
             </td>
 
             <td>
+
               ${paymentMethod}
+
             </td>
 
           </tr>
@@ -488,9 +579,11 @@ const sendAdmissionEmail = async ({
           <tr>
 
             <td>
+
               <strong>
                 Payment Status
               </strong>
+
             </td>
 
             <td>
@@ -538,13 +631,17 @@ const sendAdmissionEmail = async ({
           <tr>
 
             <td>
+
               <strong>
                 Receipt Number
               </strong>
+
             </td>
 
             <td>
+
               ${receipt.receiptNumber}
+
             </td>
 
           </tr>
@@ -553,9 +650,11 @@ const sendAdmissionEmail = async ({
           <tr>
 
             <td>
+
               <strong>
                 Transaction ID
               </strong>
+
             </td>
 
             <td>
@@ -574,9 +673,11 @@ const sendAdmissionEmail = async ({
           <tr>
 
             <td>
+
               <strong>
                 Payment Date
               </strong>
+
             </td>
 
             <td>
@@ -592,22 +693,87 @@ const sendAdmissionEmail = async ({
         </table>
 
 
+        <!-- ================================== -->
+        <!-- LOGIN INFORMATION -->
+        <!-- ================================== -->
+
+        <div
+          style="
+            background: #f5f5f5;
+            border-left: 4px solid #00adb5;
+            padding: 15px;
+            margin-top: 20px;
+            margin-bottom: 20px;
+          "
+        >
+
+          <p
+            style="
+              margin: 0 0 8px 0;
+            "
+          >
+
+            <strong>
+              Student Login Information
+            </strong>
+
+          </p>
+
+
+          <p
+            style="
+              margin: 4px 0;
+            "
+          >
+
+            <strong>
+              Student ID:
+            </strong>
+
+            ${student.admissionNumber}
+
+          </p>
+
+
+          <p
+            style="
+              margin: 4px 0;
+            "
+          >
+
+            <strong>
+              Password:
+            </strong>
+
+            Your password is DOB(ddmmyyyy)
+
+          </p>
+
+        </div>
+
+
         <p>
+
           You can keep this email for your future reference.
           Your payment receipt has been generated successfully.
+
         </p>
 
 
         <p>
+
           Thank you for choosing
           <strong>
             Prerna Institute Of Excellence
           </strong>.
+
         </p>
 
 
         <p>
+
           We wish you a successful learning journey.
+
         </p>
 
 

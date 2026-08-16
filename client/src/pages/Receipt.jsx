@@ -69,14 +69,18 @@ function Receipt() {
         settingsRes
       )
 
-    } catch (error) {
+    }
+
+    catch (error) {
 
       console.error(
         'Receipt Error:',
         error
       )
 
-    } finally {
+    }
+
+    finally {
 
       setLoading(false)
 
@@ -425,16 +429,6 @@ function Receipt() {
     )
 
 
-  /*
-   * Backend me registrationFeePaid
-   * available hai to wahi use hoga.
-   *
-   * Agar registration receipt hai
-   * aur field available nahi hai,
-   * to current payment ko registration
-   * paid maana jayega.
-   */
-
   const registrationFeePaid =
     receipt.registrationFeePaid !==
     undefined
@@ -670,13 +664,30 @@ function Receipt() {
             <tr>
 
               <td>
-                Admission Number
+                Student ID
               </td>
 
               <td>
+
                 {
                   receipt.admissionNumber
                 }
+
+              </td>
+
+            </tr>
+
+
+            <tr>
+
+              <td>
+                Password
+              </td>
+
+              <td>
+
+                Your password is DOB(ddmmyyyy)
+
               </td>
 
             </tr>
@@ -689,9 +700,11 @@ function Receipt() {
               </td>
 
               <td>
+
                 {
                   receipt.studentName
                 }
+
               </td>
 
             </tr>
@@ -704,28 +717,33 @@ function Receipt() {
               </td>
 
               <td>
+
                 {
                   receipt.course
                 }
+
               </td>
 
             </tr>
+
 
             <tr>
 
               <td>
                 Batch Time
               </td>
-            
+
               <td>
+
                 {
                   receipt.batchTime ||
                   '-'
                 }
+
               </td>
-            
+
             </tr>
-            
+
 
             <tr>
 
@@ -785,7 +803,6 @@ function Receipt() {
         <table className="receipt-table">
 
           <tbody>
-
 
             {/* ==================================
                 PAYMENT CATEGORY
@@ -969,7 +986,6 @@ function Receipt() {
         <table className="receipt-table">
 
           <tbody>
-
 
             {/* ==================================
                 REGISTRATION FEE
