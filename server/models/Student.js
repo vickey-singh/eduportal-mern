@@ -181,6 +181,14 @@ const studentSchema =
       },
 
 
+      // ======================================
+      // AADHAAR
+      // ======================================
+      //
+      // OPTIONAL
+      //
+      // ======================================
+
       aadharNumber: {
 
         type: String,
@@ -205,11 +213,23 @@ const studentSchema =
       },
 
 
+      // ======================================
+      // COURSE
+      // ======================================
+      //
+      // OPTIONAL
+      //
+      // Student admission ke time course
+      // baad mein bhi add/update kiya ja
+      // sakta hai.
+      //
+      // ======================================
+
       course: {
 
         type: String,
 
-        required: true,
+        default: '',
 
         trim: true,
 
@@ -227,6 +247,14 @@ const studentSchema =
       },
 
 
+      // ======================================
+      // STUDENT MOBILE
+      // ======================================
+      //
+      // REQUIRED
+      //
+      // ======================================
+
       contact: {
 
         type: String,
@@ -238,11 +266,19 @@ const studentSchema =
       },
 
 
+      // ======================================
+      // EMAIL
+      // ======================================
+      //
+      // OPTIONAL
+      //
+      // ======================================
+
       email: {
 
         type: String,
 
-        required: true,
+        default: '',
 
         lowercase: true,
 
@@ -250,6 +286,10 @@ const studentSchema =
 
       },
 
+
+      // ======================================
+      // ADMISSION DATE
+      // ======================================
 
       admissionDate: {
 
@@ -270,9 +310,6 @@ const studentSchema =
       //
       // New admission ke time backend
       // automatically session assign karega.
-      //
-      // Default '' rakha gaya hai taaki
-      // existing students safe rahen.
       //
       // ======================================
 
@@ -302,8 +339,6 @@ const studentSchema =
       // Example:
       // Student 1-2 month ke liye bahar gaya
       // ho to admin Inactive kar sakta hai.
-      //
-      // Student ka record delete nahi hoga.
       //
       // ======================================
 
@@ -363,6 +398,14 @@ const studentSchema =
       },
 
 
+      // ======================================
+      // FATHER OCCUPATION
+      // ======================================
+      //
+      // OPTIONAL
+      //
+      // ======================================
+
       fatherOccupation: {
 
         type: String,
@@ -373,6 +416,14 @@ const studentSchema =
 
       },
 
+
+      // ======================================
+      // MOTHER OCCUPATION
+      // ======================================
+      //
+      // OPTIONAL
+      //
+      // ======================================
 
       motherOccupation: {
 
@@ -385,6 +436,14 @@ const studentSchema =
       },
 
 
+      // ======================================
+      // FATHER MOBILE
+      // ======================================
+      //
+      // OPTIONAL
+      //
+      // ======================================
+
       fatherMobile: {
 
         type: String,
@@ -395,6 +454,14 @@ const studentSchema =
 
       },
 
+
+      // ======================================
+      // MOTHER MOBILE
+      // ======================================
+      //
+      // OPTIONAL
+      //
+      // ======================================
 
       motherMobile: {
 
@@ -472,6 +539,12 @@ const studentSchema =
       // ======================================
       // REGISTRATION FEE
       // ======================================
+      //
+      // OPTIONAL
+      //
+      // Default 0
+      //
+      // ======================================
 
       registrationFee: {
 
@@ -511,23 +584,35 @@ const studentSchema =
       // ======================================
       // COURSE FEE
       // ======================================
+      //
+      // OPTIONAL
+      //
+      // Default 0
+      //
+      // ======================================
 
       totalFees: {
 
         type: Number,
-
-        required: true,
 
         default: 0,
 
       },
 
 
+      // ======================================
+      // PAID FEE
+      // ======================================
+      //
+      // OPTIONAL
+      //
+      // Default 0
+      //
+      // ======================================
+
       paidFees: {
 
         type: Number,
-
-        required: true,
 
         default: 0,
 

@@ -409,7 +409,6 @@ function Students() {
       admissionType: 'Offline',
       admissionDate: '',
 
-      // Default new student = Active
       studentStatus: 'Active',
 
       registrationFee: '',
@@ -906,9 +905,6 @@ function Students() {
             )
 
 
-          // New student current session mein
-          // automatically show hoga.
-
           if (
             response?.student
           ) {
@@ -1000,8 +996,6 @@ function Students() {
 
 
         resetForm()
-
-        // Fresh backend data
 
         await fetchStudents()
 
@@ -1098,7 +1092,8 @@ function Students() {
           student.admissionDate || '',
 
         studentStatus:
-          student.studentStatus || 'Active',
+          student.studentStatus ||
+          'Active',
 
         registrationFee:
           student.registrationFee || 0,
@@ -1447,9 +1442,6 @@ function Students() {
             statusFilter
 
 
-        // Old students without
-        // studentStatus are treated as Active.
-
         const actualStudentStatus =
           student.studentStatus ||
           'Active'
@@ -1708,7 +1700,6 @@ function Students() {
                 onChange={
                   handleChange
                 }
-                required
               />
 
             </div>
@@ -1988,7 +1979,6 @@ function Students() {
                 onChange={
                   handleChange
                 }
-                required
               >
 
                 <option value="">
@@ -2017,6 +2007,10 @@ function Students() {
                 )}
 
               </select>
+
+              <small className="text-muted">
+                Optional. Course can be added later.
+              </small>
 
             </div>
 
@@ -2217,13 +2211,11 @@ function Students() {
                   handleChange
                 }
                 min="0"
-                required
               />
 
               <small className="text-muted">
 
-                Individual student fee. Course
-                default can be modified for concession.
+                Optional. Course fee can be added later.
 
               </small>
 
@@ -2586,9 +2578,7 @@ function Students() {
           <div className="col-md-3">
 
             <label className="form-label fw-bold">
-
               Session
-
             </label>
 
             <select
@@ -2646,9 +2636,7 @@ function Students() {
           <div className="col-md-3">
 
             <label className="form-label fw-bold">
-
               Search
-
             </label>
 
             <input
@@ -2673,9 +2661,7 @@ function Students() {
           <div className="col-md-2">
 
             <label className="form-label fw-bold">
-
               Course
-
             </label>
 
             <select
@@ -2725,9 +2711,7 @@ function Students() {
           <div className="col-md-2">
 
             <label className="form-label fw-bold">
-
               Batch
-
             </label>
 
             <select
@@ -2777,9 +2761,7 @@ function Students() {
           <div className="col-md-2">
 
             <label className="form-label fw-bold">
-
               Fee Status
-
             </label>
 
             <select
@@ -2820,9 +2802,7 @@ function Students() {
           <div className="col-md-2">
 
             <label className="form-label fw-bold">
-
               Student Status
-
             </label>
 
             <select
@@ -3029,7 +3009,8 @@ function Students() {
 
                     <td>
                       {
-                        student.course
+                        student.course ||
+                        '-'
                       }
                     </td>
 
@@ -3111,8 +3092,6 @@ function Students() {
                     </td>
 
 
-                    {/* FEE STATUS */}
-
                     <td>
 
                       <span
@@ -3135,8 +3114,6 @@ function Students() {
 
                     </td>
 
-
-                    {/* STUDENT STATUS */}
 
                     <td>
 

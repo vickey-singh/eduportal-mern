@@ -269,9 +269,7 @@ const getCurrentAcademicSession =
   () => {
 
     return calculateAcademicSession(
-
       new Date()
-
     )
 
   }
@@ -639,18 +637,35 @@ router.post(
           admissionNumber:
             admissionNumber,
 
-          course,
+          // ==================================
+          // COURSE OPTIONAL
+          // ==================================
+
+          course:
+            course || '',
 
           batchTime:
             batchTime || '',
 
-          contact,
+          // ==================================
+          // CONTACT REQUIRED
+          // ==================================
 
-          email,
+          contact:
+            contact || '',
 
-          admissionDate,
+          // ==================================
+          // EMAIL OPTIONAL
+          // ==================================
 
-          session,
+          email:
+            email || '',
+
+          admissionDate:
+            admissionDate,
+
+          session:
+            session,
 
           // ==================================
           // NEW STUDENT STATUS
@@ -659,7 +674,8 @@ router.post(
           studentStatus:
             'Active',
 
-          image,
+          image:
+            image,
 
           fatherName:
             fatherName || '',
@@ -691,6 +707,10 @@ router.post(
           admissionType:
             admissionType || 'Offline',
 
+          // ==================================
+          // REGISTRATION FEE OPTIONAL
+          // ==================================
+
           registrationFee:
             registration,
 
@@ -699,6 +719,10 @@ router.post(
 
           registrationFeeStatus:
             registrationStatus,
+
+          // ==================================
+          // COURSE FEE OPTIONAL
+          // ==================================
 
           totalFees:
             totalFee,
@@ -711,6 +735,10 @@ router.post(
 
           feesStatus:
             status,
+
+          // ==================================
+          // INSTALLMENTS OPTIONAL
+          // ==================================
 
           monthlyInstallment:
             Number(
@@ -732,6 +760,10 @@ router.post(
               fullPaymentFee || 0
             ),
 
+          // ==================================
+          // PAYMENT PLAN OPTIONAL
+          // ==================================
+
           paymentPlan:
             paymentPlan || '',
 
@@ -741,7 +773,8 @@ router.post(
           paymentMode:
             'Offline',
 
-          paymentHistory: [],
+          paymentHistory:
+            [],
 
         })
 
@@ -1028,7 +1061,16 @@ router.post(
             'New Admission',
 
           message:
-            `${savedStudent.name} has taken admission in ${savedStudent.course}`,
+
+            `${savedStudent.name} has taken admission` +
+
+            (
+
+              savedStudent.course
+                ? ` in ${savedStudent.course}`
+                : ''
+
+            ),
 
           link:
             '/admin/students',
@@ -1199,8 +1241,6 @@ router.get(
       //
       // Name OR Admission Number
       //
-      // One search box
-      //
       // ======================================
 
       if (
@@ -1295,14 +1335,6 @@ router.get(
       // ======================================
       // STUDENT STATUS FILTER
       // ======================================
-      //
-      // Active / Inactive
-      //
-      // Old records jinke database mein
-      // studentStatus field nahi hai unko
-      // Active maana jayega.
-      //
-      // ======================================
 
       if (
         studentStatus &&
@@ -1313,30 +1345,38 @@ router.get(
           studentStatus === 'Active'
         ) {
 
-          query.$or = [
+          query.$and = [
 
-            ...(query.$or || []),
-
-            {
-
-              studentStatus:
-                'Active',
-
-            },
+            ...(query.$and || []),
 
             {
 
-              studentStatus:
+              $or: [
+
                 {
-                  $exists: false,
+
+                  studentStatus:
+                    'Active',
+
                 },
 
-            },
+                {
 
-            {
+                  studentStatus:
+                    {
+                      $exists: false,
+                    },
 
-              studentStatus:
-                '',
+                },
+
+                {
+
+                  studentStatus:
+                    '',
+
+                },
+
+              ],
 
             },
 
@@ -1377,15 +1417,6 @@ router.get(
       // ======================================
       // BACKFILL OLD STUDENT SESSION
       // ======================================
-      //
-      // Existing students jinke session
-      // blank hai unka session admissionDate
-      // se calculate hoga.
-      //
-      // Database ko automatically update
-      // bhi karenge.
-      //
-      // ======================================
 
       const updates = []
 
@@ -1414,9 +1445,7 @@ router.get(
 
 
             updates.push(
-
               student.save()
-
             )
 
           }
@@ -1439,12 +1468,6 @@ router.get(
 
       // ======================================
       // SESSION FILTER AFTER BACKFILL
-      // ======================================
-      //
-      // Agar old student ka session blank tha
-      // aur request specific session ke liye
-      // hai, ensure correct result mile.
-      //
       // ======================================
 
       if (
@@ -1469,15 +1492,6 @@ router.get(
 
       // ======================================
       // OLD STUDENT STATUS NORMALIZATION
-      // ======================================
-      //
-      // Existing documents mein agar
-      // studentStatus nahi hai to response
-      // mein Active bhejenge.
-      //
-      // Database mein old record ko force
-      // update nahi kar rahe.
-      //
       // ======================================
 
       students =
@@ -1542,16 +1556,6 @@ router.get(
 // ======================================
 // DELETE STUDENT
 // ======================================
-//
-// IMPORTANT:
-//
-// Student delete hone se pehle:
-//
-// 1. Student ki Receipt records delete
-// 2. Student ke Payment records delete
-// 3. Student delete
-//
-// ======================================
 
 router.delete(
 
@@ -1570,10 +1574,6 @@ router.delete(
           req.params.id
         )
 
-
-      // ==================================
-      // CHECK STUDENT
-      // ==================================
 
       if (!student) {
 
@@ -1965,20 +1965,32 @@ router.put(
         aadharNumber || ''
 
 
+      // ======================================
+      // COURSE OPTIONAL
+      // ======================================
+
       student.course =
-        course
+        course || ''
 
 
       student.batchTime =
         batchTime || ''
 
 
-      student.contact =
-        contact
+      // ======================================
+      // CONTACT
+      // ======================================
 
+      student.contact =
+        contact || ''
+
+
+      // ======================================
+      // EMAIL OPTIONAL
+      // ======================================
 
       student.email =
-        email
+        email || ''
 
 
       student.admissionDate =
@@ -2724,7 +2736,16 @@ router.put(
             'Payment Received',
 
           message:
-            `${student.name} paid ₹${paymentAmount} for ${student.course}`,
+
+            `${student.name} paid ₹${paymentAmount}` +
+
+            (
+
+              student.course
+                ? ` for ${student.course}`
+                : ''
+
+            ),
 
           link:
             '/admin/payments',
