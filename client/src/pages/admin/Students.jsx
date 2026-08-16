@@ -157,6 +157,17 @@ function Students() {
 
 
   // ======================================
+  // STUDENT STATUS FILTER
+  // ======================================
+
+  const [
+    studentStatusFilter,
+    setStudentStatusFilter
+  ] =
+    useState('All')
+
+
+  // ======================================
   // FORM
   // ======================================
 
@@ -187,6 +198,9 @@ function Students() {
 
       admissionType: 'Offline',
       admissionDate: '',
+
+      // Student status
+      studentStatus: 'Active',
 
       registrationFee: '',
       registrationFeePaid: '',
@@ -394,6 +408,9 @@ function Students() {
 
       admissionType: 'Offline',
       admissionDate: '',
+
+      // Default new student = Active
+      studentStatus: 'Active',
 
       registrationFee: '',
       registrationFeePaid: '',
@@ -779,6 +796,16 @@ function Students() {
 
 
         // ==================================
+        // STUDENT STATUS
+        // ==================================
+
+        data.append(
+          'studentStatus',
+          formData.studentStatus || 'Active'
+        )
+
+
+        // ==================================
         // REGISTRATION
         // ==================================
 
@@ -1069,6 +1096,9 @@ function Students() {
 
         admissionDate:
           student.admissionDate || '',
+
+        studentStatus:
+          student.studentStatus || 'Active',
 
         registrationFee:
           student.registrationFee || 0,
@@ -1417,6 +1447,22 @@ function Students() {
             statusFilter
 
 
+        // Old students without
+        // studentStatus are treated as Active.
+
+        const actualStudentStatus =
+          student.studentStatus ||
+          'Active'
+
+
+        const matchesStudentStatus =
+
+          studentStatusFilter === 'All' ||
+
+          actualStudentStatus ===
+            studentStatusFilter
+
+
         return (
 
           matchesSearch &&
@@ -1425,7 +1471,9 @@ function Students() {
 
           matchesBatch &&
 
-          matchesStatus
+          matchesStatus &&
+
+          matchesStudentStatus
 
         )
 
@@ -2046,6 +2094,48 @@ function Students() {
 
             </div>
 
+
+            {/* ==================================
+                STUDENT STATUS
+            ================================== */}
+
+            <div className="col-md-6 mb-3">
+
+              <label className="form-label">
+                Student Status
+              </label>
+
+              <select
+                className="form-control"
+                name="studentStatus"
+                value={
+                  formData.studentStatus ||
+                  'Active'
+                }
+                onChange={
+                  handleChange
+                }
+              >
+
+                <option value="Active">
+                  Active
+                </option>
+
+                <option value="Inactive">
+                  Inactive
+                </option>
+
+              </select>
+
+              <small className="text-muted">
+
+                Use Inactive when a student is
+                temporarily away or not attending.
+
+              </small>
+
+            </div>
+
           </div>
 
 
@@ -2520,6 +2610,8 @@ function Students() {
 
                 setStatusFilter('All')
 
+                setStudentStatusFilter('All')
+
               }}
             >
 
@@ -2722,6 +2814,45 @@ function Students() {
 
           </div>
 
+
+          {/* STUDENT STATUS */}
+
+          <div className="col-md-2">
+
+            <label className="form-label fw-bold">
+
+              Student Status
+
+            </label>
+
+            <select
+              className="form-control"
+              value={
+                studentStatusFilter
+              }
+              onChange={(e) =>
+                setStudentStatusFilter(
+                  e.target.value
+                )
+              }
+            >
+
+              <option value="All">
+                All Students
+              </option>
+
+              <option value="Active">
+                Active
+              </option>
+
+              <option value="Inactive">
+                Inactive
+              </option>
+
+            </select>
+
+          </div>
+
         </div>
 
       </div>
@@ -2768,7 +2899,7 @@ function Students() {
         <table
           className="table applications-table"
           style={{
-            minWidth: '1500px',
+            minWidth: '1650px',
           }}
         >
 
@@ -2817,7 +2948,11 @@ function Students() {
               </th>
 
               <th>
-                Status
+                Fee Status
+              </th>
+
+              <th>
+                Student Status
               </th>
 
               <th>
@@ -2840,7 +2975,7 @@ function Students() {
               <tr>
 
                 <td
-                  colSpan="13"
+                  colSpan="14"
                   className="text-center py-4"
                 >
 
@@ -2855,7 +2990,7 @@ function Students() {
               <tr>
 
                 <td
-                  colSpan="13"
+                  colSpan="14"
                   className="text-center py-4"
                 >
 
@@ -2976,6 +3111,8 @@ function Students() {
                     </td>
 
 
+                    {/* FEE STATUS */}
+
                     <td>
 
                       <span
@@ -2992,6 +3129,31 @@ function Students() {
                         {
                           student.feesStatus ||
                           'Pending'
+                        }
+
+                      </span>
+
+                    </td>
+
+
+                    {/* STUDENT STATUS */}
+
+                    <td>
+
+                      <span
+                        className={
+                          `status ${
+                            (
+                              student.studentStatus ||
+                              'Active'
+                            ).toLowerCase()
+                          }`
+                        }
+                      >
+
+                        {
+                          student.studentStatus ||
+                          'Active'
                         }
 
                       </span>
@@ -3354,6 +3516,14 @@ function Students() {
                 />
 
                 <Detail
+                  label="Student Status"
+                  value={
+                    selectedStudent.studentStatus ||
+                    'Active'
+                  }
+                />
+
+                <Detail
                   label="Course"
                   value={
                     selectedStudent.course
@@ -3528,6 +3698,7 @@ function Students() {
                 selectedStudent={
                   selectedStudent
                 }
+
               />
 
             </div>

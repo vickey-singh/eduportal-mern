@@ -652,6 +652,13 @@ router.post(
 
           session,
 
+          // ==================================
+          // NEW STUDENT STATUS
+          // ==================================
+
+          studentStatus:
+            'Active',
+
           image,
 
           fatherName:
@@ -1131,6 +1138,12 @@ router.post(
 //
 // ?feesStatus=All
 //
+// ?studentStatus=Active
+//
+// ?studentStatus=Inactive
+//
+// ?studentStatus=All
+//
 // ======================================
 
 router.get(
@@ -1152,6 +1165,8 @@ router.get(
         batchTime,
 
         feesStatus,
+
+        studentStatus,
 
       } = req.query
 
@@ -1278,6 +1293,68 @@ router.get(
 
 
       // ======================================
+      // STUDENT STATUS FILTER
+      // ======================================
+      //
+      // Active / Inactive
+      //
+      // Old records jinke database mein
+      // studentStatus field nahi hai unko
+      // Active maana jayega.
+      //
+      // ======================================
+
+      if (
+        studentStatus &&
+        studentStatus !== 'All'
+      ) {
+
+        if (
+          studentStatus === 'Active'
+        ) {
+
+          query.$or = [
+
+            ...(query.$or || []),
+
+            {
+
+              studentStatus:
+                'Active',
+
+            },
+
+            {
+
+              studentStatus:
+                {
+                  $exists: false,
+                },
+
+            },
+
+            {
+
+              studentStatus:
+                '',
+
+            },
+
+          ]
+
+        }
+
+        else {
+
+          query.studentStatus =
+            studentStatus
+
+        }
+
+      }
+
+
+      // ======================================
       // FIND STUDENTS
       // ======================================
 
@@ -1388,6 +1465,45 @@ router.get(
           )
 
       }
+
+
+      // ======================================
+      // OLD STUDENT STATUS NORMALIZATION
+      // ======================================
+      //
+      // Existing documents mein agar
+      // studentStatus nahi hai to response
+      // mein Active bhejenge.
+      //
+      // Database mein old record ko force
+      // update nahi kar rahe.
+      //
+      // ======================================
+
+      students =
+        students.map(
+
+          (student) => {
+
+            const studentObject =
+              student.toObject()
+
+
+            if (
+              !studentObject.studentStatus
+            ) {
+
+              studentObject.studentStatus =
+                'Active'
+
+            }
+
+
+            return studentObject
+
+          }
+
+        )
 
 
       // ======================================
@@ -1624,6 +1740,8 @@ router.put(
 
         dueDate,
 
+        studentStatus,
+
       } = req.body
 
 
@@ -1819,6 +1937,19 @@ router.put(
 
 
       // ======================================
+      // VALIDATE STUDENT STATUS
+      // ======================================
+
+      const finalStudentStatus =
+
+        studentStatus === 'Inactive'
+
+          ? 'Inactive'
+
+          : 'Active'
+
+
+      // ======================================
       // UPDATE STUDENT
       // ======================================
 
@@ -1856,6 +1987,14 @@ router.put(
 
       student.session =
         session
+
+
+      // ======================================
+      // STUDENT STATUS
+      // ======================================
+
+      student.studentStatus =
+        finalStudentStatus
 
 
       student.image =

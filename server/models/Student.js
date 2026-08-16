@@ -289,6 +289,45 @@ const studentSchema =
       },
 
 
+      // ======================================
+      // STUDENT STATUS
+      // ======================================
+      //
+      // Active:
+      // Student currently institute me active hai.
+      //
+      // Inactive:
+      // Student temporarily inactive hai.
+      //
+      // Example:
+      // Student 1-2 month ke liye bahar gaya
+      // ho to admin Inactive kar sakta hai.
+      //
+      // Student ka record delete nahi hoga.
+      //
+      // ======================================
+
+      studentStatus: {
+
+        type: String,
+
+        enum: [
+
+          'Active',
+
+          'Inactive',
+
+        ],
+
+        default: 'Active',
+
+        trim: true,
+
+        index: true,
+
+      },
+
+
       image: {
 
         type: String,
@@ -705,6 +744,24 @@ studentSchema.index({
   session: 1,
 
   batchTime: 1,
+
+})
+
+
+// ======================================
+// SESSION + STUDENT STATUS INDEX
+// ======================================
+//
+// Active / Inactive students ko
+// session-wise fast filter karne ke liye.
+//
+// ======================================
+
+studentSchema.index({
+
+  session: 1,
+
+  studentStatus: 1,
 
 })
 
