@@ -2,6 +2,10 @@ import { useEffect, useMemo, useState } from 'react'
 
 import axios from 'axios'
 
+import jsPDF from 'jspdf'
+
+import autoTable from 'jspdf-autotable'
+
 import { API_URL } from '../../config/api'
 
 
@@ -1403,8 +1407,6 @@ function TeacherExams() {
           )
 
 
-          // Reload saved marks
-
           await handleEnterMarks(
             marksExam
           )
@@ -1453,6 +1455,626 @@ function TeacherExams() {
         setMarksSaving(false)
 
       }
+
+    }
+
+
+  // ======================================
+  // DOWNLOAD RESULT PDF
+  // ======================================
+
+  const handleDownloadResultPDF =
+    () => {
+
+      if (!marksExam) {
+
+        return
+
+      }
+
+
+      if (
+        !markStudents ||
+        markStudents.length === 0
+      ) {
+
+        alert(
+          'No students found for this exam.'
+        )
+
+        return
+
+      }
+
+
+      // ==================================
+      // CREATE PDF
+      // ==================================
+
+      const pdf =
+        new jsPDF(
+
+          'l',
+
+          'mm',
+
+          'a4'
+
+        )
+
+
+      const pageWidth =
+        pdf.internal.pageSize.getWidth()
+
+
+      // ==================================
+      // INSTITUTE NAME
+      // ==================================
+
+      pdf.setFontSize(18)
+
+      pdf.text(
+
+        'PRERNA INSTITUTE OF EXCELLENCE',
+
+        pageWidth / 2,
+
+        12,
+
+        {
+
+          align: 'center',
+
+        }
+
+      )
+
+
+      // ==================================
+      // REPORT TITLE
+      // ==================================
+
+      pdf.setFontSize(14)
+
+      pdf.text(
+
+        'STUDENT RESULT REPORT',
+
+        pageWidth / 2,
+
+        20,
+
+        {
+
+          align: 'center',
+
+        }
+
+      )
+
+
+      // ==================================
+      // EXAM DETAILS
+      // ==================================
+
+      pdf.setFontSize(9)
+
+
+      pdf.text(
+
+        `Exam: ${marksExam.examName || '-'}`,
+
+        10,
+
+        29
+
+      )
+
+
+      pdf.text(
+
+        `Course: ${marksExam.course || '-'}`,
+
+        10,
+
+        35
+
+      )
+
+
+      pdf.text(
+
+        `Batch: ${marksExam.batchTime || '-'}`,
+
+        10,
+
+        41
+
+      )
+
+
+      pdf.text(
+
+        `Subject: ${marksExam.subject || '-'}`,
+
+        95,
+
+        29
+
+      )
+
+
+      pdf.text(
+
+        `Exam Type: ${marksExam.examType || '-'}`,
+
+        95,
+
+        35
+
+      )
+
+
+      pdf.text(
+
+        `Exam Date: ${marksExam.examDate || '-'}`,
+
+        95,
+
+        41
+
+      )
+
+
+      pdf.text(
+
+        `Total Marks: ${marksExam.totalMarks || 0}`,
+
+        190,
+
+        29
+
+      )
+
+
+      pdf.text(
+
+        `Passing Marks: ${marksExam.passingMarks || 0}`,
+
+        190,
+
+        35
+
+      )
+
+
+      // ==================================
+      // RESULT TABLE DATA
+      // ==================================
+
+      const totalMarks =
+        Number(
+          marksExam.totalMarks || 0
+        )
+
+
+      const passingMarks =
+        Number(
+          marksExam.passingMarks || 0
+        )
+
+
+      let totalObtained = 0
+
+      let highestMarks = 0
+
+      let studentsWithMarks = 0
+
+
+      let passedStudents = 0
+
+      let failedStudents = 0
+
+
+      const tableData =
+        markStudents.map(
+
+          (student, index) => {
+
+            const hasMarks =
+
+              student.obtainedMarks !== '' &&
+
+              student.obtainedMarks !== null &&
+
+              student.obtainedMarks !== undefined
+
+
+            const obtained =
+              hasMarks
+
+                ? Number(
+                    student.obtainedMarks
+                  )
+
+                : 0
+
+
+            let percentage = '-'
+
+
+            if (
+              hasMarks &&
+              totalMarks > 0
+            ) {
+
+              percentage = (
+
+                (
+                  obtained /
+                  totalMarks
+                ) * 100
+
+              ).toFixed(2)
+
+            }
+
+
+            let result =
+              'PENDING'
+
+
+            if (hasMarks) {
+
+              if (
+                obtained >=
+                passingMarks
+              ) {
+
+                result = 'PASS'
+
+                passedStudents += 1
+
+              }
+
+              else {
+
+                result = 'FAIL'
+
+                failedStudents += 1
+
+              }
+
+
+              totalObtained +=
+                obtained
+
+
+              studentsWithMarks +=
+                1
+
+
+              if (
+                obtained >
+                highestMarks
+              ) {
+
+                highestMarks =
+                  obtained
+
+              }
+
+            }
+
+
+            return [
+
+              index + 1,
+
+              student.admissionNumber ||
+                '-',
+
+              student.name ||
+                '-',
+
+              hasMarks
+                ? obtained
+                : '-',
+
+              hasMarks
+                ? `${percentage}%`
+                : '-',
+
+              result,
+
+              student.remarks ||
+                '-',
+
+            ]
+
+          }
+
+        )
+
+
+      // ==================================
+      // PDF TABLE
+      // ==================================
+
+      autoTable(
+
+        pdf,
+
+        {
+
+          startY: 47,
+
+          head: [[
+
+            'S.No',
+
+            'Student ID',
+
+            'Student Name',
+
+            'Marks',
+
+            'Percentage',
+
+            'Result',
+
+            'Remarks',
+
+          ]],
+
+          body:
+            tableData,
+
+          theme:
+            'grid',
+
+          styles: {
+
+            fontSize: 8,
+
+            cellPadding: 2,
+
+            valign: 'middle',
+
+          },
+
+          headStyles: {
+
+            fontSize: 8,
+
+            fontStyle: 'bold',
+
+          },
+
+          margin: {
+
+            left: 10,
+
+            right: 10,
+
+          },
+
+        }
+
+      )
+
+
+      // ==================================
+      // SUMMARY
+      // ==================================
+
+      const finalY =
+        pdf.lastAutoTable.finalY + 8
+
+
+      const classAverage =
+
+        studentsWithMarks > 0 &&
+        totalMarks > 0
+
+          ? (
+
+              (
+
+                totalObtained /
+
+                studentsWithMarks /
+
+                totalMarks
+
+              ) * 100
+
+            ).toFixed(2)
+
+          : '0.00'
+
+
+      pdf.setFontSize(9)
+
+
+      pdf.text(
+
+        `Total Students: ${markStudents.length}`,
+
+        10,
+
+        finalY
+
+      )
+
+
+      pdf.text(
+
+        `Marks Entered: ${studentsWithMarks}`,
+
+        65,
+
+        finalY
+
+      )
+
+
+      pdf.text(
+
+        `Passed: ${passedStudents}`,
+
+        125,
+
+        finalY
+
+      )
+
+
+      pdf.text(
+
+        `Failed: ${failedStudents}`,
+
+        165,
+
+        finalY
+
+      )
+
+
+      pdf.text(
+
+        `Average: ${classAverage}%`,
+
+        210,
+
+        finalY
+
+      )
+
+
+      // ==================================
+      // HIGHEST MARKS
+      // ==================================
+
+      pdf.text(
+
+        `Highest Marks: ${highestMarks}`,
+
+        10,
+
+        finalY + 7
+
+      )
+
+
+      // ==================================
+      // FOOTER
+      // ==================================
+
+      const pageCount =
+        pdf.internal.getNumberOfPages()
+
+
+      for (
+
+        let page = 1;
+
+        page <= pageCount;
+
+        page += 1
+
+      ) {
+
+        pdf.setPage(page)
+
+
+        pdf.setFontSize(8)
+
+
+        pdf.text(
+
+          `Page ${page} of ${pageCount}`,
+
+          pageWidth - 10,
+
+          pdf.internal.pageSize.getHeight() - 7,
+
+          {
+
+            align: 'right',
+
+          }
+
+        )
+
+      }
+
+
+      // ==================================
+      // FILE NAME
+      // ==================================
+
+      const safeExamName =
+
+        String(
+
+          marksExam.examName ||
+          'result'
+
+        )
+
+          .trim()
+
+          .replace(
+
+            /[^a-z0-9]+/gi,
+
+            '-'
+
+          )
+
+          .replace(
+
+            /^-+|-+$/g,
+
+            ''
+
+          )
+
+
+      const safeBatch =
+
+        String(
+
+          marksExam.batchTime ||
+          'batch'
+
+        )
+
+          .trim()
+
+          .replace(
+
+            /[^a-z0-9]+/gi,
+
+            '-'
+
+          )
+
+          .replace(
+
+            /^-+|-+$/g,
+
+            ''
+
+          )
+
+
+      pdf.save(
+
+        `${safeExamName || 'result'}-${safeBatch || 'batch'}-result.pdf`
+
+      )
 
     }
 
@@ -1658,21 +2280,47 @@ function TeacherExams() {
               </div>
 
 
-              <button
+              <div className="d-flex gap-2 mt-3 mt-md-0">
 
-                type="button"
+                <button
 
-                className="btn btn-outline-secondary mt-3 mt-md-0"
+                  type="button"
 
-                onClick={
-                  closeMarks
-                }
+                  className="btn btn-success"
 
-              >
+                  onClick={
+                    handleDownloadResultPDF
+                  }
 
-                Close
+                  disabled={
+                    marksLoading ||
+                    markStudents.length === 0
+                  }
 
-              </button>
+                >
+
+                  📄 Download Result PDF
+
+                </button>
+
+
+                <button
+
+                  type="button"
+
+                  className="btn btn-outline-secondary"
+
+                  onClick={
+                    closeMarks
+                  }
+
+                >
+
+                  Close
+
+                </button>
+
+              </div>
 
             </div>
 

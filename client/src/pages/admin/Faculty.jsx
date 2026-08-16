@@ -109,6 +109,46 @@ function Faculty() {
 
 
   // ======================================
+  // SALARY
+  // ======================================
+
+  const [salaryFaculty, setSalaryFaculty] =
+    useState(null)
+
+  const [salaryData, setSalaryData] =
+    useState(null)
+
+  const [salaryLoading, setSalaryLoading] =
+    useState(false)
+
+  const [salaryUpdating, setSalaryUpdating] =
+    useState(false)
+
+  const [salaryPaying, setSalaryPaying] =
+    useState(false)
+
+  const [monthlySalaryInput, setMonthlySalaryInput] =
+    useState('')
+
+  const [paymentDate, setPaymentDate] =
+    useState('')
+
+  const [paymentMethod, setPaymentMethod] =
+    useState('Cash')
+
+  const [salaryRemarks, setSalaryRemarks] =
+    useState('')
+
+
+  // ======================================
+  // PAY SALARY RECORD
+  // ======================================
+
+  const [paySalaryRecord, setPaySalaryRecord] =
+    useState(null)
+
+
+  // ======================================
   // LOADING
   // ======================================
 
@@ -1473,6 +1513,665 @@ function Faculty() {
 
 
   // ======================================
+  // OPEN SALARY
+  // ======================================
+
+  const openSalary =
+    async (faculty) => {
+
+      try {
+
+        setSalaryFaculty(
+          faculty
+        )
+
+        setSalaryData(null)
+
+        setSalaryLoading(true)
+
+        setMonthlySalaryInput(
+
+          faculty.monthlySalary !==
+            undefined &&
+          faculty.monthlySalary !==
+            null
+
+            ? String(
+                faculty.monthlySalary
+              )
+
+            : ''
+
+        )
+
+
+        // RESET PAYMENT FORM
+
+        setPaySalaryRecord(null)
+
+        setPaymentDate('')
+
+        setPaymentMethod('Cash')
+
+        setSalaryRemarks('')
+
+
+        const response =
+          await axios.get(
+
+            `${API_URL}/faculty-salary/${faculty._id}`
+
+          )
+
+
+        if (
+          response.data.success
+        ) {
+
+          setSalaryData(
+            response.data
+          )
+
+          setMonthlySalaryInput(
+
+            response.data.faculty
+              ?.monthlySalary !==
+              undefined &&
+            response.data.faculty
+              ?.monthlySalary !==
+              null
+
+              ? String(
+
+                  response.data.faculty
+                    .monthlySalary
+
+                )
+
+              : ''
+
+          )
+
+        }
+
+      }
+
+      catch (error) {
+
+        console.log(
+          'Open Salary Error:',
+          error
+        )
+
+
+        alert(
+
+          error?.response?.data?.message ||
+
+          'Unable to load faculty salary.'
+
+        )
+
+        setSalaryFaculty(null)
+
+      }
+
+      finally {
+
+        setSalaryLoading(false)
+
+      }
+
+    }
+
+
+  // ======================================
+  // CLOSE SALARY
+  // ======================================
+
+  const closeSalary =
+    () => {
+
+      if (
+        salaryUpdating ||
+        salaryPaying
+      ) {
+
+        return
+
+      }
+
+
+      setSalaryFaculty(null)
+
+      setSalaryData(null)
+
+      setPaySalaryRecord(null)
+
+      setPaymentDate('')
+
+      setPaymentMethod('Cash')
+
+      setSalaryRemarks('')
+
+    }
+
+
+  // ======================================
+  // UPDATE MONTHLY SALARY
+  // ======================================
+
+  const handleUpdateMonthlySalary =
+    async () => {
+
+      if (salaryUpdating) {
+
+        return
+
+      }
+
+
+      if (!salaryFaculty) {
+
+        return
+
+      }
+
+
+      const salary =
+        Number(
+          monthlySalaryInput
+        )
+
+
+      if (
+
+        Number.isNaN(salary) ||
+
+        salary < 0
+
+      ) {
+
+        alert(
+          'Please enter a valid salary amount.'
+        )
+
+        return
+
+      }
+
+
+      try {
+
+        setSalaryUpdating(true)
+
+
+        const response =
+          await axios.put(
+
+            `${API_URL}/faculty-salary/${salaryFaculty._id}`,
+
+            {
+
+              monthlySalary:
+                salary,
+
+            }
+
+          )
+
+
+        if (
+          response.data.success
+        ) {
+
+          alert(
+
+            response.data.message ||
+
+            'Monthly salary updated successfully.'
+
+          )
+
+
+          await openSalary(
+            salaryFaculty
+          )
+
+
+          // Update faculty list
+
+          setFacultyData(
+
+            (current) =>
+
+              current.map(
+
+                (faculty) =>
+
+                  faculty._id ===
+                  salaryFaculty._id
+
+                    ? {
+
+                        ...faculty,
+
+                        monthlySalary:
+                          salary,
+
+                      }
+
+                    : faculty
+
+              )
+
+          )
+
+        }
+
+      }
+
+      catch (error) {
+
+        console.log(
+
+          'Update Salary Error:',
+
+          error
+
+        )
+
+
+        alert(
+
+          error?.response?.data?.message ||
+
+          'Unable to update monthly salary.'
+
+        )
+
+      }
+
+      finally {
+
+        setSalaryUpdating(false)
+
+      }
+
+    }
+
+
+  // ======================================
+  // OPEN PAY SALARY
+  // ======================================
+
+  const openPaySalary =
+    (record) => {
+
+      setPaySalaryRecord(
+        record
+      )
+
+
+      const today =
+        new Date()
+
+
+      const year =
+        today.getFullYear()
+
+
+      const month =
+        String(
+          today.getMonth() + 1
+        ).padStart(
+          2,
+          '0'
+        )
+
+
+      const day =
+        String(
+          today.getDate()
+        ).padStart(
+          2,
+          '0'
+        )
+
+
+      setPaymentDate(
+
+        `${year}-${month}-${day}`
+
+      )
+
+
+      setPaymentMethod('Cash')
+
+      setSalaryRemarks('')
+
+    }
+
+
+  // ======================================
+  // MARK SALARY PAID
+  // ======================================
+
+  const handleMarkSalaryPaid =
+    async () => {
+
+      if (salaryPaying) {
+
+        return
+
+      }
+
+
+      if (
+        !salaryFaculty ||
+        !paySalaryRecord
+      ) {
+
+        return
+
+      }
+
+
+      try {
+
+        setSalaryPaying(true)
+
+
+        const response =
+          await axios.put(
+
+            `${API_URL}/faculty-salary/${salaryFaculty._id}/pay`,
+
+            {
+
+              month:
+                paySalaryRecord.month,
+
+              year:
+                paySalaryRecord.year,
+
+              paymentDate:
+                paymentDate || null,
+
+              paymentMethod:
+                paymentMethod || '',
+
+              remarks:
+                salaryRemarks || '',
+
+            }
+
+          )
+
+
+        if (
+          response.data.success
+        ) {
+
+          alert(
+
+            response.data.message ||
+
+            'Salary marked as paid successfully.'
+
+          )
+
+
+          setPaySalaryRecord(
+            null
+          )
+
+
+          setPaymentDate('')
+
+          setPaymentMethod('Cash')
+
+          setSalaryRemarks('')
+
+
+          await openSalary(
+            salaryFaculty
+          )
+
+        }
+
+      }
+
+      catch (error) {
+
+        console.log(
+
+          'Mark Salary Paid Error:',
+
+          error
+
+        )
+
+
+        alert(
+
+          error?.response?.data?.message ||
+
+          'Unable to mark salary as paid.'
+
+        )
+
+      }
+
+      finally {
+
+        setSalaryPaying(false)
+
+      }
+
+    }
+
+
+  // ======================================
+  // MARK SALARY DUE
+  // ======================================
+
+  const handleMarkSalaryDue =
+    async (record) => {
+
+      if (!salaryFaculty) {
+
+        return
+
+      }
+
+
+      const confirmed =
+        window.confirm(
+
+          `Are you sure you want to mark ${getMonthName(record.month)} ${record.year} salary as Due?`
+
+        )
+
+
+      if (!confirmed) {
+
+        return
+
+      }
+
+
+      try {
+
+        const response =
+          await axios.put(
+
+            `${API_URL}/faculty-salary/${salaryFaculty._id}/due`,
+
+            {
+
+              month:
+                record.month,
+
+              year:
+                record.year,
+
+            }
+
+          )
+
+
+        if (
+          response.data.success
+        ) {
+
+          alert(
+
+            response.data.message ||
+
+            'Salary marked as due.'
+
+          )
+
+
+          await openSalary(
+            salaryFaculty
+          )
+
+        }
+
+      }
+
+      catch (error) {
+
+        console.log(
+
+          'Mark Salary Due Error:',
+
+          error
+
+        )
+
+
+        alert(
+
+          error?.response?.data?.message ||
+
+          'Unable to mark salary as due.'
+
+        )
+
+      }
+
+    }
+
+
+  // ======================================
+  // MONTH NAME
+  // ======================================
+
+  const getMonthName =
+    (month) => {
+
+      const monthNames = [
+
+        'January',
+
+        'February',
+
+        'March',
+
+        'April',
+
+        'May',
+
+        'June',
+
+        'July',
+
+        'August',
+
+        'September',
+
+        'October',
+
+        'November',
+
+        'December',
+
+      ]
+
+
+      return (
+
+        monthNames[
+          Number(month) - 1
+        ] ||
+
+        '-'
+
+      )
+
+    }
+
+
+  // ======================================
+  // FORMAT MONEY
+  // ======================================
+
+  const formatMoney =
+    (amount) => {
+
+      return (
+
+        `₹${Number(
+          amount || 0
+        ).toLocaleString('en-IN')}`
+
+      )
+
+    }
+
+
+  // ======================================
+  // FORMAT DATE
+  // ======================================
+
+  const formatDate =
+    (date) => {
+
+      if (!date) {
+
+        return '-'
+
+      }
+
+
+      const value =
+        new Date(
+          date
+        )
+
+
+      if (
+        Number.isNaN(
+          value.getTime()
+        )
+      ) {
+
+        return '-'
+
+      }
+
+
+      return value.toLocaleDateString(
+        'en-IN'
+      )
+
+    }
+
+
+  // ======================================
   // RENDER
   // ======================================
 
@@ -1488,18 +2187,18 @@ function Faculty() {
       <div className="applications-header d-flex justify-content-between align-items-center">
 
         <div>
-      
+
           <h2>
             Faculty Management
           </h2>
-      
+
           <p>
             Add and manage faculty members.
           </p>
-      
+
         </div>
-      
-      
+
+
         <Link
           to="/admin/faculty-attendance"
           className="btn faculty-attendance-btn"
@@ -1508,9 +2207,9 @@ function Faculty() {
           <i className="fas fa-calendar-check me-2"></i>
 
           Faculty Attendance
-          
+
         </Link>
-              
+
       </div>
 
 
@@ -2560,9 +3259,9 @@ function Faculty() {
           </div>
 
 
-          {/* ==================================
+          {/* ======================================
               SUBMIT
-          ================================== */}
+          ====================================== */}
 
           <button
 
@@ -2646,6 +3345,8 @@ function Faculty() {
 
               <th>Employee ID</th>
 
+              <th>Salary</th>
+
               <th>Website</th>
 
               <th>Action</th>
@@ -2662,7 +3363,7 @@ function Faculty() {
               <tr>
 
                 <td
-                  colSpan="9"
+                  colSpan="10"
                   className="text-center"
                 >
 
@@ -2784,6 +3485,35 @@ function Faculty() {
                         item.employeeId ||
                         'Generating...'
                       }
+
+                    </td>
+
+
+                    {/* ==================================
+                        SALARY
+                    ================================== */}
+
+                    <td>
+
+                      <button
+
+                        type="button"
+
+                        className="table-btn approve-btn"
+
+                        onClick={() =>
+                          openSalary(
+                            item
+                          )
+                        }
+
+                      >
+
+                        <i className="fas fa-money-bill-wave me-1"></i>
+
+                        Salary
+
+                      </button>
 
                     </td>
 
@@ -3844,6 +4574,1273 @@ function Faculty() {
                     ? 'Please Wait...'
 
                     : 'Reset Password'
+
+                  }
+
+                </button>
+
+              </div>
+
+            </div>
+
+          </div>
+
+        </div>
+
+      )}
+
+
+      {/* ======================================
+          SALARY MODAL
+      ====================================== */}
+
+      {salaryFaculty && (
+
+        <div
+
+          className="modal d-block"
+
+          tabIndex="-1"
+
+          style={{
+
+            backgroundColor:
+              'rgba(0,0,0,0.5)',
+
+          }}
+
+        >
+
+          <div className="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
+
+            <div className="modal-content">
+
+
+              {/* ==================================
+                  SALARY HEADER
+              ================================== */}
+
+              <div className="modal-header">
+
+                <div>
+
+                  <h5 className="modal-title">
+
+                    <i className="fas fa-money-bill-wave me-2"></i>
+
+                    Faculty Salary
+
+                  </h5>
+
+
+                  <small className="text-muted">
+
+                    {
+                      salaryFaculty.name
+                    }
+
+                    {' • '}
+
+                    {
+                      salaryFaculty.designation
+                    }
+
+                  </small>
+
+                </div>
+
+
+                <button
+
+                  type="button"
+
+                  className="btn-close"
+
+                  onClick={
+                    closeSalary
+                  }
+
+                ></button>
+
+              </div>
+
+
+              {/* ==================================
+                  SALARY BODY
+              ================================== */}
+
+              <div className="modal-body">
+
+
+                {salaryLoading ? (
+
+                  <div className="text-center py-5">
+
+                    <div
+                      className="spinner-border"
+                      role="status"
+                    />
+
+                    <p className="text-muted mt-3">
+
+                      Loading salary information...
+
+                    </p>
+
+                  </div>
+
+                ) : salaryData ? (
+
+                  <>
+
+                    {/* ==================================
+                        MONTHLY SALARY
+                    ================================== */}
+
+                    <div className="card border-0 bg-light mb-4">
+
+                      <div className="card-body">
+
+                        <h6 className="fw-bold mb-3">
+
+                          Monthly Salary
+
+                        </h6>
+
+
+                        <div className="row align-items-end">
+
+                          <div className="col-md-6">
+
+                            <label className="form-label">
+
+                              Monthly Salary Amount
+
+                            </label>
+
+
+                            <div className="input-group">
+
+                              <span className="input-group-text">
+
+                                ₹
+
+                              </span>
+
+
+                              <input
+
+                                type="number"
+
+                                className="form-control"
+
+                                min="0"
+
+                                value={
+                                  monthlySalaryInput
+                                }
+
+                                onChange={(e) =>
+                                  setMonthlySalaryInput(
+                                    e.target.value
+                                  )
+                                }
+
+                                disabled={
+                                  salaryUpdating
+                                }
+
+                              />
+
+                            </div>
+
+                          </div>
+
+
+                          <div className="col-md-6 mt-3 mt-md-0">
+
+                            <button
+
+                              type="button"
+
+                              className="btn btn-primary"
+
+                              onClick={
+                                handleUpdateMonthlySalary
+                              }
+
+                              disabled={
+                                salaryUpdating
+                              }
+
+                            >
+
+                              {salaryUpdating
+
+                                ? 'Updating...'
+
+                                : 'Update Salary'
+
+                              }
+
+                            </button>
+
+                          </div>
+
+                        </div>
+
+
+                        <small className="text-muted d-block mt-2">
+
+                          Changing the monthly salary will
+                          affect new/current salary records.
+                          Previous paid records remain unchanged.
+
+                        </small>
+
+                      </div>
+
+                    </div>
+
+
+                    {/* ==================================
+                        CURRENT MONTH
+                    ================================== */}
+
+                    <div className="card border mb-4">
+
+                      <div className="card-body">
+
+                        <h6 className="fw-bold mb-3">
+
+                          Current Month
+
+                        </h6>
+
+
+                        {salaryData.currentMonth?.record ? (
+
+                          <div className="row align-items-center">
+
+                            <div className="col-md-3">
+
+                              <small className="text-muted">
+
+                                Month
+
+                              </small>
+
+
+                              <div className="fw-semibold">
+
+                                {
+                                  getMonthName(
+
+                                    salaryData
+                                      .currentMonth
+                                      .record
+                                      .month
+
+                                  )
+                                }
+
+                                {' '}
+
+                                {
+                                  salaryData
+                                    .currentMonth
+                                    .record
+                                    .year
+                                }
+
+                              </div>
+
+                            </div>
+
+
+                            <div className="col-md-3">
+
+                              <small className="text-muted">
+
+                                Amount
+
+                              </small>
+
+
+                              <div className="fw-semibold">
+
+                                {
+                                  formatMoney(
+
+                                    salaryData
+                                      .currentMonth
+                                      .record
+                                      .amount
+
+                                  )
+                                }
+
+                              </div>
+
+                            </div>
+
+
+                            <div className="col-md-3">
+
+                              <small className="text-muted">
+
+                                Status
+
+                              </small>
+
+
+                              <div>
+
+                                {
+
+                                  salaryData
+                                    .currentMonth
+                                    .record
+                                    .status === 'Paid'
+
+                                    ? (
+
+                                      <span className="badge bg-success">
+
+                                        Paid
+
+                                      </span>
+
+                                    )
+
+                                    : (
+
+                                      <span className="badge bg-danger">
+
+                                        Due
+
+                                      </span>
+
+                                    )
+
+                                }
+
+                              </div>
+
+                            </div>
+
+
+                            <div className="col-md-3 text-md-end mt-3 mt-md-0">
+
+                              {
+
+                                salaryData
+                                  .currentMonth
+                                  .record
+                                  .status === 'Paid'
+
+                                  ? (
+
+                                    <button
+
+                                      type="button"
+
+                                      className="btn btn-outline-danger btn-sm"
+
+                                      onClick={() =>
+                                        handleMarkSalaryDue(
+
+                                          salaryData
+                                            .currentMonth
+                                            .record
+
+                                        )
+                                      }
+
+                                    >
+
+                                      Mark as Due
+
+                                    </button>
+
+                                  )
+
+                                  : (
+
+                                    <button
+
+                                      type="button"
+
+                                      className="btn btn-success btn-sm"
+
+                                      onClick={() =>
+                                        openPaySalary(
+
+                                          salaryData
+                                            .currentMonth
+                                            .record
+
+                                        )
+                                      }
+
+                                    >
+
+                                      <i className="fas fa-check me-1"></i>
+
+                                      Mark as Paid
+
+                                    </button>
+
+                                  )
+
+                              }
+
+                            </div>
+
+                          </div>
+
+                        ) : (
+
+                          <div className="alert alert-warning mb-0">
+
+                            Current month salary record is not
+                            available.
+
+                          </div>
+
+                        )}
+
+                      </div>
+
+                    </div>
+
+
+                    {/* ==================================
+                        SUMMARY
+                    ================================== */}
+
+                    <div className="row g-3 mb-4">
+
+                      <div className="col-md-4">
+
+                        <div className="card border h-100">
+
+                          <div className="card-body">
+
+                            <small className="text-muted">
+
+                              Monthly Salary
+
+                            </small>
+
+
+                            <h4 className="fw-bold mb-0">
+
+                              {
+                                formatMoney(
+
+                                  salaryData
+                                    .faculty
+                                    ?.monthlySalary
+
+                                )
+                              }
+
+                            </h4>
+
+                          </div>
+
+                        </div>
+
+                      </div>
+
+
+                      <div className="col-md-4">
+
+                        <div className="card border h-100">
+
+                          <div className="card-body">
+
+                            <small className="text-muted">
+
+                              Total Paid
+
+                            </small>
+
+
+                            <h4 className="fw-bold text-success mb-0">
+
+                              {
+                                formatMoney(
+
+                                  salaryData
+                                    .summary
+                                    ?.totalPaid
+
+                                )
+                              }
+
+                            </h4>
+
+                          </div>
+
+                        </div>
+
+                      </div>
+
+
+                      <div className="col-md-4">
+
+                        <div className="card border h-100">
+
+                          <div className="card-body">
+
+                            <small className="text-muted">
+
+                              Total Due
+
+                            </small>
+
+
+                            <h4 className="fw-bold text-danger mb-0">
+
+                              {
+                                formatMoney(
+
+                                  salaryData
+                                    .summary
+                                    ?.totalDue
+
+                                )
+                              }
+
+                            </h4>
+
+                          </div>
+
+                        </div>
+
+                      </div>
+
+                    </div>
+
+
+                    {/* ==================================
+                        SALARY HISTORY
+                    ================================== */}
+
+                    <div className="card border">
+
+                      <div className="card-body">
+
+                        <div className="d-flex justify-content-between align-items-center mb-3">
+
+                          <h6 className="fw-bold mb-0">
+
+                            Salary History
+
+                          </h6>
+
+
+                          <span className="badge bg-secondary">
+
+                            {
+                              salaryData
+                                .salaryRecords
+                                ?.length || 0
+                            }
+
+                            {' '}
+
+                            Record(s)
+
+                          </span>
+
+                        </div>
+
+
+                        {
+
+                          salaryData
+                            .salaryRecords
+                            ?.length > 0
+
+                            ? (
+
+                              <div className="table-responsive">
+
+                                <table className="table table-bordered table-hover align-middle mb-0">
+
+                                  <thead className="table-light">
+
+                                    <tr>
+
+                                      <th>
+                                        #
+                                      </th>
+
+                                      <th>
+                                        Month
+                                      </th>
+
+                                      <th>
+                                        Amount
+                                      </th>
+
+                                      <th>
+                                        Status
+                                      </th>
+
+                                      <th>
+                                        Payment Date
+                                      </th>
+
+                                      <th>
+                                        Payment Method
+                                      </th>
+
+                                      <th>
+                                        Remarks
+                                      </th>
+
+                                      <th>
+                                        Action
+                                      </th>
+
+                                    </tr>
+
+                                  </thead>
+
+
+                                  <tbody>
+
+                                    {[
+
+                                      ...(salaryData
+                                        .salaryRecords || [])
+
+                                    ]
+
+                                      .sort(
+
+                                        (a, b) => {
+
+                                          const dateA =
+                                            Number(a.year) *
+                                            100 +
+                                            Number(a.month)
+
+                                          const dateB =
+                                            Number(b.year) *
+                                            100 +
+                                            Number(b.month)
+
+                                          return (
+                                            dateB -
+                                            dateA
+                                          )
+
+                                        }
+
+                                      )
+
+                                      .map(
+
+                                        (
+                                          record,
+                                          index
+                                        ) => (
+
+                                          <tr
+
+                                            key={
+
+                                              record._id ||
+
+                                              `${record.year}-${record.month}`
+
+                                            }
+
+                                          >
+
+                                            <td>
+
+                                              {
+                                                index + 1
+                                              }
+
+                                            </td>
+
+
+                                            <td>
+
+                                              <strong>
+
+                                                {
+                                                  getMonthName(
+                                                    record.month
+                                                  )
+                                                }
+
+                                                {' '}
+
+                                                {
+                                                  record.year
+                                                }
+
+                                              </strong>
+
+                                            </td>
+
+
+                                            <td>
+
+                                              {
+                                                formatMoney(
+                                                  record.amount
+                                                )
+                                              }
+
+                                            </td>
+
+
+                                            <td>
+
+                                              {record.status ===
+                                              'Paid' ? (
+
+                                                <span className="badge bg-success">
+
+                                                  Paid
+
+                                                </span>
+
+                                              ) : (
+
+                                                <span className="badge bg-danger">
+
+                                                  Due
+
+                                                </span>
+
+                                              )}
+
+                                            </td>
+
+
+                                            <td>
+
+                                              {
+                                                formatDate(
+                                                  record.paymentDate
+                                                )
+                                              }
+
+                                            </td>
+
+
+                                            <td>
+
+                                              {
+                                                record.paymentMethod ||
+                                                '-'
+                                              }
+
+                                            </td>
+
+
+                                            <td>
+
+                                              {
+                                                record.remarks ||
+                                                '-'
+                                              }
+
+                                            </td>
+
+
+                                            <td>
+
+                                              {record.status ===
+                                              'Paid' ? (
+
+                                                <button
+
+                                                  type="button"
+
+                                                  className="btn btn-outline-danger btn-sm"
+
+                                                  onClick={() =>
+                                                    handleMarkSalaryDue(
+                                                      record
+                                                    )
+                                                  }
+
+                                                >
+
+                                                  Mark Due
+
+                                                </button>
+
+                                              ) : (
+
+                                                <button
+
+                                                  type="button"
+
+                                                  className="btn btn-success btn-sm"
+
+                                                  onClick={() =>
+                                                    openPaySalary(
+                                                      record
+                                                    )
+                                                  }
+
+                                                >
+
+                                                  Mark Paid
+
+                                                </button>
+
+                                              )}
+
+                                            </td>
+
+                                          </tr>
+
+                                        )
+
+                                      )}
+
+                                  </tbody>
+
+                                </table>
+
+                              </div>
+
+                            )
+
+                            : (
+
+                              <div className="text-center py-4">
+
+                                <div
+                                  style={{
+                                    fontSize: '40px',
+                                  }}
+                                >
+
+                                  💰
+
+                                </div>
+
+
+                                <p className="text-muted mb-0">
+
+                                  No salary records found.
+
+                                </p>
+
+                              </div>
+
+                            )
+
+                        }
+
+                      </div>
+
+                    </div>
+
+                  </>
+
+                ) : (
+
+                  <div className="alert alert-warning">
+
+                    Unable to load salary information.
+
+                  </div>
+
+                )}
+
+              </div>
+
+
+              {/* ==================================
+                  FOOTER
+              ================================== */}
+
+              <div className="modal-footer">
+
+                <button
+
+                  type="button"
+
+                  className="table-btn reject-btn"
+
+                  onClick={
+                    closeSalary
+                  }
+
+                  disabled={
+
+                    salaryUpdating ||
+                    salaryPaying
+
+                  }
+
+                >
+
+                  Close
+
+                </button>
+
+              </div>
+
+            </div>
+
+          </div>
+
+        </div>
+
+      )}
+
+
+      {/* ======================================
+          MARK SALARY PAID MODAL
+      ====================================== */}
+
+      {paySalaryRecord && (
+
+        <div
+
+          className="modal d-block"
+
+          tabIndex="-1"
+
+          style={{
+
+            backgroundColor:
+              'rgba(0,0,0,0.5)',
+
+            zIndex: 1060,
+
+          }}
+
+        >
+
+          <div className="modal-dialog modal-dialog-centered">
+
+            <div className="modal-content">
+
+
+              {/* HEADER */}
+
+              <div className="modal-header">
+
+                <h5 className="modal-title">
+
+                  Mark Salary as Paid
+
+                </h5>
+
+
+                <button
+
+                  type="button"
+
+                  className="btn-close"
+
+                  onClick={() => {
+
+                    if (
+                      salaryPaying
+                    ) {
+
+                      return
+
+                    }
+
+
+                    setPaySalaryRecord(
+                      null
+                    )
+
+                  }}
+
+                ></button>
+
+              </div>
+
+
+              {/* BODY */}
+
+              <div className="modal-body">
+
+                <div className="alert alert-light border">
+
+                  <div className="d-flex justify-content-between">
+
+                    <span>
+
+                      Faculty
+
+                    </span>
+
+
+                    <strong>
+
+                      {
+                        salaryFaculty?.name
+                      }
+
+                    </strong>
+
+                  </div>
+
+
+                  <div className="d-flex justify-content-between mt-2">
+
+                    <span>
+
+                      Salary Month
+
+                    </span>
+
+
+                    <strong>
+
+                      {
+                        getMonthName(
+                          paySalaryRecord.month
+                        )
+                      }
+
+                      {' '}
+
+                      {
+                        paySalaryRecord.year
+                      }
+
+                    </strong>
+
+                  </div>
+
+
+                  <div className="d-flex justify-content-between mt-2">
+
+                    <span>
+
+                      Amount
+
+                    </span>
+
+
+                    <strong>
+
+                      {
+                        formatMoney(
+                          paySalaryRecord.amount
+                        )
+                      }
+
+                    </strong>
+
+                  </div>
+
+                </div>
+
+
+                {/* PAYMENT DATE */}
+
+                <div className="mb-3">
+
+                  <label className="form-label">
+
+                    Payment Date
+
+                  </label>
+
+
+                  <input
+
+                    type="date"
+
+                    className="form-control"
+
+                    value={
+                      paymentDate
+                    }
+
+                    onChange={(e) =>
+                      setPaymentDate(
+                        e.target.value
+                      )
+                    }
+
+                    disabled={
+                      salaryPaying
+                    }
+
+                  />
+
+                </div>
+
+
+                {/* PAYMENT METHOD */}
+
+                <div className="mb-3">
+
+                  <label className="form-label">
+
+                    Payment Method
+
+                  </label>
+
+
+                  <select
+
+                    className="form-select"
+
+                    value={
+                      paymentMethod
+                    }
+
+                    onChange={(e) =>
+                      setPaymentMethod(
+                        e.target.value
+                      )
+                    }
+
+                    disabled={
+                      salaryPaying
+                    }
+
+                  >
+
+                    <option value="Cash">
+
+                      Cash
+
+                    </option>
+
+                    <option value="Bank Transfer">
+
+                      Bank Transfer
+
+                    </option>
+
+                    <option value="UPI">
+
+                      UPI
+
+                    </option>
+
+                    <option value="Cheque">
+
+                      Cheque
+
+                    </option>
+
+                    <option value="Other">
+
+                      Other
+
+                    </option>
+
+                  </select>
+
+                </div>
+
+
+                {/* REMARKS */}
+
+                <div className="mb-3">
+
+                  <label className="form-label">
+
+                    Remarks
+
+                  </label>
+
+
+                  <textarea
+
+                    className="form-control"
+
+                    rows="3"
+
+                    placeholder="Optional remarks..."
+
+                    value={
+                      salaryRemarks
+                    }
+
+                    onChange={(e) =>
+                      setSalaryRemarks(
+                        e.target.value
+                      )
+                    }
+
+                    disabled={
+                      salaryPaying
+                    }
+
+                  ></textarea>
+
+                </div>
+
+              </div>
+
+
+              {/* FOOTER */}
+
+              <div className="modal-footer">
+
+                <button
+
+                  type="button"
+
+                  className="table-btn reject-btn"
+
+                  onClick={() =>
+                    setPaySalaryRecord(
+                      null
+                    )
+                  }
+
+                  disabled={
+                    salaryPaying
+                  }
+
+                >
+
+                  Cancel
+
+                </button>
+
+
+                <button
+
+                  type="button"
+
+                  className="table-btn approve-btn"
+
+                  onClick={
+                    handleMarkSalaryPaid
+                  }
+
+                  disabled={
+                    salaryPaying
+                  }
+
+                >
+
+                  {salaryPaying
+
+                    ? 'Saving...'
+
+                    : 'Mark as Paid'
 
                   }
 

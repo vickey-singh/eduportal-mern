@@ -5,381 +5,719 @@ const mongoose = require('mongoose')
 // PAYMENT SCHEMA
 // ======================================
 
-const paymentSchema = new mongoose.Schema({
+const paymentSchema =
+  new mongoose.Schema({
 
-  amount: {
-    type: Number,
-    required: true,
-  },
+    amount: {
 
-  paymentCategory: {
-    type: String,
-    enum: [
-      'Registration',
-      'CourseFee',
-    ],
-    required: true,
-  },
+      type: Number,
 
-  paymentMethod: {
-    type: String,
-    required: true,
-  },
+      required: true,
 
-  paymentType: {
-    type: String,
-    enum: [
-      'Full',
-      'Installment',
-    ],
-    default: 'Installment',
-  },
+    },
 
-  paymentPlan: {
-    type: String,
-    enum: [
-      'monthly',
-      'three_month',
-      'six_month',
-      'full',
-      '',
-    ],
-    default: '',
-  },
 
-  paymentMode: {
-    type: String,
-    enum: [
-      'Offline',
-      'Online',
-    ],
-    default: 'Offline',
-  },
+    paymentCategory: {
 
-  paymentStatus: {
-    type: String,
-    enum: [
-      'Success',
-      'Pending',
-      'Failed',
-    ],
-    default: 'Success',
-  },
+      type: String,
 
-  transactionId: {
-    type: String,
-    default: '',
-  },
+      enum: [
 
-  orderId: {
-    type: String,
-    default: '',
-  },
+        'Registration',
 
-  paymentDate: {
-    type: String,
-    required: true,
-  },
+        'CourseFee',
 
-})
+      ],
+
+      required: true,
+
+    },
+
+
+    paymentMethod: {
+
+      type: String,
+
+      required: true,
+
+    },
+
+
+    paymentType: {
+
+      type: String,
+
+      enum: [
+
+        'Full',
+
+        'Installment',
+
+      ],
+
+      default: 'Installment',
+
+    },
+
+
+    paymentPlan: {
+
+      type: String,
+
+      enum: [
+
+        'monthly',
+
+        'three_month',
+
+        'six_month',
+
+        'full',
+
+        '',
+
+      ],
+
+      default: '',
+
+    },
+
+
+    paymentMode: {
+
+      type: String,
+
+      enum: [
+
+        'Offline',
+
+        'Online',
+
+      ],
+
+      default: 'Offline',
+
+    },
+
+
+    paymentStatus: {
+
+      type: String,
+
+      enum: [
+
+        'Success',
+
+        'Pending',
+
+        'Failed',
+
+      ],
+
+      default: 'Success',
+
+    },
+
+
+    transactionId: {
+
+      type: String,
+
+      default: '',
+
+    },
+
+
+    orderId: {
+
+      type: String,
+
+      default: '',
+
+    },
+
+
+    paymentDate: {
+
+      type: String,
+
+      required: true,
+
+    },
+
+  })
 
 
 // ======================================
 // STUDENT SCHEMA
 // ======================================
 
-const studentSchema = new mongoose.Schema(
+const studentSchema =
+  new mongoose.Schema(
 
-  {
+    {
 
-    // ======================================
-    // BASIC INFORMATION
-    // ======================================
+      // ======================================
+      // BASIC INFORMATION
+      // ======================================
 
-    name: {
-      type: String,
-      required: true,
-      trim: true,
-    },
+      name: {
 
-    dob: {
-      type: String,
-      default: '',
-    },
+        type: String,
 
-    aadharNumber: {
-      type: String,
-      default: '',
-      trim: true,
-    },
+        required: true,
 
-    admissionNumber: {
-      type: String,
-      required: true,
-      unique: true,
-      trim: true,
-    },
+        trim: true,
 
-    course: {
-      type: String,
-      required: true,
-      trim: true,
-    },
-
-    batchTime: {
-      type: String,
-      default: '',
-      trim: true,
-    },
-
-    contact: {
-      type: String,
-      required: true,
-      trim: true,
-    },
-
-    email: {
-      type: String,
-      required: true,
-      lowercase: true,
-      trim: true,
-    },
-
-    admissionDate: {
-      type: String,
-      required: true,
-    },
-
-    image: {
-      type: String,
-      default: '',
-    },
+      },
 
 
-    // ======================================
-    // PARENTS INFORMATION
-    // ======================================
+      dob: {
 
-    fatherName: {
-      type: String,
-      default: '',
-      trim: true,
-    },
+        type: String,
 
-    motherName: {
-      type: String,
-      default: '',
-      trim: true,
-    },
+        default: '',
 
-    fatherOccupation: {
-      type: String,
-      default: '',
-      trim: true,
-    },
-
-    motherOccupation: {
-      type: String,
-      default: '',
-      trim: true,
-    },
-
-    fatherMobile: {
-      type: String,
-      default: '',
-      trim: true,
-    },
-
-    motherMobile: {
-      type: String,
-      default: '',
-      trim: true,
-    },
+      },
 
 
-    // ======================================
-    // ADDRESS
-    // ======================================
+      aadharNumber: {
 
-    permanentAddress: {
-      type: String,
-      default: '',
-      trim: true,
-    },
+        type: String,
 
-    currentAddress: {
-      type: String,
-      default: '',
-      trim: true,
-    },
+        default: '',
+
+        trim: true,
+
+      },
 
 
-    // ======================================
-    // EDUCATION
-    // ======================================
+      admissionNumber: {
 
-    schoolCollegeName: {
-      type: String,
-      default: '',
-      trim: true,
-    },
+        type: String,
+
+        required: true,
+
+        unique: true,
+
+        trim: true,
+
+      },
 
 
-    // ======================================
-    // ADMISSION
-    // ======================================
+      course: {
 
-    admissionType: {
-      type: String,
-      enum: [
-        'Offline',
-        'Online',
+        type: String,
+
+        required: true,
+
+        trim: true,
+
+      },
+
+
+      batchTime: {
+
+        type: String,
+
+        default: '',
+
+        trim: true,
+
+      },
+
+
+      contact: {
+
+        type: String,
+
+        required: true,
+
+        trim: true,
+
+      },
+
+
+      email: {
+
+        type: String,
+
+        required: true,
+
+        lowercase: true,
+
+        trim: true,
+
+      },
+
+
+      admissionDate: {
+
+        type: String,
+
+        required: true,
+
+      },
+
+
+      // ======================================
+      // ACADEMIC SESSION
+      // ======================================
+      //
+      // Example:
+      // 2026-2027
+      // 2027-2028
+      //
+      // New admission ke time backend
+      // automatically session assign karega.
+      //
+      // Default '' rakha gaya hai taaki
+      // existing students safe rahen.
+      //
+      // ======================================
+
+      session: {
+
+        type: String,
+
+        default: '',
+
+        trim: true,
+
+        index: true,
+
+      },
+
+
+      image: {
+
+        type: String,
+
+        default: '',
+
+      },
+
+
+      // ======================================
+      // PARENTS INFORMATION
+      // ======================================
+
+      fatherName: {
+
+        type: String,
+
+        default: '',
+
+        trim: true,
+
+      },
+
+
+      motherName: {
+
+        type: String,
+
+        default: '',
+
+        trim: true,
+
+      },
+
+
+      fatherOccupation: {
+
+        type: String,
+
+        default: '',
+
+        trim: true,
+
+      },
+
+
+      motherOccupation: {
+
+        type: String,
+
+        default: '',
+
+        trim: true,
+
+      },
+
+
+      fatherMobile: {
+
+        type: String,
+
+        default: '',
+
+        trim: true,
+
+      },
+
+
+      motherMobile: {
+
+        type: String,
+
+        default: '',
+
+        trim: true,
+
+      },
+
+
+      // ======================================
+      // ADDRESS
+      // ======================================
+
+      permanentAddress: {
+
+        type: String,
+
+        default: '',
+
+        trim: true,
+
+      },
+
+
+      currentAddress: {
+
+        type: String,
+
+        default: '',
+
+        trim: true,
+
+      },
+
+
+      // ======================================
+      // EDUCATION
+      // ======================================
+
+      schoolCollegeName: {
+
+        type: String,
+
+        default: '',
+
+        trim: true,
+
+      },
+
+
+      // ======================================
+      // ADMISSION
+      // ======================================
+
+      admissionType: {
+
+        type: String,
+
+        enum: [
+
+          'Offline',
+
+          'Online',
+
+        ],
+
+        default: 'Offline',
+
+      },
+
+
+      // ======================================
+      // REGISTRATION FEE
+      // ======================================
+
+      registrationFee: {
+
+        type: Number,
+
+        default: 0,
+
+      },
+
+
+      registrationFeePaid: {
+
+        type: Number,
+
+        default: 0,
+
+      },
+
+
+      registrationFeeStatus: {
+
+        type: String,
+
+        enum: [
+
+          'Pending',
+
+          'Paid',
+
+        ],
+
+        default: 'Pending',
+
+      },
+
+
+      // ======================================
+      // COURSE FEE
+      // ======================================
+
+      totalFees: {
+
+        type: Number,
+
+        required: true,
+
+        default: 0,
+
+      },
+
+
+      paidFees: {
+
+        type: Number,
+
+        required: true,
+
+        default: 0,
+
+      },
+
+
+      remainingFees: {
+
+        type: Number,
+
+        default: 0,
+
+      },
+
+
+      feesStatus: {
+
+        type: String,
+
+        enum: [
+
+          'Pending',
+
+          'Partial',
+
+          'Paid',
+
+        ],
+
+        default: 'Pending',
+
+      },
+
+
+      // ======================================
+      // STUDENT-SPECIFIC PAYMENT OPTIONS
+      // ======================================
+
+      monthlyInstallment: {
+
+        type: Number,
+
+        default: 0,
+
+      },
+
+
+      threeMonthInstallment: {
+
+        type: Number,
+
+        default: 0,
+
+      },
+
+
+      sixMonthInstallment: {
+
+        type: Number,
+
+        default: 0,
+
+      },
+
+
+      fullPaymentFee: {
+
+        type: Number,
+
+        default: 0,
+
+      },
+
+
+      // ======================================
+      // PAYMENT PLAN
+      // ======================================
+
+      paymentPlan: {
+
+        type: String,
+
+        enum: [
+
+          'monthly',
+
+          'three_month',
+
+          'six_month',
+
+          'full',
+
+          '',
+
+        ],
+
+        default: '',
+
+      },
+
+
+      // ======================================
+      // DUE DATE
+      // ======================================
+
+      dueDate: {
+
+        type: String,
+
+        default: '',
+
+      },
+
+
+      // ======================================
+      // LAST PAYMENT MODE
+      // ======================================
+
+      paymentMode: {
+
+        type: String,
+
+        enum: [
+
+          'Offline',
+
+          'Online',
+
+        ],
+
+        default: 'Offline',
+
+      },
+
+
+      // ======================================
+      // PAYMENT HISTORY
+      // ======================================
+
+      paymentHistory: [
+
+        paymentSchema
+
       ],
-      default: 'Offline',
+
     },
 
 
-    // ======================================
-    // REGISTRATION FEE
-    // ======================================
+    {
 
-    registrationFee: {
-      type: Number,
-      default: 0,
-    },
+      timestamps: true,
 
-    registrationFeePaid: {
-      type: Number,
-      default: 0,
-    },
+    }
 
-    registrationFeeStatus: {
-      type: String,
-      enum: [
-        'Pending',
-        'Paid',
-      ],
-      default: 'Pending',
-    },
+  )
 
 
-    // ======================================
-    // COURSE FEE
-    // ======================================
+// ======================================
+// SESSION INDEX
+// ======================================
+//
+// Session-wise student filtering fast
+// karne ke liye.
+//
+// ======================================
 
-    totalFees: {
-      type: Number,
-      required: true,
-      default: 0,
-    },
+studentSchema.index({
 
-    paidFees: {
-      type: Number,
-      required: true,
-      default: 0,
-    },
+  session: 1,
 
-    remainingFees: {
-      type: Number,
-      default: 0,
-    },
+  admissionDate: -1,
 
-    feesStatus: {
-      type: String,
-      enum: [
-        'Pending',
-        'Partial',
-        'Paid',
-      ],
-      default: 'Pending',
-    },
+})
 
 
-    // ======================================
-    // STUDENT-SPECIFIC PAYMENT OPTIONS
-    // ======================================
+// ======================================
+// SESSION + FEE STATUS INDEX
+// ======================================
+//
+// Current session ke Paid / Partial /
+// Pending students fast filter karne
+// ke liye.
+//
+// ======================================
 
-    monthlyInstallment: {
-      type: Number,
-      default: 0,
-    },
+studentSchema.index({
 
-    threeMonthInstallment: {
-      type: Number,
-      default: 0,
-    },
+  session: 1,
 
-    sixMonthInstallment: {
-      type: Number,
-      default: 0,
-    },
+  feesStatus: 1,
 
-    fullPaymentFee: {
-      type: Number,
-      default: 0,
-    },
+})
 
 
-    // ======================================
-    // PAYMENT PLAN
-    // ======================================
+// ======================================
+// SESSION + COURSE INDEX
+// ======================================
 
-    paymentPlan: {
-      type: String,
-      enum: [
-        'monthly',
-        'three_month',
-        'six_month',
-        'full',
-        '',
-      ],
-      default: '',
-    },
+studentSchema.index({
+
+  session: 1,
+
+  course: 1,
+
+})
 
 
-    // ======================================
-    // DUE DATE
-    // ======================================
+// ======================================
+// SESSION + BATCH INDEX
+// ======================================
 
-    dueDate: {
-      type: String,
-      default: '',
-    },
+studentSchema.index({
 
+  session: 1,
 
-    // ======================================
-    // LAST PAYMENT MODE
-    // ======================================
+  batchTime: 1,
 
-    paymentMode: {
-      type: String,
-      enum: [
-        'Offline',
-        'Online',
-      ],
-      default: 'Offline',
-    },
+})
 
 
-    // ======================================
-    // PAYMENT HISTORY
-    // ======================================
-
-    paymentHistory: [
-      paymentSchema
-    ],
-
-  },
-
-  {
-    timestamps: true,
-  }
-
-)
-
+// ======================================
+// EXPORT MODEL
+// ======================================
 
 module.exports =
   mongoose.model(
+
     'Student',
+
     studentSchema
+
   )

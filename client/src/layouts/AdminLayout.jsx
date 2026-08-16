@@ -34,6 +34,7 @@ import {
   FaTrash,
   FaTimes,
   FaHome,
+  FaFilePdf,
 
 } from 'react-icons/fa'
 
@@ -285,13 +286,6 @@ function AdminLayout() {
   // ======================================
   // NOTIFICATION CLICK
   // ======================================
-  // Click notification:
-  //
-  // 1. Mark as read
-  // 2. Close dropdown
-  // 3. Open related page
-  //
-  // ======================================
 
   const handleNotificationClick =
     async (notification) => {
@@ -358,10 +352,6 @@ function AdminLayout() {
   const handleMarkAllAsRead =
     async (event) => {
 
-      // Important:
-      // Parent notification item ka
-      // click trigger na ho.
-
       event?.stopPropagation()
 
 
@@ -400,10 +390,6 @@ function AdminLayout() {
 
   // ======================================
   // DELETE ONE NOTIFICATION
-  // ======================================
-  //
-  // Individual × button
-  //
   // ======================================
 
   const handleDeleteNotification =
@@ -448,14 +434,6 @@ function AdminLayout() {
 
   // ======================================
   // CLEAR ALL NOTIFICATIONS
-  // ======================================
-  //
-  // IMPORTANT:
-  // Sirf notifications delete honge.
-  //
-  // Student / Payment / Feedback /
-  // Message delete nahi honge.
-  //
   // ======================================
 
   const handleClearAll =
@@ -594,10 +572,11 @@ function AdminLayout() {
 
             </li>
 
+
             {/* HOME PAGE */}
 
             <li>
-            
+
               <NavLink
                 to="/admin/home-page"
                 onClick={closeSidebar}
@@ -607,13 +586,13 @@ function AdminLayout() {
                     : 'admin-link'
                 }
               >
-            
+
                 <FaHome />
-            
+
                 Home Page
-            
+
               </NavLink>
-            
+
             </li>
 
 
@@ -703,6 +682,31 @@ function AdminLayout() {
                 <FaMoneyBillWave />
 
                 Payments
+
+              </NavLink>
+
+            </li>
+
+
+            {/* ==================================
+                FEE DUE REPORT
+            ================================== */}
+
+            <li>
+
+              <NavLink
+                to="/admin/fee-due-report"
+                onClick={closeSidebar}
+                className={({ isActive }) =>
+                  isActive
+                    ? 'admin-link active-admin-link'
+                    : 'admin-link'
+                }
+              >
+
+                <FaFilePdf />
+
+                Fee Due Report
 
               </NavLink>
 
@@ -1087,9 +1091,7 @@ function AdminLayout() {
                 <div className="notification-dropdown">
 
 
-                  {/* ==================================
-                      HEADER
-                  ================================== */}
+                  {/* HEADER */}
 
                   <div className="notification-header">
 
@@ -1155,9 +1157,7 @@ function AdminLayout() {
                   </div>
 
 
-                  {/* ==================================
-                      EMPTY
-                  ================================== */}
+                  {/* EMPTY */}
 
                   {notifications.length === 0 ? (
 
@@ -1198,9 +1198,7 @@ function AdminLayout() {
                           >
 
 
-                            {/* ==================================
-                                CLICKABLE CONTENT
-                            ================================== */}
+                            {/* CLICKABLE CONTENT */}
 
                             <button
 
@@ -1215,7 +1213,6 @@ function AdminLayout() {
                               }
 
                             >
-
 
                               {/* ICON */}
 
@@ -1298,9 +1295,7 @@ function AdminLayout() {
                             </button>
 
 
-                            {/* ==================================
-                                INDIVIDUAL CLEAR
-                            ================================== */}
+                            {/* INDIVIDUAL CLEAR */}
 
                             <button
 

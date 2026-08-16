@@ -32,6 +32,22 @@ function TeacherProfile() {
 
 
   // ======================================
+  // SALARY DATA
+  // ======================================
+
+  const [salaryData, setSalaryData] =
+    useState(null)
+
+
+  const [salaryLoading, setSalaryLoading] =
+    useState(false)
+
+
+  const [salaryError, setSalaryError] =
+    useState('')
+
+
+  // ======================================
   // LOADING
   // ======================================
 
@@ -52,7 +68,40 @@ function TeacherProfile() {
 
 
   // ======================================
-  // GET TEACHER
+  // GET TEACHER TOKEN
+  // ======================================
+
+  const getToken = () => {
+
+    return localStorage.getItem(
+      'teacherToken'
+    )
+
+  }
+
+
+  // ======================================
+  // AUTH HEADERS
+  // ======================================
+
+  const getHeaders = () => {
+
+    return {
+
+      headers: {
+
+        Authorization:
+          `Bearer ${getToken()}`,
+
+      },
+
+    }
+
+  }
+
+
+  // ======================================
+  // LOAD TEACHER
   // ======================================
 
   useEffect(() => {
@@ -96,36 +145,126 @@ function TeacherProfile() {
 
 
   // ======================================
-  // GET TEACHER TOKEN
+  // FETCH SALARY
   // ======================================
 
-  const getToken = () => {
+  const fetchSalary =
+    async () => {
 
-    return localStorage.getItem(
-      'teacherToken'
-    )
+      try {
 
-  }
+        setSalaryLoading(
+          true
+        )
+
+        setSalaryError('')
 
 
-  // ======================================
-  // AUTH HEADERS
-  // ======================================
+        const response =
+          await axios.get(
 
-  const getHeaders = () => {
+            `${API_URL}/teacher/salary`,
 
-    return {
+            getHeaders()
 
-      headers: {
+          )
 
-        Authorization:
-          `Bearer ${getToken()}`,
 
-      },
+        if (
+          response?.data?.success
+        ) {
+
+          setSalaryData(
+            response.data.salary
+          )
+
+
+          // ==================================
+          // UPDATE TEACHER INFORMATION
+          // ==================================
+
+          if (
+            response.data.teacher
+          ) {
+
+            setTeacher(
+              (current) => ({
+
+                ...(current || {}),
+
+                ...response.data.teacher,
+
+              })
+
+            )
+
+          }
+
+        }
+
+        else {
+
+          setSalaryData(null)
+
+          setSalaryError(
+
+            response?.data?.message ||
+
+            'Unable to load salary information.'
+
+          )
+
+        }
+
+      }
+
+      catch (error) {
+
+        console.log(
+
+          'Teacher Salary Error:',
+
+          error
+
+        )
+
+
+        setSalaryData(null)
+
+        setSalaryError(
+
+          error?.response?.data?.message ||
+
+          'Unable to load salary information.'
+
+        )
+
+      }
+
+      finally {
+
+        setSalaryLoading(
+          false
+        )
+
+      }
 
     }
 
-  }
+
+  // ======================================
+  // LOAD SALARY AFTER PROFILE LOAD
+  // ======================================
+
+  useEffect(() => {
+
+    if (!loading) {
+
+      fetchSalary()
+
+    }
+
+  }, [loading])
 
 
   // ======================================
@@ -331,7 +470,7 @@ function TeacherProfile() {
 
 
   // ======================================
-  // LOAD ATTENDANCE WHEN OPEN
+  // LOAD ATTENDANCE
   // ======================================
 
   useEffect(() => {
@@ -385,7 +524,112 @@ function TeacherProfile() {
 
 
   // ======================================
-  // STATUS BADGE
+  // FORMAT PAYMENT DATE
+  // ======================================
+
+  const formatPaymentDate =
+    (date) => {
+
+      if (!date) {
+
+        return 'Not Paid'
+
+      }
+
+
+      const value =
+        new Date(
+          date
+        )
+
+
+      if (
+        Number.isNaN(
+          value.getTime()
+        )
+      ) {
+
+        return 'Not Paid'
+
+      }
+
+
+      return value.toLocaleDateString(
+        'en-IN'
+      )
+
+    }
+
+
+  // ======================================
+  // FORMAT MONEY
+  // ======================================
+
+  const formatMoney =
+    (amount) => {
+
+      return (
+
+        `₹${Number(
+          amount || 0
+        ).toLocaleString('en-IN')}`
+
+      )
+
+    }
+
+
+  // ======================================
+  // MONTH NAME
+  // ======================================
+
+  const getMonthName =
+    (month) => {
+
+      const monthNames = [
+
+        'January',
+
+        'February',
+
+        'March',
+
+        'April',
+
+        'May',
+
+        'June',
+
+        'July',
+
+        'August',
+
+        'September',
+
+        'October',
+
+        'November',
+
+        'December',
+
+      ]
+
+
+      return (
+
+        monthNames[
+          Number(month) - 1
+        ] ||
+
+        '-'
+
+      )
+
+    }
+
+
+  // ======================================
+  // ATTENDANCE STATUS
   // ======================================
 
   const getStatusBadge =
@@ -402,6 +646,36 @@ function TeacherProfile() {
 
       if (
         status === 'Absent'
+      ) {
+
+        return 'badge bg-danger'
+
+      }
+
+
+      return 'badge bg-secondary'
+
+    }
+
+
+  // ======================================
+  // SALARY STATUS
+  // ======================================
+
+  const getSalaryStatusBadge =
+    (status) => {
+
+      if (
+        status === 'Paid'
+      ) {
+
+        return 'badge bg-success'
+
+      }
+
+
+      if (
+        status === 'Due'
       ) {
 
         return 'badge bg-danger'
@@ -540,7 +814,6 @@ function TeacherProfile() {
 
             <div className="d-flex gap-2 flex-wrap mb-4">
 
-
               <button
 
                 type="button"
@@ -625,7 +898,7 @@ function TeacherProfile() {
 
 
             {/* ==================================
-                LOADING
+                ATTENDANCE LOADING
             ================================== */}
 
             {attendanceLoading ? (
@@ -802,9 +1075,7 @@ function TeacherProfile() {
 
                   <div>
 
-
                     <div className="row g-3 mb-4">
-
 
                       <div className="col-sm-6 col-lg-3">
 
@@ -1037,9 +1308,7 @@ function TeacherProfile() {
 
                   <div>
 
-
                     <div className="row g-3 mb-4">
-
 
                       <div className="col-sm-6 col-lg-3">
 
@@ -1310,13 +1579,12 @@ function TeacherProfile() {
 
 
       {/* ==================================
-          MY ATTENDANCE CARD
+          MY ATTENDANCE
       ================================== */}
 
       <div className="card border-0 shadow-sm mb-4">
 
         <div className="card-body p-4">
-
 
           <div className="d-flex justify-content-between align-items-center">
 
@@ -1449,7 +1717,7 @@ function TeacherProfile() {
 
 
           {/* ==================================
-              INFORMATION
+              PROFILE DETAILS
           ================================== */}
 
           <div className="row g-4">
@@ -1884,6 +2152,777 @@ function TeacherProfile() {
 
       </div>
 
+
+      {/* ======================================
+          SALARY INFORMATION
+          ↓↓↓ BOTTOM OF PROFILE ↓↓↓
+      ====================================== */}
+
+      <div className="card border-0 shadow-sm mt-4 mb-4">
+
+        <div className="card-body p-4">
+
+
+          {/* ==================================
+              SALARY HEADER
+          ================================== */}
+
+          <div className="d-flex justify-content-between align-items-center mb-4">
+
+            <div>
+
+              <h5 className="fw-bold mb-1">
+
+                Salary Information
+
+              </h5>
+
+
+              <p className="text-muted mb-0">
+
+                View your monthly salary and
+                payment status.
+
+              </p>
+
+            </div>
+
+
+            <div
+              style={{
+                fontSize: '32px',
+              }}
+            >
+
+              💰
+
+            </div>
+
+          </div>
+
+
+          {/* ==================================
+              SALARY ERROR
+          ================================== */}
+
+          {salaryError && (
+
+            <div className="alert alert-danger">
+
+              {salaryError}
+
+            </div>
+
+          )}
+
+
+          {/* ==================================
+              SALARY LOADING
+          ================================== */}
+
+          {salaryLoading ? (
+
+            <div className="text-center py-4">
+
+              <div
+                className="spinner-border"
+                role="status"
+              >
+
+                <span className="visually-hidden">
+
+                  Loading...
+
+                </span>
+
+              </div>
+
+
+              <p className="text-muted mt-3 mb-0">
+
+                Loading salary information...
+
+              </p>
+
+            </div>
+
+          ) : salaryData ? (
+
+            <>
+
+
+              {/* ==================================
+                  SALARY SUMMARY
+              ================================== */}
+
+              <div className="row g-3 mb-4">
+
+
+                {/* MONTHLY SALARY */}
+
+                <div className="col-sm-6 col-lg-4">
+
+                  <div className="card border h-100">
+
+                    <div className="card-body">
+
+                      <small className="text-muted">
+
+                        Monthly Salary
+
+                      </small>
+
+
+                      <h4 className="fw-bold mb-0 mt-2">
+
+                        {
+                          formatMoney(
+                            salaryData.monthlySalary
+                          )
+                        }
+
+                      </h4>
+
+                    </div>
+
+                  </div>
+
+                </div>
+
+
+                {/* TOTAL PAID */}
+
+                <div className="col-sm-6 col-lg-4">
+
+                  <div className="card border h-100">
+
+                    <div className="card-body">
+
+                      <small className="text-muted">
+
+                        Total Paid
+
+                      </small>
+
+
+                      <h4 className="fw-bold text-success mb-0 mt-2">
+
+                        {
+                          formatMoney(
+                            salaryData.summary?.totalPaid
+                          )
+                        }
+
+                      </h4>
+
+                    </div>
+
+                  </div>
+
+                </div>
+
+
+                {/* TOTAL DUE */}
+
+                <div className="col-sm-6 col-lg-4">
+
+                  <div className="card border h-100">
+
+                    <div className="card-body">
+
+                      <small className="text-muted">
+
+                        Total Due
+
+                      </small>
+
+
+                      <h4 className="fw-bold text-danger mb-0 mt-2">
+
+                        {
+                          formatMoney(
+                            salaryData.summary?.totalDue
+                          )
+                        }
+
+                      </h4>
+
+                    </div>
+
+                  </div>
+
+                </div>
+
+              </div>
+
+
+              {/* ==================================
+                  CURRENT MONTH
+              ================================== */}
+
+              <div className="card border mb-4">
+
+                <div className="card-body p-4">
+
+                  <h6 className="fw-bold mb-3">
+
+                    Current Month Salary
+
+                  </h6>
+
+
+                  {salaryData.currentMonth?.record ? (
+
+                    <div className="row g-4 align-items-center">
+
+
+                      {/* MONTH */}
+
+                      <div className="col-md-3">
+
+                        <small className="text-muted">
+
+                          Month
+
+                        </small>
+
+
+                        <div className="fw-semibold mt-1">
+
+                          {
+                            getMonthName(
+
+                              salaryData
+                                .currentMonth
+                                .record
+                                .month
+
+                            )
+                          }
+
+                          {' '}
+
+                          {
+                            salaryData
+                              .currentMonth
+                              .record
+                              .year
+                          }
+
+                        </div>
+
+                      </div>
+
+
+                      {/* AMOUNT */}
+
+                      <div className="col-md-3">
+
+                        <small className="text-muted">
+
+                          Amount
+
+                        </small>
+
+
+                        <div className="fw-semibold mt-1">
+
+                          {
+                            formatMoney(
+
+                              salaryData
+                                .currentMonth
+                                .record
+                                .amount
+
+                            )
+                          }
+
+                        </div>
+
+                      </div>
+
+
+                      {/* STATUS */}
+
+                      <div className="col-md-3">
+
+                        <small className="text-muted">
+
+                          Status
+
+                        </small>
+
+
+                        <div className="mt-1">
+
+                          <span
+
+                            className={
+
+                              getSalaryStatusBadge(
+
+                                salaryData
+                                  .currentMonth
+                                  .record
+                                  .status
+
+                              )
+
+                            }
+
+                          >
+
+                            {
+
+                              salaryData
+                                .currentMonth
+                                .record
+                                .status === 'Paid'
+
+                                ? 'Paid'
+
+                                : 'Salary Due'
+
+                            }
+
+                          </span>
+
+                        </div>
+
+                      </div>
+
+
+                      {/* PAYMENT DATE */}
+
+                      <div className="col-md-3">
+
+                        <small className="text-muted">
+
+                          Payment Date
+
+                        </small>
+
+
+                        <div className="fw-semibold mt-1">
+
+                          {
+                            formatPaymentDate(
+
+                              salaryData
+                                .currentMonth
+                                .record
+                                .paymentDate
+
+                            )
+                          }
+
+                        </div>
+
+                      </div>
+
+
+                      {/* PAYMENT METHOD */}
+
+                      {salaryData
+                        .currentMonth
+                        .record
+                        .status === 'Paid' && (
+
+                        <div className="col-md-6">
+
+                          <small className="text-muted">
+
+                            Payment Method
+
+                          </small>
+
+
+                          <div className="fw-semibold mt-1">
+
+                            {
+                              salaryData
+                                .currentMonth
+                                .record
+                                .paymentMethod ||
+
+                              '-'
+
+                            }
+
+                          </div>
+
+                        </div>
+
+                      )}
+
+
+                      {/* REMARKS */}
+
+                      {salaryData
+                        .currentMonth
+                        .record
+                        .remarks && (
+
+                        <div className="col-md-6">
+
+                          <small className="text-muted">
+
+                            Remarks
+
+                          </small>
+
+
+                          <div className="fw-semibold mt-1">
+
+                            {
+                              salaryData
+                                .currentMonth
+                                .record
+                                .remarks
+
+                            }
+
+                          </div>
+
+                        </div>
+
+                      )}
+
+                    </div>
+
+                  ) : (
+
+                    <div className="alert alert-warning mb-0">
+
+                      Current month salary record is
+                      not available.
+
+                    </div>
+
+                  )}
+
+                </div>
+
+              </div>
+
+
+              {/* ==================================
+                  SALARY HISTORY
+              ================================== */}
+
+              <div className="card border">
+
+                <div className="card-body p-4">
+
+                  <div className="d-flex justify-content-between align-items-center mb-3">
+
+                    <div>
+
+                      <h6 className="fw-bold mb-1">
+
+                        Salary History
+
+                      </h6>
+
+
+                      <small className="text-muted">
+
+                        Your previous monthly salary
+                        records.
+
+                      </small>
+
+                    </div>
+
+
+                    <span className="badge bg-secondary">
+
+                      {
+                        salaryData.records?.length ||
+                        0
+                      }
+
+                      {' '}
+
+                      Record(s)
+
+                    </span>
+
+                  </div>
+
+
+                  {salaryData.records?.length > 0 ? (
+
+                    <div className="table-responsive">
+
+                      <table className="table table-hover align-middle mb-0">
+
+                        <thead className="table-light">
+
+                          <tr>
+
+                            <th>
+                              #
+                            </th>
+
+                            <th>
+                              Month
+                            </th>
+
+                            <th>
+                              Amount
+                            </th>
+
+                            <th>
+                              Status
+                            </th>
+
+                            <th>
+                              Payment Date
+                            </th>
+
+                            <th>
+                              Payment Method
+                            </th>
+
+                          </tr>
+
+                        </thead>
+
+
+                        <tbody>
+
+                          {[
+
+                            ...(salaryData.records || [])
+
+                          ]
+
+                            .sort(
+
+                              (a, b) => {
+
+                                const dateA =
+                                  Number(a.year) *
+                                  100 +
+                                  Number(a.month)
+
+                                const dateB =
+                                  Number(b.year) *
+                                  100 +
+                                  Number(b.month)
+
+                                return (
+                                  dateB -
+                                  dateA
+                                )
+
+                              }
+
+                            )
+
+                            .map(
+
+                              (
+                                record,
+                                index
+                              ) => (
+
+                                <tr
+
+                                  key={
+
+                                    record._id ||
+
+                                    `${record.year}-${record.month}`
+
+                                  }
+
+                                >
+
+                                  <td>
+
+                                    {
+                                      index + 1
+                                    }
+
+                                  </td>
+
+
+                                  <td>
+
+                                    <strong>
+
+                                      {
+                                        getMonthName(
+                                          record.month
+                                        )
+                                      }
+
+                                      {' '}
+
+                                      {
+                                        record.year
+                                      }
+
+                                    </strong>
+
+                                  </td>
+
+
+                                  <td>
+
+                                    {
+                                      formatMoney(
+                                        record.amount
+                                      )
+                                    }
+
+                                  </td>
+
+
+                                  <td>
+
+                                    <span
+
+                                      className={
+
+                                        getSalaryStatusBadge(
+                                          record.status
+                                        )
+
+                                      }
+
+                                    >
+
+                                      {
+
+                                        record.status ===
+                                        'Paid'
+
+                                          ? 'Paid'
+
+                                          : 'Due'
+
+                                      }
+
+                                    </span>
+
+                                  </td>
+
+
+                                  <td>
+
+                                    {
+                                      formatPaymentDate(
+                                        record.paymentDate
+                                      )
+                                    }
+
+                                  </td>
+
+
+                                  <td>
+
+                                    {
+                                      record.paymentMethod ||
+                                      '-'
+                                    }
+
+                                  </td>
+
+                                </tr>
+
+                              )
+
+                            )}
+
+                        </tbody>
+
+                      </table>
+
+                    </div>
+
+                  ) : (
+
+                    <div className="text-center py-4">
+
+                      <div
+                        style={{
+                          fontSize: '42px',
+                        }}
+                      >
+
+                        💰
+
+                      </div>
+
+
+                      <h6 className="fw-bold mt-3">
+
+                        No Salary Records
+
+                      </h6>
+
+
+                      <p className="text-muted mb-0">
+
+                        No salary records are
+                        available yet.
+
+                      </p>
+
+                    </div>
+
+                  )}
+
+                </div>
+
+              </div>
+
+            </>
+
+          ) : (
+
+            !salaryError && (
+
+              <div className="text-center py-4">
+
+                <div
+                  style={{
+                    fontSize: '42px',
+                  }}
+                >
+
+                  💰
+
+                </div>
+
+
+                <h6 className="fw-bold mt-3">
+
+                  Salary Information Not Available
+
+                </h6>
+
+
+                <p className="text-muted mb-0">
+
+                  Salary information has not been
+                  added yet.
+
+                </p>
+
+              </div>
+
+            )
+
+          )}
+
+        </div>
+
+      </div>
 
     </div>
 

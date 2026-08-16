@@ -76,6 +76,208 @@ const calculateFeesStatus = (
 
 
 // ======================================
+// HELPER: CALCULATE ACADEMIC SESSION
+// ======================================
+//
+// Session April -> March
+//
+// 01-04-2026 to 31-03-2027
+//          = 2026-2027
+//
+// 01-04-2027 to 31-03-2028
+//          = 2027-2028
+//
+// ======================================
+
+const calculateAcademicSession =
+  (admissionDate) => {
+
+    if (!admissionDate) {
+
+      return ''
+
+    }
+
+
+    const value =
+      String(admissionDate)
+        .trim()
+
+
+    if (!value) {
+
+      return ''
+
+    }
+
+
+    let date
+
+
+    // ==================================
+    // YYYY-MM-DD
+    // ==================================
+
+    if (
+      /^\d{4}-\d{2}-\d{2}$/.test(
+        value
+      )
+    ) {
+
+      const [
+        year,
+        month,
+        day
+      ] =
+        value
+          .split('-')
+          .map(Number)
+
+
+      date =
+        new Date(
+          year,
+          month - 1,
+          day
+        )
+
+    }
+
+
+    // ==================================
+    // DD-MM-YYYY
+    // ==================================
+
+    else if (
+      /^\d{2}-\d{2}-\d{4}$/.test(
+        value
+      )
+    ) {
+
+      const [
+        day,
+        month,
+        year
+      ] =
+        value
+          .split('-')
+          .map(Number)
+
+
+      date =
+        new Date(
+          year,
+          month - 1,
+          day
+        )
+
+    }
+
+
+    // ==================================
+    // DD/MM/YYYY
+    // ==================================
+
+    else if (
+      /^\d{2}\/\d{2}\/\d{4}$/.test(
+        value
+      )
+    ) {
+
+      const [
+        day,
+        month,
+        year
+      ] =
+        value
+          .split('/')
+          .map(Number)
+
+
+      date =
+        new Date(
+          year,
+          month - 1,
+          day
+        )
+
+    }
+
+
+    // ==================================
+    // OTHER VALID DATE
+    // ==================================
+
+    else {
+
+      date =
+        new Date(value)
+
+    }
+
+
+    // ==================================
+    // INVALID DATE
+    // ==================================
+
+    if (
+      Number.isNaN(
+        date.getTime()
+      )
+    ) {
+
+      return ''
+
+    }
+
+
+    const year =
+      date.getFullYear()
+
+
+    const month =
+      date.getMonth() + 1
+
+
+    // ==================================
+    // APRIL = NEW SESSION
+    // ==================================
+
+    if (
+      month >= 4
+    ) {
+
+      return `${year}-${year + 1}`
+
+    }
+
+
+    // ==================================
+    // JANUARY-MARCH
+    // ==================================
+
+    return `${year - 1}-${year}`
+
+  }
+
+
+// ======================================
+// HELPER: CURRENT SESSION
+// ======================================
+
+const getCurrentAcademicSession =
+  () => {
+
+    return calculateAcademicSession(
+
+      new Date()
+
+    )
+
+  }
+
+
+// ======================================
 // HELPER: GENERATE NEXT ADMISSION NUMBER
 // ======================================
 
@@ -242,6 +444,36 @@ router.post(
       console.log(
         'Generated Admission Number:',
         admissionNumber
+      )
+
+
+      // ======================================
+      // CALCULATE SESSION
+      // ======================================
+
+      const session =
+        calculateAcademicSession(
+          admissionDate
+        )
+
+
+      if (!session) {
+
+        return res.status(400).json({
+
+          success: false,
+
+          message:
+            'Valid admission date is required to calculate academic session.',
+
+        })
+
+      }
+
+
+      console.log(
+        'Academic Session:',
+        session
       )
 
 
@@ -417,6 +649,8 @@ router.post(
           email,
 
           admissionDate,
+
+          session,
 
           image,
 
@@ -878,6 +1112,26 @@ router.post(
 // ======================================
 // GET ALL STUDENTS
 // ======================================
+//
+// Supported filters:
+//
+// ?session=2026-2027
+//
+// ?search=PIE0001
+//
+// ?course=SSC CGL
+//
+// ?batchTime=Morning
+//
+// ?feesStatus=Paid
+//
+// ?feesStatus=Partial
+//
+// ?feesStatus=Pending
+//
+// ?feesStatus=All
+//
+// ======================================
 
 router.get(
 
@@ -887,16 +1141,258 @@ router.get(
 
     try {
 
-      const students =
-        await Student.find()
+      const {
+
+        session,
+
+        search,
+
+        course,
+
+        batchTime,
+
+        feesStatus,
+
+      } = req.query
+
+
+      // ======================================
+      // QUERY
+      // ======================================
+
+      const query = {}
+
+
+      // ======================================
+      // SESSION FILTER
+      // ======================================
+
+      if (
+        session &&
+        session !== 'All'
+      ) {
+
+        query.session =
+          session
+
+      }
+
+
+      // ======================================
+      // SEARCH
+      // ======================================
+      //
+      // Name OR Admission Number
+      //
+      // One search box
+      //
+      // ======================================
+
+      if (
+        search &&
+        search.trim()
+      ) {
+
+        const searchValue =
+          search.trim()
+
+
+        query.$or = [
+
+          {
+
+            name: {
+
+              $regex:
+                searchValue,
+
+              $options:
+                'i',
+
+            },
+
+          },
+
+          {
+
+            admissionNumber: {
+
+              $regex:
+                searchValue,
+
+              $options:
+                'i',
+
+            },
+
+          },
+
+        ]
+
+      }
+
+
+      // ======================================
+      // COURSE FILTER
+      // ======================================
+
+      if (
+        course &&
+        course !== 'All'
+      ) {
+
+        query.course =
+          course
+
+      }
+
+
+      // ======================================
+      // BATCH FILTER
+      // ======================================
+
+      if (
+        batchTime &&
+        batchTime !== 'All'
+      ) {
+
+        query.batchTime =
+          batchTime
+
+      }
+
+
+      // ======================================
+      // FEE STATUS FILTER
+      // ======================================
+
+      if (
+        feesStatus &&
+        feesStatus !== 'All'
+      ) {
+
+        query.feesStatus =
+          feesStatus
+
+      }
+
+
+      // ======================================
+      // FIND STUDENTS
+      // ======================================
+
+      let students =
+        await Student.find(
+          query
+        )
 
           .sort({
+
+            admissionDate:
+              -1,
 
             createdAt:
               -1,
 
           })
 
+
+      // ======================================
+      // BACKFILL OLD STUDENT SESSION
+      // ======================================
+      //
+      // Existing students jinke session
+      // blank hai unka session admissionDate
+      // se calculate hoga.
+      //
+      // Database ko automatically update
+      // bhi karenge.
+      //
+      // ======================================
+
+      const updates = []
+
+
+      for (
+        const student of students
+      ) {
+
+        if (
+          !student.session &&
+          student.admissionDate
+        ) {
+
+          const calculatedSession =
+            calculateAcademicSession(
+              student.admissionDate
+            )
+
+
+          if (
+            calculatedSession
+          ) {
+
+            student.session =
+              calculatedSession
+
+
+            updates.push(
+
+              student.save()
+
+            )
+
+          }
+
+        }
+
+      }
+
+
+      if (
+        updates.length > 0
+      ) {
+
+        await Promise.all(
+          updates
+        )
+
+      }
+
+
+      // ======================================
+      // SESSION FILTER AFTER BACKFILL
+      // ======================================
+      //
+      // Agar old student ka session blank tha
+      // aur request specific session ke liye
+      // hai, ensure correct result mile.
+      //
+      // ======================================
+
+      if (
+        session &&
+        session !== 'All'
+      ) {
+
+        students =
+          students.filter(
+
+            (student) => (
+
+              student.session ===
+              session
+
+            )
+
+          )
+
+      }
+
+
+      // ======================================
+      // RESPONSE
+      // ======================================
 
       res.status(200).json(
         students
@@ -980,11 +1476,6 @@ router.delete(
       // ==================================
       // DELETE RECEIPTS
       // ==================================
-      //
-      // New receipts studentId se linked
-      // hongi.
-      //
-      // ==================================
 
       const receiptResult =
         await Receipt.deleteMany({
@@ -997,14 +1488,6 @@ router.delete(
 
       // ==================================
       // DELETE PAYMENTS
-      // ==================================
-      //
-      // Payment collection mein abhi
-      // studentId nahi hai.
-      //
-      // Isliye admissionNumber se
-      // payment records delete kar rahe hain.
-      //
       // ==================================
 
       const paymentResult =
@@ -1312,32 +1795,68 @@ router.put(
 
 
       // ======================================
+      // CALCULATE SESSION
+      // ======================================
+
+      const session =
+        calculateAcademicSession(
+          admissionDate
+        )
+
+
+      if (!session) {
+
+        return res.status(400).json({
+
+          success: false,
+
+          message:
+            'Valid admission date is required to calculate academic session.',
+
+        })
+
+      }
+
+
+      // ======================================
       // UPDATE STUDENT
       // ======================================
 
       student.name =
         name || ''
 
+
       student.dob =
         dob || ''
+
 
       student.aadharNumber =
         aadharNumber || ''
 
+
       student.course =
         course
+
 
       student.batchTime =
         batchTime || ''
 
+
       student.contact =
         contact
+
 
       student.email =
         email
 
+
       student.admissionDate =
         admissionDate
+
+
+      student.session =
+        session
+
 
       student.image =
         image
@@ -1350,17 +1869,22 @@ router.put(
       student.fatherName =
         fatherName || ''
 
+
       student.motherName =
         motherName || ''
+
 
       student.fatherOccupation =
         fatherOccupation || ''
 
+
       student.motherOccupation =
         motherOccupation || ''
 
+
       student.fatherMobile =
         fatherMobile || ''
+
 
       student.motherMobile =
         motherMobile || ''
@@ -1372,6 +1896,7 @@ router.put(
 
       student.permanentAddress =
         permanentAddress || ''
+
 
       student.currentAddress =
         currentAddress || ''
@@ -1400,8 +1925,10 @@ router.put(
       student.registrationFee =
         registration
 
+
       student.registrationFeePaid =
         registrationPaid
+
 
       student.registrationFeeStatus =
         registrationStatus
@@ -1414,11 +1941,14 @@ router.put(
       student.totalFees =
         totalFee
 
+
       student.paidFees =
         paidFee
 
+
       student.remainingFees =
         remaining
+
 
       student.feesStatus =
         status
@@ -1433,15 +1963,18 @@ router.put(
           monthlyInstallment || 0
         )
 
+
       student.threeMonthInstallment =
         Number(
           threeMonthInstallment || 0
         )
 
+
       student.sixMonthInstallment =
         Number(
           sixMonthInstallment || 0
         )
+
 
       student.fullPaymentFee =
         Number(

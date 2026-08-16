@@ -84,6 +84,9 @@ import Course
 import Payments
   from '../pages/admin/Payments'
 
+import FeeDueReport
+  from '../pages/admin/FeeDueReport'
+
 
 // ======================================
 // RECEIPT
@@ -440,6 +443,16 @@ function AppRoutes() {
           <Route
             path="payments"
             element={<Payments />}
+          />
+
+
+          {/* ==================================
+              FEE DUE REPORT
+          ================================== */}
+
+          <Route
+            path="fee-due-report"
+            element={<FeeDueReport />}
           />
 
         </Route>

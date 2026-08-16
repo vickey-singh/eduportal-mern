@@ -39,6 +39,9 @@ const attendanceRoutes =
 const studentRoutes =
   require('./routes/studentRoutes')
 
+const feeReportRoutes =
+  require('./routes/feeReportRoutes')
+
 const studentPortalRoutes =
   require('./routes/studentPortalRoutes')
 
@@ -65,6 +68,9 @@ const achievementRoutes =
 
 const facultyRoutes =
   require('./routes/facultyRoutes')
+
+const facultySalaryRoutes =
+  require('./routes/facultySalaryRoutes')
 
 const adminRoutes =
   require('./routes/adminRoutes')
@@ -95,6 +101,9 @@ const teacherMessageRoutes =
 
 const teacherReportRoutes =
   require('./routes/teacherReportRoutes')
+
+const teacherSalaryRoutes =
+  require('./routes/teacherSalaryRoutes')
 
 const facultyAttendanceRoutes =
   require('./routes/facultyAttendanceRoutes')
@@ -234,6 +243,11 @@ app.use(
 
 app.use(
   '/api',
+  teacherSalaryRoutes
+)
+
+app.use(
+  '/api',
   teacherAttendanceRoutes
 )
 
@@ -245,6 +259,11 @@ app.use(
 app.use(
   '/api',
   facultyRoutes
+)
+
+app.use(
+  '/api',
+  facultySalaryRoutes
 )
 
 app.use(
@@ -285,6 +304,11 @@ app.use(
 app.use(
   '/api',
   studentPortalRoutes
+)
+
+app.use(
+  '/api',
+  feeReportRoutes
 )
 
 app.use(

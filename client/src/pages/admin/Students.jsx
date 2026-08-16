@@ -21,6 +21,75 @@ import PaymentHistory from './PaymentHistory'
 import ReceiptButton from './ReceiptButton'
 
 
+// ======================================
+// CURRENT ACADEMIC SESSION
+// ======================================
+
+const getCurrentSession = () => {
+
+  const today =
+    new Date()
+
+  const year =
+    today.getFullYear()
+
+  const month =
+    today.getMonth() + 1
+
+
+  if (month >= 4) {
+
+    return `${year}-${year + 1}`
+
+  }
+
+
+  return `${year - 1}-${year}`
+
+}
+
+
+// ======================================
+// GENERATE SESSION LIST
+// ======================================
+
+const getSessionList = () => {
+
+  const currentSession =
+    getCurrentSession()
+
+  const currentStartYear =
+    Number(
+      currentSession.split('-')[0]
+    )
+
+
+  const sessions = []
+
+
+  // Current + previous 10 sessions
+
+  for (
+    let i = 0;
+    i <= 10;
+    i++
+  ) {
+
+    const startYear =
+      currentStartYear - i
+
+    sessions.push(
+      `${startYear}-${startYear + 1}`
+    )
+
+  }
+
+
+  return sessions
+
+}
+
+
 function Students() {
 
   // ======================================
@@ -40,13 +109,60 @@ function Students() {
 
 
   // ======================================
+  // SESSION
+  // ======================================
+
+  const [sessionFilter, setSessionFilter] =
+    useState(
+      getCurrentSession()
+    )
+
+
+  const [sessions] =
+    useState(
+      getSessionList()
+    )
+
+
+  // ======================================
+  // SEARCH
+  // ======================================
+
+  const [searchTerm, setSearchTerm] =
+    useState('')
+
+
+  // ======================================
+  // COURSE FILTER
+  // ======================================
+
+  const [courseFilter, setCourseFilter] =
+    useState('All')
+
+
+  // ======================================
+  // BATCH FILTER
+  // ======================================
+
+  const [batchFilter, setBatchFilter] =
+    useState('All')
+
+
+  // ======================================
+  // FEE STATUS FILTER
+  // ======================================
+
+  const [statusFilter, setStatusFilter] =
+    useState('All')
+
+
+  // ======================================
   // FORM
   // ======================================
 
   const [formData, setFormData] =
     useState({
 
-      // Basic
       name: '',
       dob: '',
       aadharNumber: '',
@@ -54,11 +170,9 @@ function Students() {
       course: '',
       batchTime: '',
 
-      // Contact
       contact: '',
       email: '',
 
-      // Parents
       fatherName: '',
       motherName: '',
       fatherOccupation: '',
@@ -66,37 +180,29 @@ function Students() {
       fatherMobile: '',
       motherMobile: '',
 
-      // Address
       permanentAddress: '',
       currentAddress: '',
 
-      // Education
       schoolCollegeName: '',
 
-      // Admission
       admissionType: 'Offline',
       admissionDate: '',
 
-      // Fees
       registrationFee: '',
       registrationFeePaid: '',
 
       totalFees: '',
       paidFees: '',
 
-      // Installments
       monthlyInstallment: '',
       threeMonthInstallment: '',
       sixMonthInstallment: '',
       fullPaymentFee: '',
 
-      // Payment plan
       paymentPlan: '',
 
-      // Due
       dueDate: '',
 
-      // Image
       image: null,
 
     })
@@ -119,19 +225,11 @@ function Students() {
 
 
   // ======================================
-  // SEARCH
+  // FETCH LOADING
   // ======================================
 
-  const [searchTerm, setSearchTerm] =
-    useState('')
-
-
-  // ======================================
-  // STATUS FILTER
-  // ======================================
-
-  const [statusFilter, setStatusFilter] =
-    useState('All')
+  const [isLoading, setIsLoading] =
+    useState(false)
 
 
   // ======================================
@@ -164,7 +262,7 @@ function Students() {
 
 
   // ======================================
-  // FETCH DATA
+  // FETCH INITIAL DATA
   // ======================================
 
   useEffect(() => {
@@ -177,6 +275,19 @@ function Students() {
 
 
   // ======================================
+  // SESSION CHANGE
+  // ======================================
+
+  useEffect(() => {
+
+    fetchStudents()
+
+  }, [
+    sessionFilter
+  ])
+
+
+  // ======================================
   // GET STUDENTS
   // ======================================
 
@@ -184,16 +295,38 @@ function Students() {
 
     try {
 
+      setIsLoading(true)
+
+
       const response =
-        await getStudents()
+        await getStudents({
+
+          session:
+            sessionFilter,
+
+        })
+
 
       setStudentData(
         response || []
       )
 
-    } catch (error) {
+    }
 
-      console.log(error)
+    catch (error) {
+
+      console.log(
+        'Get Students Error:',
+        error
+      )
+
+      setStudentData([])
+
+    }
+
+    finally {
+
+      setIsLoading(false)
 
     }
 
@@ -215,9 +348,14 @@ function Students() {
         response || []
       )
 
-    } catch (error) {
+    }
 
-      console.log(error)
+    catch (error) {
+
+      console.log(
+        'Get Courses Error:',
+        error
+      )
 
     }
 
@@ -275,6 +413,7 @@ function Students() {
       image: null,
 
     })
+
 
     setEditId(null)
 
@@ -432,10 +571,6 @@ function Students() {
       e.preventDefault()
 
 
-      // ==================================
-      // PREVENT DOUBLE SUBMIT
-      // ==================================
-
       if (isSubmitting) {
 
         return
@@ -444,10 +579,6 @@ function Students() {
 
 
       try {
-
-        // ==================================
-        // START LOADING
-        // ==================================
 
         setIsSubmitting(true)
 
@@ -509,10 +640,6 @@ function Students() {
         }
 
 
-        // ==================================
-        // OFFLINE INITIAL PAYMENT PLAN
-        // ==================================
-
         if (
 
           !editId &&
@@ -533,16 +660,12 @@ function Students() {
 
 
         // ==================================
-        // FORMDATA
+        // FORM DATA
         // ==================================
 
         const data =
           new FormData()
 
-
-        // ==================================
-        // BASIC
-        // ==================================
 
         data.append(
           'name',
@@ -559,16 +682,6 @@ function Students() {
           formData.aadharNumber
         )
 
-        // ==================================
-        // IMPORTANT
-        // ==================================
-        // Admission Number is NOT sent
-        // from frontend.
-        //
-        // Backend will automatically
-        // generate ADM0001, ADM0002, etc.
-        // ==================================
-
         data.append(
           'course',
           formData.course
@@ -578,11 +691,6 @@ function Students() {
           'batchTime',
           formData.batchTime
         )
-
-
-        // ==================================
-        // CONTACT
-        // ==================================
 
         data.append(
           'contact',
@@ -771,15 +879,35 @@ function Students() {
             )
 
 
-          setStudentData(
-            (previous) => [
+          // New student current session mein
+          // automatically show hoga.
 
-              response.student,
+          if (
+            response?.student
+          ) {
 
-              ...previous,
+            const newStudent =
+              response.student
 
-            ]
-          )
+
+            if (
+              newStudent.session ===
+              sessionFilter
+            ) {
+
+              setStudentData(
+                (previous) => [
+
+                  newStudent,
+
+                  ...previous,
+
+                ]
+              )
+
+            }
+
+          }
 
 
           alert(
@@ -846,7 +974,13 @@ function Students() {
 
         resetForm()
 
-      } catch (error) {
+        // Fresh backend data
+
+        await fetchStudents()
+
+      }
+
+      catch (error) {
 
         console.log(error)
 
@@ -858,11 +992,9 @@ function Students() {
 
         )
 
-      } finally {
+      }
 
-        // ==================================
-        // STOP LOADING
-        // ==================================
+      finally {
 
         setIsSubmitting(false)
 
@@ -932,7 +1064,8 @@ function Students() {
           student.schoolCollegeName || '',
 
         admissionType:
-          student.admissionType || 'Offline',
+          student.admissionType ||
+          'Offline',
 
         admissionDate:
           student.admissionDate || '',
@@ -1046,11 +1179,14 @@ function Students() {
           'Student Deleted Successfully'
         )
 
-      } catch (error) {
+      }
+
+      catch (error) {
 
         console.log(error)
 
         alert(
+          error.response?.data?.message ||
           'Delete failed.'
         )
 
@@ -1157,7 +1293,9 @@ function Students() {
 
         )
 
-      } catch (error) {
+      }
+
+      catch (error) {
 
         console.log(error)
 
@@ -1175,7 +1313,51 @@ function Students() {
 
 
   // ======================================
-  // FILTER
+  // AVAILABLE COURSES
+  // ======================================
+
+  const courseOptions = [
+
+    ...new Set(
+
+      studentData
+
+        .map(
+          (student) =>
+            student.course
+        )
+
+        .filter(Boolean)
+
+    )
+
+  ]
+
+
+  // ======================================
+  // AVAILABLE BATCHES
+  // ======================================
+
+  const batchOptions = [
+
+    ...new Set(
+
+      studentData
+
+        .map(
+          (student) =>
+            student.batchTime
+        )
+
+        .filter(Boolean)
+
+    )
+
+  ]
+
+
+  // ======================================
+  // FRONTEND FILTER
   // ======================================
 
   const filteredStudents =
@@ -1202,31 +1384,34 @@ function Students() {
             .toLowerCase()
 
 
-        const course =
-          (
-            student.course || ''
-          )
-            .toLowerCase()
-
-
         const matchesSearch =
 
-          name.includes(search)
+          !search ||
 
-          ||
+          name.includes(search) ||
 
           admissionNumber.includes(search)
 
-          ||
 
-          course.includes(search)
+        const matchesCourse =
+
+          courseFilter === 'All' ||
+
+          student.course ===
+            courseFilter
+
+
+        const matchesBatch =
+
+          batchFilter === 'All' ||
+
+          student.batchTime ===
+            batchFilter
 
 
         const matchesStatus =
 
-          statusFilter === 'All'
-
-          ||
+          statusFilter === 'All' ||
 
           student.feesStatus ===
             statusFilter
@@ -1235,6 +1420,10 @@ function Students() {
         return (
 
           matchesSearch &&
+
+          matchesCourse &&
+
+          matchesBatch &&
 
           matchesStatus
 
@@ -1337,7 +1526,6 @@ function Students() {
           }
         >
 
-
           {editId && (
 
             <div className="alert alert-warning">
@@ -1369,8 +1557,6 @@ function Students() {
           <div className="row">
 
 
-            {/* NAME */}
-
             <div className="col-md-6 mb-3">
 
               <label className="form-label">
@@ -1393,8 +1579,6 @@ function Students() {
             </div>
 
 
-            {/* DOB */}
-
             <div className="col-md-6 mb-3">
 
               <label className="form-label">
@@ -1415,8 +1599,6 @@ function Students() {
 
             </div>
 
-
-            {/* AADHAAR */}
 
             <div className="col-md-6 mb-3">
 
@@ -1440,8 +1622,6 @@ function Students() {
             </div>
 
 
-            {/* STUDENT MOBILE */}
-
             <div className="col-md-6 mb-3">
 
               <label className="form-label">
@@ -1464,8 +1644,6 @@ function Students() {
             </div>
 
 
-            {/* EMAIL */}
-
             <div className="col-md-6 mb-3">
 
               <label className="form-label">
@@ -1487,8 +1665,6 @@ function Students() {
 
             </div>
 
-
-            {/* PHOTO */}
 
             <div className="col-md-6 mb-3">
 
@@ -1520,7 +1696,6 @@ function Students() {
 
 
           <div className="row">
-
 
             <div className="col-md-6 mb-3">
 
@@ -1661,7 +1836,6 @@ function Students() {
 
           <div className="row">
 
-
             <div className="col-md-6 mb-3">
 
               <label className="form-label">
@@ -1750,13 +1924,6 @@ function Students() {
 
 
           <div className="row">
-
-
-            {/* ==================================
-                ADMISSION NUMBER REMOVED
-                Backend generates it automatically
-            ================================== */}
-
 
             <div className="col-md-6 mb-3">
 
@@ -1893,9 +2060,6 @@ function Students() {
 
           <div className="row">
 
-
-            {/* REGISTRATION */}
-
             <div className="col-md-6 mb-3">
 
               <label className="form-label">
@@ -1917,8 +2081,6 @@ function Students() {
 
             </div>
 
-
-            {/* REGISTRATION PAID */}
 
             <div className="col-md-6 mb-3">
 
@@ -1947,8 +2109,6 @@ function Students() {
 
             </div>
 
-
-            {/* TOTAL COURSE FEE */}
 
             <div className="col-md-6 mb-3">
 
@@ -1980,8 +2140,6 @@ function Students() {
             </div>
 
 
-            {/* PAID */}
-
             <div className="col-md-6 mb-3">
 
               <label className="form-label">
@@ -2000,20 +2158,13 @@ function Students() {
                 }
                 min="0"
                 max={
-                  formData.totalFees || undefined
+                  formData.totalFees ||
+                  undefined
                 }
               />
 
-              <small className="text-muted">
-
-                Can be entered manually for offline admission.
-
-              </small>
-
             </div>
 
-
-            {/* REMAINING */}
 
             <div className="col-md-6 mb-3">
 
@@ -2032,8 +2183,6 @@ function Students() {
 
             </div>
 
-
-            {/* DUE DATE */}
 
             <div className="col-md-6 mb-3">
 
@@ -2068,7 +2217,6 @@ function Students() {
 
 
           <div className="row">
-
 
             <div className="col-md-6 mb-3">
 
@@ -2220,7 +2368,8 @@ function Students() {
 
                 ₹{
                   Number(
-                    formData.registrationFee || 0
+                    formData.registrationFee ||
+                    0
                   )
                 }
 
@@ -2237,7 +2386,8 @@ function Students() {
 
                 ₹{
                   Number(
-                    formData.registrationFeePaid || 0
+                    formData.registrationFeePaid ||
+                    0
                   )
                 }
 
@@ -2254,7 +2404,8 @@ function Students() {
 
                 ₹{
                   Number(
-                    formData.totalFees || 0
+                    formData.totalFees ||
+                    0
                   )
                 }
 
@@ -2289,30 +2440,18 @@ function Students() {
             <button
               type="submit"
               className="table-btn approve-btn"
-              disabled={isSubmitting}
-              style={{
-                opacity:
-                  isSubmitting ? 0.7 : 1,
-                cursor:
-                  isSubmitting
-                    ? 'not-allowed'
-                    : 'pointer',
-              }}
+              disabled={
+                isSubmitting
+              }
             >
 
-              {isSubmitting ? (
-
-                editId
+              {
+                isSubmitting
                   ? 'Please Wait...'
-                  : 'Please Wait...'
-
-              ) : (
-
-                editId
-                  ? 'Update Student'
-                  : 'Add Student'
-
-              )}
+                  : editId
+                    ? 'Update Student'
+                    : 'Add Student'
+              }
 
             </button>
 
@@ -2325,7 +2464,9 @@ function Students() {
                 onClick={
                   resetForm
                 }
-                disabled={isSubmitting}
+                disabled={
+                  isSubmitting
+                }
               >
 
                 Cancel
@@ -2336,70 +2477,279 @@ function Students() {
 
           </div>
 
-
         </form>
 
       </div>
 
 
       {/* ====================================== */}
-      {/* SEARCH / FILTER */}
+      {/* STUDENT FILTERS */}
       {/* ====================================== */}
 
-      <div className="row mt-4 mb-3">
+      <div className="mt-4 mb-3">
 
-        <div className="col-md-8 mb-2">
+        <div className="row g-2">
 
-          <input
-            type="text"
-            className="form-control"
-            placeholder="Search student, admission number or course..."
-            value={
-              searchTerm
-            }
-            onChange={(e) =>
-              setSearchTerm(
-                e.target.value
-              )
-            }
-          />
+
+          {/* SESSION */}
+
+          <div className="col-md-3">
+
+            <label className="form-label fw-bold">
+
+              Session
+
+            </label>
+
+            <select
+              className="form-control"
+              value={
+                sessionFilter
+              }
+              onChange={(e) => {
+
+                setSessionFilter(
+                  e.target.value
+                )
+
+                setSearchTerm('')
+
+                setCourseFilter('All')
+
+                setBatchFilter('All')
+
+                setStatusFilter('All')
+
+              }}
+            >
+
+              {sessions.map(
+                (session) => (
+
+                  <option
+                    key={
+                      session
+                    }
+                    value={
+                      session
+                    }
+                  >
+
+                    {
+                      session
+                    }
+
+                  </option>
+
+                )
+              )}
+
+            </select>
+
+          </div>
+
+
+          {/* SEARCH */}
+
+          <div className="col-md-3">
+
+            <label className="form-label fw-bold">
+
+              Search
+
+            </label>
+
+            <input
+              type="text"
+              className="form-control"
+              placeholder="Name / Admission No."
+              value={
+                searchTerm
+              }
+              onChange={(e) =>
+                setSearchTerm(
+                  e.target.value
+                )
+              }
+            />
+
+          </div>
+
+
+          {/* COURSE */}
+
+          <div className="col-md-2">
+
+            <label className="form-label fw-bold">
+
+              Course
+
+            </label>
+
+            <select
+              className="form-control"
+              value={
+                courseFilter
+              }
+              onChange={(e) =>
+                setCourseFilter(
+                  e.target.value
+                )
+              }
+            >
+
+              <option value="All">
+                All Courses
+              </option>
+
+              {courseOptions.map(
+                (course) => (
+
+                  <option
+                    key={
+                      course
+                    }
+                    value={
+                      course
+                    }
+                  >
+
+                    {
+                      course
+                    }
+
+                  </option>
+
+                )
+              )}
+
+            </select>
+
+          </div>
+
+
+          {/* BATCH */}
+
+          <div className="col-md-2">
+
+            <label className="form-label fw-bold">
+
+              Batch
+
+            </label>
+
+            <select
+              className="form-control"
+              value={
+                batchFilter
+              }
+              onChange={(e) =>
+                setBatchFilter(
+                  e.target.value
+                )
+              }
+            >
+
+              <option value="All">
+                All Batches
+              </option>
+
+              {batchOptions.map(
+                (batch) => (
+
+                  <option
+                    key={
+                      batch
+                    }
+                    value={
+                      batch
+                    }
+                  >
+
+                    {
+                      batch
+                    }
+
+                  </option>
+
+                )
+              )}
+
+            </select>
+
+          </div>
+
+
+          {/* FEE STATUS */}
+
+          <div className="col-md-2">
+
+            <label className="form-label fw-bold">
+
+              Fee Status
+
+            </label>
+
+            <select
+              className="form-control"
+              value={
+                statusFilter
+              }
+              onChange={(e) =>
+                setStatusFilter(
+                  e.target.value
+                )
+              }
+            >
+
+              <option value="All">
+                All Students
+              </option>
+
+              <option value="Paid">
+                Paid
+              </option>
+
+              <option value="Partial">
+                Partial
+              </option>
+
+              <option value="Pending">
+                Pending
+              </option>
+
+            </select>
+
+          </div>
 
         </div>
 
+      </div>
 
-        <div className="col-md-4 mb-2">
 
-          <select
-            className="form-control"
-            value={
-              statusFilter
-            }
-            onChange={(e) =>
-              setStatusFilter(
-                e.target.value
-              )
-            }
-          >
+      {/* ====================================== */}
+      {/* CURRENT RESULT COUNT */}
+      {/* ====================================== */}
 
-            <option value="All">
-              All Students
-            </option>
+      <div className="mb-3">
 
-            <option value="Pending">
-              Pending
-            </option>
+        <strong>
+          Session:
+        </strong>
 
-            <option value="Partial">
-              Partial
-            </option>
+        {' '}
 
-            <option value="Paid">
-              Paid
-            </option>
+        {sessionFilter}
 
-          </select>
+        {' | '}
 
-        </div>
+        <strong>
+          Students:
+        </strong>
+
+        {' '}
+
+        {filteredStudents.length}
 
       </div>
 
@@ -2436,6 +2786,10 @@ function Students() {
 
               <th>
                 Course
+              </th>
+
+              <th>
+                Batch
               </th>
 
               <th>
@@ -2481,16 +2835,33 @@ function Students() {
 
           <tbody>
 
-            {filteredStudents.length === 0 ? (
+            {isLoading ? (
 
               <tr>
 
                 <td
-                  colSpan="12"
-                  className="text-center"
+                  colSpan="13"
+                  className="text-center py-4"
                 >
 
-                  No Students Found
+                  Loading Students...
+
+                </td>
+
+              </tr>
+
+            ) : filteredStudents.length === 0 ? (
+
+              <tr>
+
+                <td
+                  colSpan="13"
+                  className="text-center py-4"
+                >
+
+                  No Students Found in Session{' '}
+
+                  {sessionFilter}
 
                 </td>
 
@@ -2508,38 +2879,38 @@ function Students() {
                   >
 
                     <td>
-
                       {
                         student.name
                       }
-
                     </td>
 
 
                     <td>
-
                       {
                         student.admissionNumber
                       }
-
                     </td>
 
 
                     <td>
-
                       {
                         student.course
                       }
-
                     </td>
 
 
                     <td>
+                      {
+                        student.batchTime ||
+                        '-'
+                      }
+                    </td>
 
+
+                    <td>
                       {
                         student.contact
                       }
-
                     </td>
 
 
@@ -2727,9 +3098,6 @@ function Students() {
             }}
           >
 
-
-            {/* CLOSE */}
-
             <button
               type="button"
               className="student-modal-close"
@@ -2745,9 +3113,7 @@ function Students() {
             </button>
 
 
-            {/* ================================== */}
-            {/* PROFILE HEADER */}
-            {/* ================================== */}
+            {/* PROFILE */}
 
             <div
               className="text-center mb-4"
@@ -2769,12 +3135,8 @@ function Students() {
 
               ) : (
 
-                <div
-                  className="mb-3"
-                >
-
+                <div className="mb-3">
                   No Photo
-
                 </div>
 
               )}
@@ -2801,9 +3163,7 @@ function Students() {
             </div>
 
 
-            {/* ================================== */}
             {/* PERSONAL */}
-            {/* ================================== */}
 
             <div className="student-view-section">
 
@@ -2812,9 +3172,7 @@ function Students() {
               </h5>
 
 
-              <div
-                className="row"
-              >
+              <div className="row">
 
                 <Detail
                   label="Student Name"
@@ -2856,9 +3214,7 @@ function Students() {
             </div>
 
 
-            {/* ================================== */}
             {/* PARENTS */}
-            {/* ================================== */}
 
             <div className="student-view-section">
 
@@ -2867,9 +3223,7 @@ function Students() {
               </h5>
 
 
-              <div
-                className="row"
-              >
+              <div className="row">
 
                 <Detail
                   label="Father's Name"
@@ -2918,9 +3272,7 @@ function Students() {
             </div>
 
 
-            {/* ================================== */}
             {/* ADDRESS */}
-            {/* ================================== */}
 
             <div className="student-view-section">
 
@@ -2929,9 +3281,7 @@ function Students() {
               </h5>
 
 
-              <div
-                className="row"
-              >
+              <div className="row">
 
                 <Detail
                   label="Permanent Address"
@@ -2954,9 +3304,7 @@ function Students() {
             </div>
 
 
-            {/* ================================== */}
             {/* EDUCATION */}
-            {/* ================================== */}
 
             <div className="student-view-section">
 
@@ -2965,9 +3313,7 @@ function Students() {
               </h5>
 
 
-              <div
-                className="row"
-              >
+              <div className="row">
 
                 <Detail
                   label="School / College"
@@ -2981,9 +3327,7 @@ function Students() {
             </div>
 
 
-            {/* ================================== */}
             {/* ADMISSION */}
-            {/* ================================== */}
 
             <div className="student-view-section">
 
@@ -2992,14 +3336,20 @@ function Students() {
               </h5>
 
 
-              <div
-                className="row"
-              >
+              <div className="row">
 
                 <Detail
                   label="Admission Number"
                   value={
                     selectedStudent.admissionNumber
+                  }
+                />
+
+                <Detail
+                  label="Academic Session"
+                  value={
+                    selectedStudent.session ||
+                    sessionFilter
                   }
                 />
 
@@ -3036,9 +3386,7 @@ function Students() {
             </div>
 
 
-            {/* ================================== */}
             {/* FEES */}
-            {/* ================================== */}
 
             <div className="student-view-section">
 
@@ -3047,9 +3395,7 @@ function Students() {
               </h5>
 
 
-              <div
-                className="row"
-              >
+              <div className="row">
 
                 <Detail
                   label="Registration Fee"
@@ -3134,9 +3480,7 @@ function Students() {
             </div>
 
 
-            {/* ================================== */}
-            {/* ADD PAYMENT */}
-            {/* ================================== */}
+            {/* PAYMENT */}
 
             <div className="student-view-section">
 
@@ -3163,9 +3507,7 @@ function Students() {
             </div>
 
 
-            {/* ================================== */}
             {/* RECEIPT */}
-            {/* ================================== */}
 
             <div className="student-view-section">
 
@@ -3178,9 +3520,7 @@ function Students() {
             </div>
 
 
-            {/* ================================== */}
-            {/* PAYMENT HISTORY */}
-            {/* ================================== */}
+            {/* HISTORY */}
 
             <div className="student-view-section">
 
@@ -3191,7 +3531,6 @@ function Students() {
               />
 
             </div>
-
 
           </div>
 

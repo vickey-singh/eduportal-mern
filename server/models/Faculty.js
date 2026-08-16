@@ -313,13 +313,151 @@ const facultySchema =
 
         type: [
 
-          assignedClassSchema
+          assignedClassSchema,
 
         ],
 
         default: [],
 
       },
+
+
+      // ======================================
+      // FACULTY SALARY
+      // ======================================
+
+      // Current monthly salary
+
+      monthlySalary: {
+
+        type: Number,
+
+        default: 0,
+
+        min: 0,
+
+      },
+
+
+      // ======================================
+      // MONTHLY SALARY HISTORY
+      // ======================================
+
+      salaryRecords: [
+
+        {
+
+          // ================================
+          // MONTH
+          // ================================
+
+          month: {
+
+            type: Number,
+
+            required: true,
+
+            min: 1,
+
+            max: 12,
+
+          },
+
+
+          // ================================
+          // YEAR
+          // ================================
+
+          year: {
+
+            type: Number,
+
+            required: true,
+
+          },
+
+
+          // ================================
+          // SALARY AMOUNT
+          // ================================
+
+          amount: {
+
+            type: Number,
+
+            required: true,
+
+            min: 0,
+
+          },
+
+
+          // ================================
+          // PAYMENT STATUS
+          // ================================
+
+          status: {
+
+            type: String,
+
+            enum: [
+
+              'Paid',
+
+              'Due',
+
+            ],
+
+            default: 'Due',
+
+          },
+
+
+          // ================================
+          // PAYMENT DATE
+          // ================================
+
+          paymentDate: {
+
+            type: Date,
+
+            default: null,
+
+          },
+
+
+          // ================================
+          // PAYMENT METHOD
+          // ================================
+
+          paymentMethod: {
+
+            type: String,
+
+            default: '',
+
+            trim: true,
+
+          },
+
+
+          // ================================
+          // REMARKS
+          // ================================
+
+          remarks: {
+
+            type: String,
+
+            default: '',
+
+            trim: true,
+
+          },
+
+        },
+
+      ],
 
 
       // ======================================
@@ -345,8 +483,15 @@ const facultySchema =
   )
 
 
+// ======================================
+// EXPORT MODEL
+// ======================================
+
 module.exports =
   mongoose.model(
+
     'Faculty',
+
     facultySchema
+
   )
