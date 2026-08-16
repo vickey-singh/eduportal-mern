@@ -112,25 +112,65 @@ router.get(
         ) > 0
       ) {
 
+        const monthlySalary =
+          Number(
+            faculty.monthlySalary
+          )
+
+
         faculty.salaryRecords.push({
 
           month,
 
           year,
 
+          // ==============================
+          // GROSS SALARY
+          // ==============================
+
           amount:
-            Number(
-              faculty.monthlySalary
-            ),
+            monthlySalary,
+
+
+          // ==============================
+          // DEDUCTION
+          // ==============================
+
+          deduction:
+            0,
+
+
+          // ==============================
+          // DEDUCTION REASON
+          // ==============================
+
+          deductionReason:
+            '',
+
+
+          // ==============================
+          // NET SALARY
+          // ==============================
+
+          netAmount:
+            monthlySalary,
+
+
+          // ==============================
+          // STATUS
+          // ==============================
 
           status:
             'Due',
 
+
           paymentDate:
             null,
 
+
           paymentMethod:
             '',
+
 
           remarks:
             '',
@@ -150,6 +190,84 @@ router.get(
 
 
       // ==================================
+      // BACKWARD COMPATIBILITY
+      // ==================================
+      //
+      // Purane salary records ke liye
+      // deduction = 0
+      // netAmount = amount
+      //
+      // ==================================
+
+      faculty.salaryRecords.forEach(
+
+        (record) => {
+
+          if (
+
+            record.deduction ===
+            undefined ||
+
+            record.deduction ===
+            null
+
+          ) {
+
+            record.deduction =
+              0
+
+          }
+
+
+          if (
+
+            record.deductionReason ===
+            undefined ||
+
+            record.deductionReason ===
+            null
+
+          ) {
+
+            record.deductionReason =
+              ''
+
+          }
+
+
+          if (
+
+            record.netAmount ===
+            undefined ||
+
+            record.netAmount ===
+            null
+
+          ) {
+
+            record.netAmount =
+              Math.max(
+
+                0,
+
+                Number(
+                  record.amount || 0
+                ) -
+
+                Number(
+                  record.deduction || 0
+                )
+
+              )
+
+          }
+
+        }
+
+      )
+
+
+      // ==================================
       // TOTAL CALCULATION
       // ==================================
 
@@ -157,10 +275,16 @@ router.get(
 
       let totalDue = 0
 
+      let totalDeduction = 0
+
 
       faculty.salaryRecords.forEach(
 
         (record) => {
+
+          // ==============================
+          // GROSS
+          // ==============================
 
           const amount =
             Number(
@@ -168,19 +292,67 @@ router.get(
             )
 
 
+          // ==============================
+          // DEDUCTION
+          // ==============================
+
+          const deduction =
+            Number(
+              record.deduction || 0
+            )
+
+
+          // ==============================
+          // NET
+          // ==============================
+
+          const netAmount =
+            Math.max(
+
+              0,
+
+              Number(
+
+                record.netAmount !==
+                  undefined &&
+                record.netAmount !==
+                  null
+
+                  ? record.netAmount
+
+                  : amount -
+                    deduction
+
+              )
+
+            )
+
+
+          // ==============================
+          // TOTAL DEDUCTION
+          // ==============================
+
+          totalDeduction +=
+            deduction
+
+
+          // ==============================
+          // PAID / DUE
+          // ==============================
+
           if (
             record.status === 'Paid'
           ) {
 
             totalPaid +=
-              amount
+              netAmount
 
           }
 
           else {
 
             totalDue +=
-              amount
+              netAmount
 
           }
 
@@ -213,6 +385,7 @@ router.get(
 
         },
 
+
         currentMonth: {
 
           month,
@@ -224,14 +397,18 @@ router.get(
 
         },
 
+
         salaryRecords:
           faculty.salaryRecords,
+
 
         summary: {
 
           totalPaid,
 
           totalDue,
+
+          totalDeduction,
 
         },
 
@@ -410,6 +587,15 @@ router.put(
           amount:
             salary,
 
+          deduction:
+            0,
+
+          deductionReason:
+            '',
+
+          netAmount:
+            salary,
+
           status:
             'Due',
 
@@ -423,6 +609,45 @@ router.put(
             '',
 
         })
+
+      }
+
+
+      // ==================================
+      // IF CURRENT RECORD IS DUE
+      // ==================================
+      //
+      // Salary update hone par current
+      // unpaid record ka gross/net update
+      // hoga.
+      //
+      // Paid record ko touch nahi karenge.
+      //
+      // ==================================
+
+      else if (
+
+        existingRecord.status ===
+        'Due'
+
+      ) {
+
+        existingRecord.amount =
+          salary
+
+
+        existingRecord.netAmount =
+          Math.max(
+
+            0,
+
+            salary -
+
+            Number(
+              existingRecord.deduction || 0
+            )
+
+          )
 
       }
 
@@ -490,6 +715,10 @@ router.put(
 // {
 //   "month": 8,
 //   "year": 2026,
+//   "basicSalary": 20000,
+//   "deductionAmount": 2000,
+//   "deductionReason": "3 days absent",
+//   "finalSalary": 18000,
 //   "paymentDate": "2026-08-16",
 //   "paymentMethod": "Cash",
 //   "remarks": ""
@@ -516,6 +745,14 @@ router.put(
 
         year,
 
+        basicSalary,
+
+        deductionAmount,
+
+        deductionReason,
+
+        finalSalary,
+
         paymentDate,
 
         paymentMethod,
@@ -534,6 +771,7 @@ router.put(
         Number(
           month
         )
+
 
       const salaryYear =
         Number(
@@ -624,6 +862,242 @@ router.put(
 
 
       // ==================================
+      // BASIC / GROSS SALARY
+      // ==================================
+
+      const grossSalary =
+        Number(
+
+          basicSalary !==
+            undefined
+
+            ? basicSalary
+
+            : salaryRecord.amount
+
+        )
+
+
+      if (
+
+        Number.isNaN(
+          grossSalary
+        ) ||
+
+        grossSalary < 0
+
+      ) {
+
+        return res.status(400).json({
+
+          success: false,
+
+          message:
+            'Invalid salary amount.',
+
+        })
+
+      }
+
+
+      // ==================================
+      // DEDUCTION
+      // ==================================
+
+      const deduction =
+        Number(
+
+          deductionAmount !==
+            undefined
+
+            ? deductionAmount
+
+            : 0
+
+        )
+
+
+      if (
+
+        Number.isNaN(
+          deduction
+        ) ||
+
+        deduction < 0
+
+      ) {
+
+        return res.status(400).json({
+
+          success: false,
+
+          message:
+            'Invalid deduction amount.',
+
+        })
+
+      }
+
+
+      // ==================================
+      // DEDUCTION CANNOT EXCEED SALARY
+      // ==================================
+
+      if (
+        deduction >
+        grossSalary
+      ) {
+
+        return res.status(400).json({
+
+          success: false,
+
+          message:
+            'Deduction cannot be greater than salary.',
+
+        })
+
+      }
+
+
+      // ==================================
+      // DEDUCTION REASON
+      // ==================================
+
+      const reason =
+        String(
+
+          deductionReason ||
+          ''
+
+        ).trim()
+
+
+      if (
+
+        deduction > 0 &&
+
+        !reason
+
+      ) {
+
+        return res.status(400).json({
+
+          success: false,
+
+          message:
+            'Deduction reason is required.',
+
+        })
+
+      }
+
+
+      // ==================================
+      // CALCULATE NET SALARY
+      // ==================================
+      //
+      // Backend khud calculate karega.
+      //
+      // Frontend se finalSalary aaye ya
+      // na aaye, calculation trusted nahi
+      // ki jayegi.
+      //
+      // ==================================
+
+      const calculatedNetSalary =
+        Math.max(
+
+          0,
+
+          grossSalary -
+          deduction
+
+        )
+
+
+      // ==================================
+      // OPTIONAL FRONTEND FINAL SALARY
+      // ==================================
+      //
+      // Agar frontend finalSalary bhejta
+      // hai to sirf validation ke liye
+      // check karenge.
+      //
+      // Database mein backend calculated
+      // value hi save hogi.
+      //
+      // ==================================
+
+      if (
+        finalSalary !==
+        undefined
+      ) {
+
+        const frontendFinalSalary =
+          Number(
+            finalSalary
+          )
+
+
+        if (
+
+          Number.isNaN(
+            frontendFinalSalary
+          ) ||
+
+          frontendFinalSalary !==
+            calculatedNetSalary
+
+        ) {
+
+          return res.status(400).json({
+
+            success: false,
+
+            message:
+              'Final salary calculation is invalid.',
+
+          })
+
+        }
+
+      }
+
+
+      // ==================================
+      // SAVE GROSS SALARY
+      // ==================================
+
+      salaryRecord.amount =
+        grossSalary
+
+
+      // ==================================
+      // SAVE DEDUCTION
+      // ==================================
+
+      salaryRecord.deduction =
+        deduction
+
+
+      // ==================================
+      // SAVE REASON
+      // ==================================
+
+      salaryRecord.deductionReason =
+        reason
+
+
+      // ==================================
+      // SAVE NET SALARY
+      // ==================================
+
+      salaryRecord.netAmount =
+        calculatedNetSalary
+
+
+      // ==================================
       // MARK PAID
       // ==================================
 
@@ -631,18 +1105,32 @@ router.put(
         'Paid'
 
 
+      // ==================================
+      // PAYMENT DATE
+      // ==================================
+
       salaryRecord.paymentDate =
         paymentDate
+
           ? new Date(
               paymentDate
             )
+
           : new Date()
 
+
+      // ==================================
+      // PAYMENT METHOD
+      // ==================================
 
       salaryRecord.paymentMethod =
         paymentMethod ||
         ''
 
+
+      // ==================================
+      // REMARKS
+      // ==================================
 
       salaryRecord.remarks =
         remarks ||
@@ -788,6 +1276,10 @@ router.put(
       }
 
 
+      // ==================================
+      // MARK DUE
+      // ==================================
+
       salaryRecord.status =
         'Due'
 
@@ -795,6 +1287,45 @@ router.put(
       salaryRecord.paymentDate =
         null
 
+
+      salaryRecord.paymentMethod =
+        ''
+
+
+      // ==================================
+      // RESET DEDUCTION
+      // ==================================
+      //
+      // Paid salary ko Due karne par
+      // previous payment deduction bhi
+      // reset hoga.
+      //
+      // Dobara Paid karte waqt admin
+      // fresh deduction enter karega.
+      //
+      // ==================================
+
+      salaryRecord.deduction =
+        0
+
+
+      salaryRecord.deductionReason =
+        ''
+
+
+      salaryRecord.netAmount =
+        Number(
+          salaryRecord.amount || 0
+        )
+
+
+      salaryRecord.remarks =
+        ''
+
+
+      // ==================================
+      // SAVE
+      // ==================================
 
       await faculty.save()
 

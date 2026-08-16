@@ -378,14 +378,76 @@ const facultySchema =
 
 
           // ================================
-          // SALARY AMOUNT
+          // GROSS SALARY AMOUNT
           // ================================
+
+          // Original monthly salary
 
           amount: {
 
             type: Number,
 
             required: true,
+
+            min: 0,
+
+          },
+
+
+          // ================================
+          // SALARY DEDUCTION
+          // ================================
+
+          // Amount deducted from salary
+          // Example:
+          // Monthly Salary = 20000
+          // Deduction      = 2000
+
+          deduction: {
+
+            type: Number,
+
+            default: 0,
+
+            min: 0,
+
+          },
+
+
+          // ================================
+          // DEDUCTION REASON
+          // ================================
+
+          // Example:
+          // 3 days absent
+          // Late attendance
+          // Unpaid leave
+
+          deductionReason: {
+
+            type: String,
+
+            default: '',
+
+            trim: true,
+
+          },
+
+
+          // ================================
+          // NET SALARY
+          // ================================
+
+          // Final amount payable after deduction
+          //
+          // netAmount =
+          // amount - deduction
+
+          netAmount: {
+
+            type: Number,
+
+            default: 0,
 
             min: 0,
 

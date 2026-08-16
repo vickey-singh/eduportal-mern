@@ -133,6 +133,12 @@ router.get(
 
       ) {
 
+        const monthlySalary =
+          Number(
+            teacher.monthlySalary || 0
+          )
+
+
         teacher.salaryRecords.push({
 
           month:
@@ -141,10 +147,33 @@ router.get(
           year:
             currentYear,
 
+          // ================================
+          // GROSS SALARY
+          // ================================
+
           amount:
-            Number(
-              teacher.monthlySalary
-            ),
+            monthlySalary,
+
+          // ================================
+          // NO DEDUCTION INITIALLY
+          // ================================
+
+          deduction:
+            0,
+
+          deductionReason:
+            '',
+
+          // ================================
+          // NET SALARY
+          // ================================
+
+          netAmount:
+            monthlySalary,
+
+          // ================================
+          // STATUS
+          // ================================
 
           status:
             'Due',
@@ -172,38 +201,64 @@ router.get(
       }
 
 
-      // ==================================
-      // CALCULATE SUMMARY
-      // ==================================
-
-      let totalPaid = 0
-
-      let totalDue = 0
-
+      // ======================================
+      // BACKWARD COMPATIBILITY
+      // ======================================
+      //
+      // Old salary records mein deduction
+      // aur netAmount nahi hoga.
+      //
+      // Un records ke liye:
+      //
+      // deduction = 0
+      // netAmount = amount
+      //
+      // ======================================
 
       teacher.salaryRecords.forEach(
 
         (record) => {
 
-          const amount =
-            Number(
-              record.amount || 0
-            )
-
-
           if (
-            record.status === 'Paid'
+
+            record.deduction ===
+            undefined ||
+
+            record.deduction ===
+            null
+
           ) {
 
-            totalPaid +=
-              amount
+            record.deduction =
+              0
 
           }
 
-          else {
 
-            totalDue +=
-              amount
+          if (
+
+            record.netAmount ===
+            undefined ||
+
+            record.netAmount ===
+            null
+
+          ) {
+
+            record.netAmount =
+              Math.max(
+
+                0,
+
+                Number(
+                  record.amount || 0
+                ) -
+
+                Number(
+                  record.deduction || 0
+                )
+
+              )
 
           }
 
@@ -212,9 +267,103 @@ router.get(
       )
 
 
-      // ==================================
+      // ======================================
+      // CALCULATE SUMMARY
+      // ======================================
+
+      let totalPaid = 0
+
+      let totalDue = 0
+
+      let totalDeduction = 0
+
+
+      teacher.salaryRecords.forEach(
+
+        (record) => {
+
+          // ================================
+          // GROSS
+          // ================================
+
+          const amount =
+            Number(
+              record.amount || 0
+            )
+
+
+          // ================================
+          // DEDUCTION
+          // ================================
+
+          const deduction =
+            Number(
+              record.deduction || 0
+            )
+
+
+          // ================================
+          // NET
+          // ================================
+
+          const netAmount =
+            Math.max(
+
+              0,
+
+              Number(
+
+                record.netAmount !==
+                  undefined &&
+                record.netAmount !==
+                  null
+
+                  ? record.netAmount
+
+                  : amount -
+                    deduction
+
+              )
+
+            )
+
+
+          // ================================
+          // TOTAL DEDUCTION
+          // ================================
+
+          totalDeduction +=
+            deduction
+
+
+          // ================================
+          // PAID / DUE
+          // ================================
+
+          if (
+            record.status === 'Paid'
+          ) {
+
+            totalPaid +=
+              netAmount
+
+          }
+
+          else {
+
+            totalDue +=
+              netAmount
+
+          }
+
+        }
+
+      )
+
+
+      // ======================================
       // RESPONSE
-      // ==================================
+      // ======================================
 
       return res.status(200).json({
 
@@ -232,10 +381,19 @@ router.get(
 
         salary: {
 
+          // ================================
+          // CURRENT MONTHLY SALARY
+          // ================================
+
           monthlySalary:
             Number(
               teacher.monthlySalary || 0
             ),
+
+
+          // ================================
+          // CURRENT MONTH
+          // ================================
 
           currentMonth: {
 
@@ -250,14 +408,26 @@ router.get(
 
           },
 
+
+          // ================================
+          // ALL RECORDS
+          // ================================
+
           records:
             teacher.salaryRecords,
+
+
+          // ================================
+          // SUMMARY
+          // ================================
 
           summary: {
 
             totalPaid,
 
             totalDue,
+
+            totalDeduction,
 
           },
 

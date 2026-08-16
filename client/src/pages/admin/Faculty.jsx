@@ -141,6 +141,17 @@ function Faculty() {
 
 
   // ======================================
+  // SALARY DEDUCTION
+  // ======================================
+
+  const [salaryDeduction, setSalaryDeduction] =
+    useState('')
+
+  const [salaryDeductionReason, setSalaryDeductionReason] =
+    useState('')
+
+
+  // ======================================
   // PAY SALARY RECORD
   // ======================================
 
@@ -1555,6 +1566,10 @@ function Faculty() {
 
         setSalaryRemarks('')
 
+        setSalaryDeduction('')
+
+        setSalaryDeductionReason('')
+
 
         const response =
           await axios.get(
@@ -1653,6 +1668,10 @@ function Faculty() {
       setPaymentMethod('Cash')
 
       setSalaryRemarks('')
+
+      setSalaryDeduction('')
+
+      setSalaryDeductionReason('')
 
     }
 
@@ -1850,6 +1869,10 @@ function Faculty() {
 
       setSalaryRemarks('')
 
+      setSalaryDeduction('')
+
+      setSalaryDeductionReason('')
+
     }
 
 
@@ -1877,6 +1900,87 @@ function Faculty() {
       }
 
 
+      const basicSalary =
+        Number(
+
+          paySalaryRecord.amount ??
+
+          paySalaryRecord.netAmount ??
+
+          salaryFaculty.monthlySalary ??
+
+          0
+
+        )
+
+
+      const deduction =
+        Number(
+          salaryDeduction || 0
+        )
+
+
+      if (
+
+        Number.isNaN(
+          deduction
+        ) ||
+
+        deduction < 0
+
+      ) {
+
+        alert(
+          'Please enter a valid deduction amount.'
+        )
+
+        return
+
+      }
+
+
+      if (
+        deduction >
+        basicSalary
+      ) {
+
+        alert(
+          'Deduction cannot be greater than salary.'
+        )
+
+        return
+
+      }
+
+
+      if (
+
+        deduction > 0 &&
+
+        !salaryDeductionReason.trim()
+
+      ) {
+
+        alert(
+          'Please enter the deduction reason.'
+        )
+
+        return
+
+      }
+
+
+      const netAmount =
+        Math.max(
+
+          0,
+
+          basicSalary -
+          deduction
+
+        )
+
+
       try {
 
         setSalaryPaying(true)
@@ -1894,6 +1998,18 @@ function Faculty() {
 
               year:
                 paySalaryRecord.year,
+
+              basicSalary:
+                basicSalary,
+
+              deductionAmount:
+                deduction,
+
+              deductionReason:
+                salaryDeductionReason.trim(),
+
+              finalSalary:
+                netAmount,
 
               paymentDate:
                 paymentDate || null,
@@ -1932,6 +2048,10 @@ function Faculty() {
           setPaymentMethod('Cash')
 
           setSalaryRemarks('')
+
+          setSalaryDeduction('')
+
+          setSalaryDeductionReason('')
 
 
           await openSalary(
@@ -5184,7 +5304,19 @@ function Faculty() {
                                       </th>
 
                                       <th>
-                                        Amount
+                                        Basic Salary
+                                      </th>
+
+                                      <th>
+                                        Deduction
+                                      </th>
+
+                                      <th>
+                                        Net Salary
+                                      </th>
+
+                                      <th>
+                                        Deduction Reason
                                       </th>
 
                                       <th>
@@ -5299,6 +5431,88 @@ function Faculty() {
                                                 formatMoney(
                                                   record.amount
                                                 )
+                                              }
+
+                                            </td>
+
+
+                                            <td>
+
+                                              {
+                                                Number(
+                                                  record.deduction || 0
+                                                ) > 0
+
+                                                  ? (
+
+                                                    <span className="text-danger">
+
+                                                      -
+
+                                                      {
+                                                        formatMoney(
+                                                          record.deduction
+                                                        )
+                                                      }
+
+                                                    </span>
+
+                                                  )
+
+                                                  : (
+
+                                                    <span className="text-muted">
+
+                                                      ₹0
+
+                                                    </span>
+
+                                                  )
+
+                                              }
+
+                                            </td>
+
+
+                                            <td>
+
+                                              <strong>
+
+                                                {
+                                                  formatMoney(
+
+                                                    record.netAmount !==
+                                                      undefined &&
+                                                    record.netAmount !==
+                                                      null
+
+                                                      ? record.netAmount
+
+                                                      : (
+
+                                                        Number(
+                                                          record.amount || 0
+                                                        ) -
+
+                                                        Number(
+                                                          record.deduction || 0
+                                                        )
+
+                                                      )
+
+                                                  )
+                                                }
+
+                                              </strong>
+
+                                            </td>
+
+
+                                            <td>
+
+                                              {
+                                                record.deductionReason ||
+                                                '-'
                                               }
 
                                             </td>
@@ -5641,6 +5855,227 @@ function Faculty() {
                       {
                         formatMoney(
                           paySalaryRecord.amount
+                        )
+                      }
+
+                    </strong>
+
+                  </div>
+
+                </div>
+
+
+                {/* DEDUCTION AMOUNT */}
+
+                <div className="mb-3">
+
+                  <label className="form-label fw-semibold">
+
+                    Deduction Amount
+
+                  </label>
+
+
+                  <div className="input-group">
+
+                    <span className="input-group-text">
+
+                      ₹
+
+                    </span>
+
+
+                    <input
+
+                      type="number"
+
+                      className="form-control"
+
+                      min="0"
+
+                      value={
+                        salaryDeduction
+                      }
+
+                      onChange={(e) =>
+                        setSalaryDeduction(
+                          e.target.value
+                        )
+                      }
+
+                      disabled={
+                        salaryPaying
+                      }
+
+                      placeholder="0"
+
+                    />
+
+                  </div>
+
+
+                  <small className="text-muted">
+
+                    Enter 0 if there is no deduction.
+
+                  </small>
+
+                </div>
+
+
+                {/* DEDUCTION REASON */}
+
+                <div className="mb-3">
+
+                  <label className="form-label fw-semibold">
+
+                    Deduction Reason
+
+                    {
+
+                      Number(
+                        salaryDeduction || 0
+                      ) > 0 && (
+
+                        <span className="text-danger">
+
+                          {' '}*
+
+                        </span>
+
+                      )
+
+                    }
+
+                  </label>
+
+
+                  <textarea
+
+                    className="form-control"
+
+                    rows="3"
+
+                    placeholder="Example: 3 days absent"
+
+                    value={
+                      salaryDeductionReason
+                    }
+
+                    onChange={(e) =>
+                      setSalaryDeductionReason(
+                        e.target.value
+                      )
+                    }
+
+                    disabled={
+                      salaryPaying
+                    }
+
+                  ></textarea>
+
+                </div>
+
+
+                {/* SALARY CALCULATION */}
+
+                <div className="alert alert-info">
+
+                  <div className="d-flex justify-content-between">
+
+                    <span>
+
+                      Basic Salary
+
+                    </span>
+
+
+                    <strong>
+
+                      {
+                        formatMoney(
+
+                          paySalaryRecord.amount ??
+
+                          paySalaryRecord.netAmount ??
+
+                          salaryFaculty?.monthlySalary ??
+
+                          0
+
+                        )
+                      }
+
+                    </strong>
+
+                  </div>
+
+
+                  <div className="d-flex justify-content-between mt-2">
+
+                    <span>
+
+                      Deduction
+
+                    </span>
+
+
+                    <strong className="text-danger">
+
+                      -
+
+                      {
+                        formatMoney(
+                          salaryDeduction || 0
+                        )
+                      }
+
+                    </strong>
+
+                  </div>
+
+
+                  <hr />
+
+
+                  <div className="d-flex justify-content-between">
+
+                    <strong>
+
+                      Net Salary
+
+                    </strong>
+
+
+                    <strong className="text-success fs-5">
+
+                      {
+                        formatMoney(
+
+                          Math.max(
+
+                            0,
+
+                            Number(
+
+                              paySalaryRecord.amount ??
+
+                              paySalaryRecord.netAmount ??
+
+                              salaryFaculty?.monthlySalary ??
+
+                              0
+
+                            )
+
+                            -
+
+                            Number(
+                              salaryDeduction || 0
+                            )
+
+                          )
+
                         )
                       }
 

@@ -629,6 +629,99 @@ function TeacherProfile() {
 
 
   // ======================================
+  // GET BASIC SALARY
+  // ======================================
+
+  const getBasicSalary =
+    (record) => {
+
+      return Number(
+
+        record?.amount ||
+
+        0
+
+      )
+
+    }
+
+
+  // ======================================
+  // GET DEDUCTION
+  // ======================================
+
+  const getDeduction =
+    (record) => {
+
+      return Number(
+
+        record?.deduction ||
+
+        0
+
+      )
+
+    }
+
+
+  // ======================================
+  // GET NET SALARY
+  // ======================================
+
+  const getNetSalary =
+    (record) => {
+
+      const basicSalary =
+        getBasicSalary(
+          record
+        )
+
+
+      const deduction =
+        getDeduction(
+          record
+        )
+
+
+      // ==================================
+      // OLD RECORD SUPPORT
+      // ==================================
+      //
+      // If netAmount exists and is greater
+      // than 0, use it.
+      //
+      // Otherwise calculate:
+      //
+      // Basic Salary - Deduction
+      //
+      // ==================================
+
+      if (
+        Number(
+          record?.netAmount || 0
+        ) > 0
+      ) {
+
+        return Number(
+          record.netAmount
+        )
+
+      }
+
+
+      return Math.max(
+
+        0,
+
+        basicSalary -
+        deduction
+
+      )
+
+    }
+
+
+  // ======================================
   // ATTENDANCE STATUS
   // ======================================
 
@@ -2414,13 +2507,13 @@ function TeacherProfile() {
                       </div>
 
 
-                      {/* AMOUNT */}
+                      {/* BASIC SALARY */}
 
                       <div className="col-md-3">
 
                         <small className="text-muted">
 
-                          Amount
+                          Basic Salary
 
                         </small>
 
@@ -2430,10 +2523,89 @@ function TeacherProfile() {
                           {
                             formatMoney(
 
+                              getBasicSalary(
+
+                                salaryData
+                                  .currentMonth
+                                  .record
+
+                              )
+
+                            )
+                          }
+
+                        </div>
+
+                      </div>
+
+
+                      {/* DEDUCTION */}
+
+                      <div className="col-md-3">
+
+                        <small className="text-muted">
+
+                          Deduction
+
+                        </small>
+
+
+                        <div className="fw-semibold text-danger mt-1">
+
+                          {
+
+                            getDeduction(
+
                               salaryData
                                 .currentMonth
                                 .record
-                                .amount
+
+                            ) > 0
+
+                              ? `- ${formatMoney(
+
+                                  getDeduction(
+
+                                    salaryData
+                                      .currentMonth
+                                      .record
+
+                                  )
+
+                                )}`
+
+                              : '₹0'
+
+                          }
+
+                        </div>
+
+                      </div>
+
+
+                      {/* NET SALARY */}
+
+                      <div className="col-md-3">
+
+                        <small className="text-muted">
+
+                          Net Salary
+
+                        </small>
+
+
+                        <div className="fw-semibold text-success mt-1">
+
+                          {
+                            formatMoney(
+
+                              getNetSalary(
+
+                                salaryData
+                                  .currentMonth
+                                  .record
+
+                              )
 
                             )
                           }
@@ -2524,70 +2696,90 @@ function TeacherProfile() {
 
                       {/* PAYMENT METHOD */}
 
-                      {salaryData
-                        .currentMonth
-                        .record
-                        .status === 'Paid' && (
+                      <div className="col-md-3">
 
-                        <div className="col-md-6">
+                        <small className="text-muted">
 
-                          <small className="text-muted">
+                          Payment Method
 
-                            Payment Method
-
-                          </small>
+                        </small>
 
 
-                          <div className="fw-semibold mt-1">
+                        <div className="fw-semibold mt-1">
 
-                            {
-                              salaryData
-                                .currentMonth
-                                .record
-                                .paymentMethod ||
+                          {
 
-                              '-'
+                            salaryData
+                              .currentMonth
+                              .record
+                              .paymentMethod ||
 
-                            }
+                            '-'
 
-                          </div>
+                          }
 
                         </div>
 
-                      )}
+                      </div>
+
+
+                      {/* DEDUCTION REASON */}
+
+                      <div className="col-md-6">
+
+                        <small className="text-muted">
+
+                          Deduction Reason
+
+                        </small>
+
+
+                        <div className="fw-semibold mt-1">
+
+                          {
+
+                            salaryData
+                              .currentMonth
+                              .record
+                              .deductionReason ||
+
+                            '-'
+
+                          }
+
+                        </div>
+
+                      </div>
 
 
                       {/* REMARKS */}
 
-                      {salaryData
-                        .currentMonth
-                        .record
-                        .remarks && (
+                      <div className="col-md-6">
 
-                        <div className="col-md-6">
+                        <small className="text-muted">
 
-                          <small className="text-muted">
+                          Remarks
 
-                            Remarks
-
-                          </small>
+                        </small>
 
 
-                          <div className="fw-semibold mt-1">
+                        <div className="fw-semibold mt-1">
 
-                            {
-                              salaryData
-                                .currentMonth
-                                .record
-                                .remarks
+                          {
 
-                            }
+                            salaryData
+                              .currentMonth
+                              .record
+                              .remarks ||
 
-                          </div>
+                            '-'
+
+                          }
 
                         </div>
 
-                      )}
+                      </div>
+
 
                     </div>
 
@@ -2671,7 +2863,19 @@ function TeacherProfile() {
                             </th>
 
                             <th>
-                              Amount
+                              Basic Salary
+                            </th>
+
+                            <th>
+                              Deduction
+                            </th>
+
+                            <th>
+                              Net Salary
+                            </th>
+
+                            <th>
+                              Deduction Reason
                             </th>
 
                             <th>
@@ -2684,6 +2888,10 @@ function TeacherProfile() {
 
                             <th>
                               Payment Method
+                            </th>
+
+                            <th>
+                              Remarks
                             </th>
 
                           </tr>
@@ -2741,6 +2949,8 @@ function TeacherProfile() {
 
                                 >
 
+                                  {/* NUMBER */}
+
                                   <td>
 
                                     {
@@ -2749,6 +2959,8 @@ function TeacherProfile() {
 
                                   </td>
 
+
+                                  {/* MONTH */}
 
                                   <td>
 
@@ -2771,16 +2983,107 @@ function TeacherProfile() {
                                   </td>
 
 
+                                  {/* BASIC SALARY */}
+
                                   <td>
 
                                     {
+
                                       formatMoney(
-                                        record.amount
+
+                                        getBasicSalary(
+                                          record
+                                        )
+
                                       )
+
                                     }
 
                                   </td>
 
+
+                                  {/* DEDUCTION */}
+
+                                  <td>
+
+                                    <span
+
+                                      className={
+
+                                        getDeduction(
+                                          record
+                                        ) > 0
+
+                                          ? 'text-danger fw-semibold'
+
+                                          : ''
+
+                                      }
+
+                                    >
+
+                                      {
+
+                                        getDeduction(
+                                          record
+                                        ) > 0
+
+                                          ? `- ${formatMoney(
+
+                                              getDeduction(
+                                                record
+                                              )
+
+                                            )}`
+
+                                          : '₹0'
+
+                                      }
+
+                                    </span>
+
+                                  </td>
+
+
+                                  {/* NET SALARY */}
+
+                                  <td>
+
+                                    <strong className="text-success">
+
+                                      {
+
+                                        formatMoney(
+
+                                          getNetSalary(
+                                            record
+                                          )
+
+                                        )
+
+                                      }
+
+                                    </strong>
+
+                                  </td>
+
+
+                                  {/* DEDUCTION REASON */}
+
+                                  <td>
+
+                                    {
+
+                                      record.deductionReason ||
+
+                                      '-'
+
+                                    }
+
+                                  </td>
+
+
+                                  {/* STATUS */}
 
                                   <td>
 
@@ -2789,7 +3092,9 @@ function TeacherProfile() {
                                       className={
 
                                         getSalaryStatusBadge(
+
                                           record.status
+
                                         )
 
                                       }
@@ -2812,22 +3117,48 @@ function TeacherProfile() {
                                   </td>
 
 
+                                  {/* PAYMENT DATE */}
+
                                   <td>
 
                                     {
+
                                       formatPaymentDate(
+
                                         record.paymentDate
+
                                       )
+
                                     }
 
                                   </td>
 
 
+                                  {/* PAYMENT METHOD */}
+
                                   <td>
 
                                     {
+
                                       record.paymentMethod ||
+
                                       '-'
+
+                                    }
+
+                                  </td>
+
+
+                                  {/* REMARKS */}
+
+                                  <td>
+
+                                    {
+
+                                      record.remarks ||
+
+                                      '-'
+
                                     }
 
                                   </td>
