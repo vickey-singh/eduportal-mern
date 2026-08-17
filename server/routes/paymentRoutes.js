@@ -708,10 +708,10 @@ router.post(
         `PIE${String(
           nextAdmissionNumber
         ).padStart(
-          3,
+          4,
           '0'
         )}`
-
+      
 
       // ==================================
       // DATE
