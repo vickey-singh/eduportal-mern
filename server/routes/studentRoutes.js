@@ -25,6 +25,9 @@ const Receipt =
 const createNotification =
   require('../utils/createNotification')
 
+const studentAuth =
+  require('../middleware/studentAuth')
+
 
 // ======================================
 // HELPER: CALCULATE FEE STATUS
@@ -2723,25 +2726,33 @@ router.put(
 // POST
 // /api/student/fees/create-order
 //
+// Student identity comes from JWT.
+// Frontend does NOT send studentId.
+//
 // ======================================
 
 router.post(
 
   '/student/fees/create-order',
 
+  studentAuth,
+
   async (req, res) => {
 
     try {
 
       const {
-
-        studentId,
-
         amount,
-
         paymentPlan,
-
       } = req.body
+
+
+      // ==================================
+      // GET STUDENT FROM JWT
+      // ==================================
+
+      const studentId =
+        req.student?.id
 
 
       if (!studentId) {
@@ -2757,6 +2768,10 @@ router.post(
 
       }
 
+
+      // ==================================
+      // PAYMENT AMOUNT
+      // ==================================
 
       const paymentAmount =
         Number(amount)
@@ -2804,7 +2819,7 @@ router.post(
 
 
       // ==================================
-      // REMAINING
+      // REMAINING FEE
       // ==================================
 
       const remainingFee =
@@ -2889,11 +2904,8 @@ router.post(
       const allowedPlans = [
 
         'monthly',
-
         'three_month',
-
         'six_month',
-
         'full',
 
       ]
@@ -2916,6 +2928,10 @@ router.post(
 
       }
 
+
+      // ==================================
+      // PLAN CANNOT CHANGE
+      // ==================================
 
       if (
 
@@ -2941,7 +2957,7 @@ router.post(
 
 
       // ==================================
-      // PLAN AMOUNT
+      // MINIMUM PAYMENT
       // ==================================
 
       let minimumAmount =
@@ -3022,31 +3038,31 @@ router.post(
       }
 
 
+      // ==================================
+      // FULL PAYMENT
+      // ==================================
+
       if (
-        selectedPlan === 'full'
+        selectedPlan === 'full' &&
+
+        paymentAmount !==
+          remainingFee
       ) {
 
-        if (
-          paymentAmount !==
-          remainingFee
-        ) {
+        return res.status(400).json({
 
-          return res.status(400).json({
+          success: false,
 
-            success: false,
+          message:
+            `Full payment amount must be ₹${remainingFee}.`,
 
-            message:
-              `Full payment amount must be ₹${remainingFee}.`,
-
-          })
-
-        }
+        })
 
       }
 
 
       // ==================================
-      // CREATE ORDER
+      // CREATE RAZORPAY ORDER
       // ==================================
 
       const order =
@@ -3061,7 +3077,6 @@ router.post(
             'INR',
 
           receipt:
-
             `PIE_${student.admissionNumber}_${Date.now()}`,
 
           notes: {
@@ -3082,6 +3097,10 @@ router.post(
 
         })
 
+
+      // ==================================
+      // RESPONSE
+      // ==================================
 
       return res.status(200).json({
 
@@ -3156,6 +3175,8 @@ router.post(
 router.post(
 
   '/student/fees/verify',
+   
+  studentAuth,
 
   async (req, res) => {
 
@@ -3397,46 +3418,73 @@ router.post(
       // ==================================
       // STUDENT ID
       // ==================================
-
-      const studentId =
+      
+      const authenticatedStudentId =
+        req.student?.id
+      
+      const orderStudentId =
         order?.notes?.studentId
-
-
-      if (!studentId) {
-
+      
+      
+      if (
+        !authenticatedStudentId ||
+        !orderStudentId
+      ) {
+      
         return res.status(400).json({
-
+      
           success: false,
-
+      
           message:
-            'Student information not found in Razorpay order.',
-
+            'Student information not found.',
+      
         })
-
+      
       }
-
-
+      
+      
+      // ==================================
+      // VERIFY ORDER BELONGS TO LOGGED-IN STUDENT
+      // ==================================
+      
+      if (
+        String(authenticatedStudentId) !==
+        String(orderStudentId)
+      ) {
+      
+        return res.status(403).json({
+      
+          success: false,
+      
+          message:
+            'Student verification failed.',
+      
+        })
+      
+      }
+      
+      
       // ==================================
       // FIND STUDENT
       // ==================================
-
+      
       const student =
         await Student.findById(
-          studentId
+          authenticatedStudentId
         )
-
-
+      
+      
       if (!student) {
-
+      
         return res.status(404).json({
-
+      
           success: false,
-
+      
           message:
             'Student not found.',
-
+      
         })
-
+      
       }
 
 
