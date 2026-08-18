@@ -174,6 +174,10 @@ function StudentFees() {
           )
 
 
+          // ==================================
+          // PAYMENT PLAN
+          // ==================================
+
           setSelectedPlan(
 
             response.data.fees?.paymentPlan ||
@@ -843,6 +847,13 @@ function StudentFees() {
         // ==================================
         // CREATE RAZORPAY ORDER
         // ==================================
+        //
+        // IMPORTANT:
+        // Student ID is NOT sent here.
+        //
+        // Backend gets student ID from JWT.
+        //
+        // ==================================
 
         const orderResponse =
           await axios.post(
@@ -1046,6 +1057,10 @@ function StudentFees() {
 
                   setPaymentAmount('')
 
+
+                  // ==================================
+                  // REFRESH FEES + RECEIPTS
+                  // ==================================
 
                   await Promise.all([
 
@@ -1366,8 +1381,6 @@ function StudentFees() {
 
           <div className="row align-items-center g-3">
 
-            {/* COURSE */}
-
             <div className="col-md-6">
 
               <div className="d-flex align-items-center">
@@ -1412,8 +1425,6 @@ function StudentFees() {
             </div>
 
 
-            {/* DURATION */}
-
             <div className="col-md-3">
 
               <small className="text-muted">
@@ -1435,8 +1446,6 @@ function StudentFees() {
 
             </div>
 
-
-            {/* BATCH */}
 
             <div className="col-md-3">
 
@@ -1505,8 +1514,6 @@ function StudentFees() {
       <div className="row g-4 mb-4">
 
 
-        {/* TOTAL FEE */}
-
         <div className="col-md-4">
 
           <div className="card border-0 shadow-sm h-100">
@@ -1549,8 +1556,6 @@ function StudentFees() {
         </div>
 
 
-        {/* PAID */}
-
         <div className="col-md-4">
 
           <div className="card border-0 shadow-sm h-100">
@@ -1592,8 +1597,6 @@ function StudentFees() {
 
         </div>
 
-
-        {/* REMAINING */}
 
         <div className="col-md-4">
 
@@ -1739,15 +1742,20 @@ function StudentFees() {
                 </div>
 
 
+                {/* ==================================
+                    NEXT DUE DATE
+                ================================== */}
+
                 <div className="col-6">
 
                   <small className="text-muted">
 
-                    Due Date
+                    Next Due Date
 
                   </small>
 
-                  <div className="fw-semibold">
+
+                  <div className="fw-bold">
 
                     {
                       fees?.dueDate
@@ -2076,9 +2084,7 @@ function StudentFees() {
                   </small>
 
 
-                  {/* ==================================
-                      LIVE MINIMUM WARNING
-                  ================================== */}
+                  {/* MINIMUM WARNING */}
 
                   {
                     selectedPlan &&
@@ -2110,9 +2116,7 @@ function StudentFees() {
                   }
 
 
-                  {/* ==================================
-                      FULL PAYMENT WARNING
-                  ================================== */}
+                  {/* FULL PAYMENT WARNING */}
 
                   {
                     selectedPlan === 'full' &&

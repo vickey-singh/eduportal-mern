@@ -2,6 +2,7 @@ const express = require('express')
 
 const router = express.Router()
 
+
 // ======================================
 // IMPORT MODELS
 // ======================================
@@ -47,23 +48,45 @@ router.get(
       const totalStudents =
         await Student.countDocuments()
 
+
       const totalFaculty =
         await Faculty.countDocuments()
+
 
       const totalAchievements =
         await Achievement.countDocuments()
 
+
       const totalGallery =
         await Gallery.countDocuments()
+
 
       const totalTestimonials =
         await Testimonial.countDocuments()
 
+
       const totalFeedbacks =
         await Feedback.countDocuments()
 
+
       const totalMessages =
         await Message.countDocuments()
+
+
+      // ======================================
+      // TODAY
+      // ======================================
+
+      const today =
+        new Date()
+
+      today.setHours(
+        0,
+        0,
+        0,
+        0
+      )
+
 
       // ======================================
       // FEES ANALYTICS
@@ -76,6 +99,7 @@ router.get(
 
         })
 
+
       const partialStudents =
         await Student.countDocuments({
 
@@ -83,58 +107,177 @@ router.get(
 
         })
 
+
+      // ======================================
+      // ACTUAL FEE DUE STUDENTS
+      // ======================================
+      //
+      // Student will be considered Due only when:
+      //
+      // 1. Remaining fee > 0
+      // 2. Due date exists
+      // 3. Due date has arrived
+      //
+      // ======================================
+
+      const allStudents =
+        await Student.find()
+
+
+      const dueStudents =
+        allStudents.filter(
+
+          (student) => {
+
+            // ------------------------------
+            // FULLY PAID
+            // ------------------------------
+
+            if (
+              Number(
+                student.remainingFees || 0
+              ) <= 0
+            ) {
+
+              return false
+
+            }
+
+
+            // ------------------------------
+            // NO DUE DATE
+            // ------------------------------
+
+            if (
+              !student.dueDate
+            ) {
+
+              return false
+
+            }
+
+
+            // ------------------------------
+            // DUE DATE
+            // ------------------------------
+
+            const dueDate =
+              new Date(
+                student.dueDate
+              )
+
+
+            if (
+              Number.isNaN(
+                dueDate.getTime()
+              )
+            ) {
+
+              return false
+
+            }
+
+
+            dueDate.setHours(
+              0,
+              0,
+              0,
+              0
+            )
+
+
+            // ------------------------------
+            // ACTUAL DUE CHECK
+            // ------------------------------
+
+            return (
+              dueDate <= today
+            )
+
+          }
+
+        )
+
+
+      // ======================================
+      // PENDING STUDENTS
+      // ======================================
+
       const pendingStudents =
-        await Student.countDocuments({
-      
-          remainingFees: {
-      
-            $gt: 0,
-      
-          },
-      
-        })
+        dueStudents.length
+
 
       // ======================================
       // TOTAL PENDING FEES
       // ======================================
-
-      const students =
-        await Student.find()
+      //
+      // IMPORTANT:
+      //
+      // This is now the amount of fees
+      // belonging to students whose
+      // installment is actually due.
+      //
+      // ======================================
 
       const totalPendingFees =
-        students.reduce(
+        dueStudents.reduce(
 
-          (total, item) =>
+          (
+            total,
+            student
+          ) =>
 
             total +
-            item.remainingFees,
+
+            Number(
+              student.remainingFees || 0
+            ),
 
           0
 
         )
+
 
       // ======================================
       // RECENT FEE ALERTS
       // ======================================
 
       const feeAlerts =
-        await Student.find({
+        dueStudents
 
-          remainingFees: {
+          .sort(
 
-            $gt: 0,
+            (
+              a,
+              b
+            ) => {
 
-          },
+              const dateA =
+                new Date(
+                  a.dueDate
+                ).getTime()
 
-        })
 
-          .sort({
+              const dateB =
+                new Date(
+                  b.dueDate
+                ).getTime()
 
-            dueDate: 1,
 
-          })
+              return (
+                dateA -
+                dateB
+              )
 
-          .limit(5)
+            }
+
+          )
+
+          .slice(
+            0,
+            5
+          )
+
 
       // ======================================
       // RESPONSE
@@ -168,15 +311,22 @@ router.get(
 
       })
 
-    } catch (error) {
+    }
 
-      console.log(error)
+    catch (error) {
+
+      console.log(
+        'Dashboard Error:',
+        error
+      )
+
 
       res.status(500).json({
 
         success: false,
 
-        message: 'Server Error',
+        message:
+          'Server Error',
 
       })
 
@@ -186,4 +336,10 @@ router.get(
 
 )
 
-module.exports = router
+
+// ======================================
+// EXPORT ROUTER
+// ======================================
+
+module.exports =
+  router

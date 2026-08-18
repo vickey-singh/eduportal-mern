@@ -19,6 +19,7 @@ function FeeDueReport() {
   const [courses, setCourses] =
     useState([])
 
+
   const [batchTimes, setBatchTimes] =
     useState([])
 
@@ -30,11 +31,14 @@ function FeeDueReport() {
   const [course, setCourse] =
     useState('All')
 
+
   const [status, setStatus] =
     useState('Due')
 
+
   const [batchTime, setBatchTime] =
     useState('All')
+
 
   const [paymentPlan, setPaymentPlan] =
     useState('All')
@@ -46,6 +50,7 @@ function FeeDueReport() {
 
   const [students, setStudents] =
     useState([])
+
 
   const [summary, setSummary] =
     useState({
@@ -138,6 +143,117 @@ function FeeDueReport() {
 
 
   // ======================================
+  // GET ACTUAL FEE STATUS
+  // ======================================
+  //
+  // PAID
+  // Remaining = 0
+  //
+  // PARTIAL
+  // Remaining > 0
+  // Due date is in future
+  //
+  // DUE
+  // Remaining > 0
+  // Due date has arrived
+  //
+  // ======================================
+
+  const getActualFeeStatus =
+    (student) => {
+
+      const remainingFees =
+        Number(
+          student?.remainingFees || 0
+        )
+
+
+      // ==================================
+      // FULLY PAID
+      // ==================================
+
+      if (
+        remainingFees <= 0
+      ) {
+
+        return 'Paid'
+
+      }
+
+
+      // ==================================
+      // NO DUE DATE
+      // ==================================
+
+      if (
+        !student?.dueDate
+      ) {
+
+        return 'Partial'
+
+      }
+
+
+      const dueDate =
+        new Date(
+          student.dueDate
+        )
+
+
+      if (
+        Number.isNaN(
+          dueDate.getTime()
+        )
+      ) {
+
+        return 'Partial'
+
+      }
+
+
+      const today =
+        new Date()
+
+
+      today.setHours(
+        0,
+        0,
+        0,
+        0
+      )
+
+
+      dueDate.setHours(
+        0,
+        0,
+        0,
+        0
+      )
+
+
+      // ==================================
+      // DUE
+      // ==================================
+
+      if (
+        dueDate <= today
+      ) {
+
+        return 'Due'
+
+      }
+
+
+      // ==================================
+      // PARTIAL
+      // ==================================
+
+      return 'Partial'
+
+    }
+
+
+  // ======================================
   // FETCH REPORT
   // ======================================
 
@@ -167,17 +283,18 @@ function FeeDueReport() {
 
 
         // ==================================
-        // STATUS
+        // IMPORTANT
         // ==================================
-
-        if (
-          status !== 'All'
-        ) {
-
-          params.status =
-            status
-
-        }
+        //
+        // Do NOT send status to backend.
+        //
+        // We calculate:
+        //
+        // Paid / Partial / Due
+        //
+        // from remainingFees + dueDate.
+        //
+        // ==================================
 
 
         // ==================================
@@ -226,29 +343,131 @@ function FeeDueReport() {
           response.data?.success
         ) {
 
-          setStudents(
-
+          const allStudents =
             response.data.students ||
             []
 
+
+          // ==================================
+          // CALCULATE ACTUAL STATUS
+          // ==================================
+
+          const studentsWithStatus =
+            allStudents.map(
+
+              (student) => ({
+
+                ...student,
+
+                actualFeeStatus:
+                  getActualFeeStatus(
+                    student
+                  ),
+
+              })
+
+            )
+
+
+          // ==================================
+          // LOCAL STATUS FILTER
+          // ==================================
+
+          const filteredStudents =
+
+            status === 'All'
+
+              ? studentsWithStatus
+
+              : studentsWithStatus.filter(
+
+                  (student) =>
+
+                    student.actualFeeStatus ===
+                    status
+
+                )
+
+
+          // ==================================
+          // SUMMARY
+          // ==================================
+
+          const calculatedSummary =
+
+            filteredStudents.reduce(
+
+              (
+                result,
+                student
+              ) => {
+
+                result.totalStudents += 1
+
+
+                result.totalCourseFee +=
+                  Number(
+                    student.totalFees || 0
+                  )
+
+
+                result.totalPaid +=
+                  Number(
+                    student.paidFees || 0
+                  )
+
+
+                result.totalDue +=
+                  Number(
+                    student.remainingFees || 0
+                  )
+
+
+                return result
+
+              },
+
+              {
+
+                totalStudents: 0,
+
+                totalCourseFee: 0,
+
+                totalPaid: 0,
+
+                totalDue: 0,
+
+              }
+
+            )
+
+
+          setStudents(
+            filteredStudents
           )
 
 
           setSummary(
-
-            response.data.summary || {
-
-              totalStudents: 0,
-
-              totalCourseFee: 0,
-
-              totalPaid: 0,
-
-              totalDue: 0,
-
-            }
-
+            calculatedSummary
           )
+
+        }
+
+        else {
+
+          setStudents([])
+
+          setSummary({
+
+            totalStudents: 0,
+
+            totalCourseFee: 0,
+
+            totalPaid: 0,
+
+            totalDue: 0,
+
+          })
 
         }
 
@@ -319,11 +538,21 @@ function FeeDueReport() {
       setPaymentPlan('All')
 
 
-      setTimeout(() => {
+      // ==================================
+      // RESET REPORT DIRECTLY
+      // ==================================
 
-        fetchReport()
+      setTimeout(
 
-      }, 0)
+        () => {
+
+          fetchReport()
+
+        },
+
+        0
+
+      )
 
     }
 
@@ -341,17 +570,21 @@ function FeeDueReport() {
 
           return 'Monthly'
 
+
         case 'three_month':
 
           return 'Every 3 Months'
+
 
         case 'six_month':
 
           return 'Every 6 Months'
 
+
         case 'full':
 
           return 'Full Payment'
+
 
         default:
 
@@ -375,13 +608,16 @@ function FeeDueReport() {
 
           return 'Due Students'
 
+
         case 'Partial':
 
           return 'Partial Payment'
 
+
         case 'Paid':
 
           return 'Fully Paid'
+
 
         default:
 
@@ -422,11 +658,76 @@ function FeeDueReport() {
       }
 
 
-      return new Date(
-        date
-      ).toLocaleDateString(
-        'en-IN'
+      const parsedDate =
+        new Date(date)
+
+
+      if (
+        Number.isNaN(
+          parsedDate.getTime()
+        )
+      ) {
+
+        return '-'
+
+      }
+
+
+      return parsedDate.toLocaleDateString(
+
+        'en-IN',
+
+        {
+
+          day: '2-digit',
+
+          month: 'short',
+
+          year: 'numeric',
+
+        }
+
       )
+
+    }
+
+
+  // ======================================
+  // STATUS CLASS
+  // ======================================
+
+  const getStatusClass =
+    (student) => {
+
+      const actualStatus =
+        student.actualFeeStatus ||
+        getActualFeeStatus(
+          student
+        )
+
+
+      switch (actualStatus) {
+
+        case 'Paid':
+
+          return 'text-success fw-bold'
+
+
+        case 'Partial':
+
+          return 'text-warning fw-bold'
+
+
+        case 'Due':
+
+          return 'text-danger fw-bold'
+
+
+        default:
+
+          return ''
+
+      }
 
     }
 
@@ -486,6 +787,7 @@ function FeeDueReport() {
 
       pdf.setFontSize(18)
 
+
       pdf.text(
 
         'Prerna Institute Of Excellence',
@@ -504,6 +806,7 @@ function FeeDueReport() {
 
 
       pdf.setFontSize(14)
+
 
       pdf.text(
 
@@ -612,8 +915,13 @@ function FeeDueReport() {
             )}`,
 
             formatDate(
-              student.admissionDate
+              student.dueDate
             ),
+
+            student.actualFeeStatus ||
+              getActualFeeStatus(
+                student
+              ),
 
           ]
 
@@ -654,9 +962,11 @@ function FeeDueReport() {
 
             'Paid',
 
-            'Due',
+            'Remaining',
 
-            'Admission Date',
+            'Next Due Date',
+
+            'Status',
 
           ]],
 
@@ -703,6 +1013,59 @@ function FeeDueReport() {
                 data.cell.styles
                   .fontStyle =
                   'bold'
+
+              }
+
+
+              // ==================================
+              // STATUS COLOR
+              // ==================================
+
+              if (
+
+                data.section ===
+                'body' &&
+
+                data.column.index ===
+                12
+
+              ) {
+
+                const value =
+                  data.cell.text?.[0]
+
+
+                if (
+                  value === 'Paid'
+                ) {
+
+                  data.cell.styles
+                    .textColor =
+                    [25, 135, 84]
+
+                }
+
+
+                if (
+                  value === 'Partial'
+                ) {
+
+                  data.cell.styles
+                    .textColor =
+                    [180, 120, 0]
+
+                }
+
+
+                if (
+                  value === 'Due'
+                ) {
+
+                  data.cell.styles
+                    .textColor =
+                    [220, 53, 69]
+
+                }
 
               }
 
@@ -763,7 +1126,7 @@ function FeeDueReport() {
 
       pdf.text(
 
-        `Total Due: ₹ ${formatMoney(
+        `Total Remaining: ₹ ${formatMoney(
           summary.totalDue
         )}`,
 
@@ -1147,12 +1510,10 @@ function FeeDueReport() {
 
               >
 
-                {loading
-
-                  ? 'Loading...'
-
-                  : 'Apply Filter'
-
+                {
+                  loading
+                    ? 'Loading...'
+                    : 'Apply Filter'
                 }
 
               </button>
@@ -1232,7 +1593,7 @@ function FeeDueReport() {
 
               <small className="text-muted">
 
-                Total Fee
+                Total Course Fee
 
               </small>
 
@@ -1286,7 +1647,7 @@ function FeeDueReport() {
         </div>
 
 
-        {/* TOTAL DUE */}
+        {/* TOTAL REMAINING */}
 
         <div className="col-md-3">
 
@@ -1296,12 +1657,12 @@ function FeeDueReport() {
 
               <small className="text-muted">
 
-                Total Due
+                Total Remaining
 
               </small>
 
 
-              <h3 className="fw-bold mb-0">
+              <h3 className="fw-bold text-danger mb-0">
 
                 ₹ {
                   formatMoney(
@@ -1435,7 +1796,15 @@ function FeeDueReport() {
                   </th>
 
                   <th>
-                    Due
+                    Remaining
+                  </th>
+
+                  <th>
+                    Next Due Date
+                  </th>
+
+                  <th>
+                    Fee Status
                   </th>
 
                   <th>
@@ -1454,7 +1823,7 @@ function FeeDueReport() {
                   <tr>
 
                     <td
-                      colSpan="12"
+                      colSpan="14"
                       className="text-center py-4"
                     >
 
@@ -1469,7 +1838,7 @@ function FeeDueReport() {
                   <tr>
 
                     <td
-                      colSpan="12"
+                      colSpan="14"
                       className="text-center py-4"
                     >
 
@@ -1617,7 +1986,7 @@ function FeeDueReport() {
                         </td>
 
 
-                        {/* DUE */}
+                        {/* REMAINING */}
 
                         <td>
 
@@ -1630,6 +1999,45 @@ function FeeDueReport() {
                             }
 
                           </strong>
+
+                        </td>
+
+
+                        {/* NEXT DUE DATE */}
+
+                        <td>
+
+                          {
+                            student.dueDate
+                              ? formatDate(
+                                  student.dueDate
+                                )
+                              : '-'
+                          }
+
+                        </td>
+
+
+                        {/* FEE STATUS */}
+
+                        <td>
+
+                          <span
+                            className={
+                              getStatusClass(
+                                student
+                              )
+                            }
+                          >
+
+                            {
+                              student.actualFeeStatus ||
+                              getActualFeeStatus(
+                                student
+                              )
+                            }
+
+                          </span>
 
                         </td>
 

@@ -1254,6 +1254,39 @@ function PaymentForm({
         </div>
 
 
+        {/* ==================================
+            CURRENT DUE DATE
+        ================================== */}
+
+        <div className="col-md-4 mb-3">
+
+          <label className="form-label">
+
+            Current Due Date
+
+          </label>
+
+
+          <input
+            type="date"
+            className="form-control"
+            value={
+              selectedStudent?.dueDate || ''
+            }
+            readOnly
+          />
+
+
+          <small className="text-muted">
+
+            Next due date is automatically updated
+            after payment.
+
+          </small>
+
+        </div>
+
+
       </div>
 
 

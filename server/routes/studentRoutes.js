@@ -83,6 +83,407 @@ const calculateFeesStatus = (
 
 }
 
+// ======================================
+// HELPER: GET INSTALLMENT MONTHS
+// ======================================
+
+const getInstallmentMonths = (
+  paymentPlan
+) => {
+
+  switch (
+    paymentPlan
+  ) {
+
+    case 'monthly':
+      return 1
+
+    case 'three_month':
+      return 3
+
+    case 'six_month':
+      return 6
+
+    default:
+      return 0
+
+  }
+
+}
+
+
+// ======================================
+// HELPER: ADD MONTHS TO DATE
+// ======================================
+
+const addMonthsToDate = (
+  dateValue,
+  months
+) => {
+
+  if (
+    !dateValue ||
+    !months
+  ) {
+
+    return ''
+
+  }
+
+
+  const value =
+    String(dateValue)
+      .trim()
+
+
+  let date
+
+
+  // ==================================
+  // YYYY-MM-DD
+  // ==================================
+
+  if (
+    /^\d{4}-\d{2}-\d{2}$/.test(
+      value
+    )
+  ) {
+
+    const [
+      year,
+      month,
+      day,
+    ] =
+      value
+        .split('-')
+        .map(Number)
+
+
+    date =
+      new Date(
+        year,
+        month - 1,
+        day
+      )
+
+  }
+
+
+  // ==================================
+  // DD-MM-YYYY
+  // ==================================
+
+  else if (
+    /^\d{2}-\d{2}-\d{4}$/.test(
+      value
+    )
+  ) {
+
+    const [
+      day,
+      month,
+      year,
+    ] =
+      value
+        .split('-')
+        .map(Number)
+
+
+    date =
+      new Date(
+        year,
+        month - 1,
+        day
+      )
+
+  }
+
+
+  // ==================================
+  // DD/MM/YYYY
+  // ==================================
+
+  else if (
+    /^\d{2}\/\d{2}\/\d{4}$/.test(
+      value
+    )
+  ) {
+
+    const [
+      day,
+      month,
+      year,
+    ] =
+      value
+        .split('/')
+        .map(Number)
+
+
+    date =
+      new Date(
+        year,
+        month - 1,
+        day
+      )
+
+  }
+
+
+  else {
+
+    date =
+      new Date(value)
+
+  }
+
+
+  if (
+    Number.isNaN(
+      date.getTime()
+    )
+  ) {
+
+    return ''
+
+  }
+
+
+  // ==================================
+  // ADD MONTHS
+  // ==================================
+
+  date.setMonth(
+    date.getMonth() +
+    Number(months)
+  )
+
+
+  // ==================================
+  // FORMAT YYYY-MM-DD
+  // ==================================
+
+  const year =
+    date.getFullYear()
+
+
+  const month =
+    String(
+      date.getMonth() + 1
+    )
+      .padStart(
+        2,
+        '0'
+      )
+
+
+  const day =
+    String(
+      date.getDate()
+    )
+      .padStart(
+        2,
+        '0'
+      )
+
+
+  return (
+    `${year}-${month}-${day}`
+  )
+
+}
+
+
+// ======================================
+// HELPER: INITIAL DUE DATE
+// ======================================
+
+const calculateInitialDueDate = (
+  admissionDate,
+  paymentPlan
+) => {
+
+  const months =
+    getInstallmentMonths(
+      paymentPlan
+    )
+
+
+  if (
+    !months ||
+    !admissionDate
+  ) {
+
+    return ''
+
+  }
+
+
+  return addMonthsToDate(
+    admissionDate,
+    months
+  )
+
+}
+
+
+// ======================================
+// HELPER: NEXT DUE DATE AFTER PAYMENT
+// ======================================
+
+const calculateNextDueDate = (
+  currentDueDate,
+  admissionDate,
+  paymentPlan,
+  paymentDate
+) => {
+
+  const months =
+    getInstallmentMonths(
+      paymentPlan
+    )
+
+
+  // ==================================
+  // FULL PAYMENT
+  // ==================================
+
+  if (
+    paymentPlan === 'full'
+  ) {
+
+    return ''
+
+  }
+
+
+  if (
+    !months
+  ) {
+
+    return ''
+
+  }
+
+
+  // ==================================
+  // GET CURRENT DUE DATE
+  // ==================================
+
+  let nextDueDate =
+    currentDueDate
+
+
+  // ==================================
+  // OLD STUDENT / NO DUE DATE
+  // ==================================
+
+  if (
+    !nextDueDate
+  ) {
+
+    nextDueDate =
+      calculateInitialDueDate(
+        admissionDate,
+        paymentPlan
+      )
+
+  }
+
+
+  if (
+    !nextDueDate
+  ) {
+
+    return ''
+
+  }
+
+
+  // ==================================
+  // PAYMENT DATE
+  // ==================================
+
+  const finalPaymentDate =
+    paymentDate ||
+
+    new Date()
+      .toISOString()
+      .split('T')[0]
+
+
+  // ==================================
+  // EARLY PAYMENT
+  // ==================================
+  //
+  // Example:
+  //
+  // Due Date    = 01-02-2026
+  // Payment     = 20-01-2026
+  //
+  // Next Due should remain:
+  // 01-02-2026
+  //
+  // NOT:
+  // 01-03-2026
+  //
+  // ==================================
+
+  if (
+    finalPaymentDate <
+    nextDueDate
+  ) {
+
+    return nextDueDate
+
+  }
+
+
+  // ==================================
+  // PAYMENT ON / AFTER DUE DATE
+  // ==================================
+
+  let candidate =
+    addMonthsToDate(
+      nextDueDate,
+      months
+    )
+
+
+  // ==================================
+  // LATE PAYMENT
+  // ==================================
+  //
+  // Due:     01-02
+  // Payment: 08-04
+  //
+  // Schedule:
+  // 01-03
+  // 01-04
+  // 01-05
+  //
+  // Next Due:
+  // 01-05
+  //
+  // ==================================
+
+  while (
+    candidate &&
+    candidate <=
+      finalPaymentDate
+  ) {
+
+    candidate =
+      addMonthsToDate(
+        candidate,
+        months
+      )
+
+  }
+
+
+  return candidate
+
+}
 
 // ======================================
 // HELPER: CALCULATE ACADEMIC SESSION
@@ -857,7 +1258,12 @@ router.post(
             paymentPlan || '',
 
           dueDate:
-            dueDate || '',
+            paymentPlan === 'full'
+              ? ''
+              : calculateInitialDueDate(
+                  admissionDate,
+                  paymentPlan
+                ),
 
           paymentMode:
             'Offline',
@@ -2555,9 +2961,49 @@ router.put(
       }
 
 
+      // ==================================
+      // UPDATE NEXT DUE DATE
+      // ==================================
+      
+      if (
+        student.remainingFees === 0
+      ) {
+      
+        student.dueDate =
+          ''
+      
+      }
+      
+      else {
+      
+        student.dueDate =
+          calculateNextDueDate(
+      
+            student.dueDate,
+      
+            student.admissionDate,
+      
+            selectedPlan,
+      
+            finalPaymentDate
+      
+          )
+      
+      }
+      
+      
+      // ==================================
+      // PAYMENT PLAN
+      // ==================================
+      
       student.paymentPlan =
         selectedPlan
-
+      
+      
+      // ==================================
+      // PAYMENT MODE
+      // ==================================
+      
       student.paymentMode =
         'Offline'
 
@@ -3776,9 +4222,40 @@ router.post(
 
 
       // ==================================
+      // UPDATE NEXT DUE DATE
+      // ==================================
+      
+      if (
+        student.remainingFees === 0
+      ) {
+      
+        student.dueDate =
+          ''
+      
+      }
+      
+      else {
+      
+        student.dueDate =
+          calculateNextDueDate(
+      
+            student.dueDate,
+      
+            student.admissionDate,
+      
+            selectedPlan,
+      
+            paymentDate
+      
+          )
+      
+      }
+      
+      
+      // ==================================
       // PAYMENT MODE
       // ==================================
-
+      
       student.paymentMode =
         'Online'
 

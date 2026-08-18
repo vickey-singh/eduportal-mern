@@ -67,8 +67,6 @@ const getSessionList = () => {
   const sessions = []
 
 
-  // Current + previous 10 sessions
-
   for (
     let i = 0;
     i <= 10;
@@ -86,6 +84,244 @@ const getSessionList = () => {
 
 
   return sessions
+
+}
+
+
+// ======================================
+// GET ACTUAL FEE STATUS
+// ======================================
+//
+// PAID
+// remainingFees = 0
+//
+// PARTIAL
+// remainingFees > 0
+// AND due date is in future
+//
+// DUE
+// remainingFees > 0
+// AND due date has arrived
+//
+// ======================================
+
+const getActualFeeStatus = (
+  student
+) => {
+
+  const remainingFees =
+    Number(
+      student?.remainingFees || 0
+    )
+
+
+  // ==================================
+  // FULLY PAID
+  // ==================================
+
+  if (
+    remainingFees <= 0
+  ) {
+
+    return 'Paid'
+
+  }
+
+
+  // ==================================
+  // NO DUE DATE
+  // ==================================
+
+  if (
+    !student?.dueDate
+  ) {
+
+    return 'Partial'
+
+  }
+
+
+  const dueDate =
+    new Date(
+      student.dueDate
+    )
+
+
+  // ==================================
+  // INVALID DATE
+  // ==================================
+
+  if (
+    Number.isNaN(
+      dueDate.getTime()
+    )
+  ) {
+
+    return 'Partial'
+
+  }
+
+
+  const today =
+    new Date()
+
+
+  today.setHours(
+    0,
+    0,
+    0,
+    0
+  )
+
+
+  dueDate.setHours(
+    0,
+    0,
+    0,
+    0
+  )
+
+
+  // ==================================
+  // DUE
+  // ==================================
+
+  if (
+    dueDate <= today
+  ) {
+
+    return 'Due'
+
+  }
+
+
+  // ==================================
+  // PARTIAL
+  // ==================================
+
+  return 'Partial'
+
+}
+
+
+// ======================================
+// FORMAT DATE
+// ======================================
+
+const formatDate = (
+  date
+) => {
+
+  if (!date) {
+
+    return '-'
+
+  }
+
+
+  const parsedDate =
+    new Date(date)
+
+
+  if (
+    Number.isNaN(
+      parsedDate.getTime()
+    )
+  ) {
+
+    return date
+
+  }
+
+
+  return parsedDate.toLocaleDateString(
+
+    'en-IN',
+
+    {
+
+      day: '2-digit',
+
+      month: 'short',
+
+      year: 'numeric',
+
+    }
+
+  )
+
+}
+
+
+// ======================================
+// FEE STATUS CLASS
+// ======================================
+
+const getFeeStatusClass = (
+  status
+) => {
+
+  switch (status) {
+
+    case 'Paid':
+
+      return 'paid'
+
+
+    case 'Partial':
+
+      return 'partial'
+
+
+    case 'Due':
+
+      return 'due'
+
+
+    default:
+
+      return 'partial'
+
+  }
+
+}
+
+
+// ======================================
+// PAYMENT PLAN LABEL
+// ======================================
+
+const getPaymentPlanLabel = (
+  plan
+) => {
+
+  switch (plan) {
+
+    case 'monthly':
+
+      return 'Monthly'
+
+
+    case 'three_month':
+
+      return 'Every 3 Months'
+
+
+    case 'six_month':
+
+      return 'Every 6 Months'
+
+
+    case 'full':
+
+      return 'Full Payment'
+
+
+    default:
+
+      return 'Not Selected'
+
+  }
 
 }
 
@@ -199,7 +435,6 @@ function Students() {
       admissionType: 'Offline',
       admissionDate: '',
 
-      // Student status
       studentStatus: 'Active',
 
       registrationFee: '',
@@ -448,10 +683,6 @@ function Students() {
     } = e.target
 
 
-    // ==================================
-    // COURSE SELECT
-    // ==================================
-
     if (name === 'course') {
 
       const selectedCourse =
@@ -623,10 +854,6 @@ function Students() {
           )
 
 
-        // ==================================
-        // VALIDATION
-        // ==================================
-
         if (
           paidFees < 0 ||
           paidFees > totalFees
@@ -674,10 +901,6 @@ function Students() {
 
         }
 
-
-        // ==================================
-        // FORM DATA
-        // ==================================
 
         const data =
           new FormData()
@@ -873,10 +1096,14 @@ function Students() {
         // DUE DATE
         // ==================================
 
-        data.append(
-          'dueDate',
-          formData.dueDate || ''
-        )
+        if (editId) {
+
+          data.append(
+            'dueDate',
+            formData.dueDate || ''
+          )
+
+        }
 
 
         // ==================================
@@ -1434,11 +1661,22 @@ function Students() {
             batchFilter
 
 
+        // ==================================
+        // IMPORTANT:
+        // USE CALCULATED FEE STATUS
+        // ==================================
+
+        const actualFeeStatus =
+          getActualFeeStatus(
+            student
+          )
+
+
         const matchesStatus =
 
           statusFilter === 'All' ||
 
-          student.feesStatus ===
+          actualFeeStatus ===
             statusFilter
 
 
@@ -1498,35 +1736,6 @@ function Students() {
 
 
       return `${API_BASE_URL}${image}`
-
-    }
-
-
-  // ======================================
-  // PAYMENT PLAN LABEL
-  // ======================================
-
-  const getPaymentPlanLabel =
-    (plan) => {
-
-      switch (plan) {
-
-        case 'monthly':
-          return 'Monthly'
-
-        case 'three_month':
-          return 'Every 3 Months'
-
-        case 'six_month':
-          return 'Every 6 Months'
-
-        case 'full':
-          return 'Full Payment'
-
-        default:
-          return 'Not Selected'
-
-      }
 
     }
 
@@ -2089,10 +2298,6 @@ function Students() {
             </div>
 
 
-            {/* ==================================
-                STUDENT STATUS
-            ================================== */}
-
             <div className="col-md-6 mb-3">
 
               <label className="form-label">
@@ -2269,20 +2474,24 @@ function Students() {
             <div className="col-md-6 mb-3">
 
               <label className="form-label">
-                Due Date
+                Next Due Date
               </label>
 
               <input
                 type="date"
                 className="form-control"
-                name="dueDate"
                 value={
-                  formData.dueDate
+                  formData.dueDate || ''
                 }
-                onChange={
-                  handleChange
-                }
+                readOnly
               />
+
+              <small className="text-muted">
+
+                Due date is automatically calculated
+                from admission date and payment plan.
+
+              </small>
 
             </div>
 
@@ -2290,7 +2499,7 @@ function Students() {
 
 
           {/* ================================== */}
-          {/* PAYMENT PLANS */}
+          {/* PAYMENT PLAN AMOUNTS */}
           {/* ================================== */}
 
           <h5 className="mt-3 mb-3">
@@ -2565,7 +2774,7 @@ function Students() {
 
 
       {/* ====================================== */}
-      {/* STUDENT FILTERS */}
+      {/* FILTERS */}
       {/* ====================================== */}
 
       <div className="mt-4 mb-3">
@@ -2788,8 +2997,8 @@ function Students() {
                 Partial
               </option>
 
-              <option value="Pending">
-                Pending
+              <option value="Due">
+                Due
               </option>
 
             </select>
@@ -2839,7 +3048,7 @@ function Students() {
 
 
       {/* ====================================== */}
-      {/* CURRENT RESULT COUNT */}
+      {/* RESULT COUNT */}
       {/* ====================================== */}
 
       <div className="mb-3">
@@ -2879,7 +3088,7 @@ function Students() {
         <table
           className="table applications-table"
           style={{
-            minWidth: '1650px',
+            minWidth: '1750px',
           }}
         >
 
@@ -2928,6 +3137,10 @@ function Students() {
               </th>
 
               <th>
+                Due Date
+              </th>
+
+              <th>
                 Fee Status
               </th>
 
@@ -2955,7 +3168,7 @@ function Students() {
               <tr>
 
                 <td
-                  colSpan="14"
+                  colSpan="15"
                   className="text-center py-4"
                 >
 
@@ -2970,7 +3183,7 @@ function Students() {
               <tr>
 
                 <td
-                  colSpan="14"
+                  colSpan="15"
                   className="text-center py-4"
                 >
 
@@ -2985,226 +3198,252 @@ function Students() {
             ) : (
 
               filteredStudents.map(
-                (student) => (
+                (student) => {
 
-                  <tr
-                    key={
-                      student._id
-                    }
-                  >
+                  const actualFeeStatus =
+                    getActualFeeStatus(
+                      student
+                    )
 
-                    <td>
-                      {
-                        student.name
+
+                  return (
+
+                    <tr
+                      key={
+                        student._id
                       }
-                    </td>
+                    >
+
+                      <td>
+                        {
+                          student.name
+                        }
+                      </td>
 
 
-                    <td>
-                      {
-                        student.admissionNumber
-                      }
-                    </td>
+                      <td>
+                        {
+                          student.admissionNumber
+                        }
+                      </td>
 
 
-                    <td>
-                      {
-                        student.course ||
-                        '-'
-                      }
-                    </td>
+                      <td>
+                        {
+                          student.course ||
+                          '-'
+                        }
+                      </td>
 
 
-                    <td>
-                      {
-                        student.batchTime ||
-                        '-'
-                      }
-                    </td>
+                      <td>
+                        {
+                          student.batchTime ||
+                          '-'
+                        }
+                      </td>
 
 
-                    <td>
-                      {
-                        student.contact
-                      }
-                    </td>
+                      <td>
+                        {
+                          student.contact
+                        }
+                      </td>
 
 
-                    <td>
+                      <td>
 
-                      ₹{
-                        student.registrationFee ||
-                        0
-                      }
-
-                      <br />
-
-                      <small>
-
-                        Paid: ₹{
-                          student.registrationFeePaid ||
+                        ₹{
+                          student.registrationFee ||
                           0
                         }
 
-                      </small>
+                        <br />
 
-                    </td>
+                        <small>
 
+                          Paid: ₹{
+                            student.registrationFeePaid ||
+                            0
+                          }
 
-                    <td>
+                        </small>
 
-                      ₹{
-                        student.totalFees ||
-                        0
-                      }
-
-                    </td>
-
-
-                    <td>
-
-                      ₹{
-                        student.paidFees ||
-                        0
-                      }
-
-                    </td>
+                      </td>
 
 
-                    <td>
+                      <td>
 
-                      ₹{
-                        student.remainingFees ||
-                        0
-                      }
-
-                    </td>
-
-
-                    <td>
-
-                      {
-                        getPaymentPlanLabel(
-                          student.paymentPlan
-                        )
-                      }
-
-                    </td>
-
-
-                    <td>
-
-                      <span
-                        className={
-                          `status ${
-                            (
-                              student.feesStatus ||
-                              'Pending'
-                            ).toLowerCase()
-                          }`
+                        ₹{
+                          student.totalFees ||
+                          0
                         }
-                      >
+
+                      </td>
+
+
+                      <td>
+
+                        ₹{
+                          student.paidFees ||
+                          0
+                        }
+
+                      </td>
+
+
+                      <td>
+
+                        ₹{
+                          student.remainingFees ||
+                          0
+                        }
+
+                      </td>
+
+
+                      <td>
 
                         {
-                          student.feesStatus ||
-                          'Pending'
+                          getPaymentPlanLabel(
+                            student.paymentPlan
+                          )
                         }
 
-                      </span>
-
-                    </td>
+                      </td>
 
 
-                    <td>
-
-                      <span
-                        className={
-                          `status ${
-                            (
-                              student.studentStatus ||
-                              'Active'
-                            ).toLowerCase()
-                          }`
-                        }
-                      >
+                      <td>
 
                         {
-                          student.studentStatus ||
-                          'Active'
+                          student.dueDate
+                            ? formatDate(
+                                student.dueDate
+                              )
+                            : '-'
                         }
 
-                      </span>
-
-                    </td>
+                      </td>
 
 
-                    <td>
+                      {/* ==================================
+                          ACTUAL FEE STATUS
+                      ================================== */}
 
-                      {
-                        student.admissionDate ||
-                        '-'
-                      }
+                      <td>
 
-                    </td>
-
-
-                    <td>
-
-                      <div
-                        className="d-flex gap-2"
-                      >
-
-                        <button
-                          type="button"
-                          className="table-btn view-btn"
-                          onClick={() =>
-                            viewStudent(
-                              student
-                            )
+                        <span
+                          className={
+                            `status ${getFeeStatusClass(
+                              actualFeeStatus
+                            )}`
                           }
                         >
 
-                          View
+                          {
+                            actualFeeStatus
+                          }
 
-                        </button>
+                        </span>
+
+                      </td>
 
 
-                        <button
-                          type="button"
-                          className="table-btn approve-btn"
-                          onClick={() =>
-                            editStudent(
-                              student
-                            )
+                      <td>
+
+                        <span
+                          className={
+                            `status ${
+                              (
+                                student.studentStatus ||
+                                'Active'
+                              ).toLowerCase()
+                            }`
                           }
                         >
 
-                          Edit
-
-                        </button>
-
-
-                        <button
-                          type="button"
-                          className="table-btn reject-btn"
-                          onClick={() =>
-                            deleteStudent(
-                              student._id
-                            )
+                          {
+                            student.studentStatus ||
+                            'Active'
                           }
+
+                        </span>
+
+                      </td>
+
+
+                      <td>
+
+                        {
+                          student.admissionDate
+                            ? formatDate(
+                                student.admissionDate
+                              )
+                            : '-'
+                        }
+
+                      </td>
+
+
+                      <td>
+
+                        <div
+                          className="d-flex gap-2"
                         >
 
-                          Delete
+                          <button
+                            type="button"
+                            className="table-btn view-btn"
+                            onClick={() =>
+                              viewStudent(
+                                student
+                              )
+                            }
+                          >
 
-                        </button>
+                            View
 
-                      </div>
+                          </button>
 
-                    </td>
 
-                  </tr>
+                          <button
+                            type="button"
+                            className="table-btn approve-btn"
+                            onClick={() =>
+                              editStudent(
+                                student
+                              )
+                            }
+                          >
 
-                )
+                            Edit
+
+                          </button>
+
+
+                          <button
+                            type="button"
+                            className="table-btn reject-btn"
+                            onClick={() =>
+                              deleteStudent(
+                                student._id
+                              )
+                            }
+                          >
+
+                            Delete
+
+                          </button>
+
+                        </div>
+
+                      </td>
+
+                    </tr>
+
+                  )
+
+                }
 
               )
 
@@ -3252,7 +3491,9 @@ function Students() {
             </button>
 
 
-            {/* PROFILE */}
+            {/* ==================================
+                PROFILE
+            ================================== */}
 
             <div
               className="text-center mb-4"
@@ -3302,7 +3543,9 @@ function Students() {
             </div>
 
 
-            {/* PERSONAL */}
+            {/* ==================================
+                PERSONAL
+            ================================== */}
 
             <div className="student-view-section">
 
@@ -3323,7 +3566,9 @@ function Students() {
                 <Detail
                   label="Date of Birth"
                   value={
-                    selectedStudent.dob
+                    formatDate(
+                      selectedStudent.dob
+                    )
                   }
                 />
 
@@ -3353,7 +3598,9 @@ function Students() {
             </div>
 
 
-            {/* PARENTS */}
+            {/* ==================================
+                PARENTS
+            ================================== */}
 
             <div className="student-view-section">
 
@@ -3411,7 +3658,9 @@ function Students() {
             </div>
 
 
-            {/* ADDRESS */}
+            {/* ==================================
+                ADDRESS
+            ================================== */}
 
             <div className="student-view-section">
 
@@ -3443,7 +3692,9 @@ function Students() {
             </div>
 
 
-            {/* EDUCATION */}
+            {/* ==================================
+                EDUCATION
+            ================================== */}
 
             <div className="student-view-section">
 
@@ -3466,7 +3717,9 @@ function Students() {
             </div>
 
 
-            {/* ADMISSION */}
+            {/* ==================================
+                ADMISSION
+            ================================== */}
 
             <div className="student-view-section">
 
@@ -3524,7 +3777,9 @@ function Students() {
                 <Detail
                   label="Admission Date"
                   value={
-                    selectedStudent.admissionDate
+                    formatDate(
+                      selectedStudent.admissionDate
+                    )
                   }
                 />
 
@@ -3533,7 +3788,9 @@ function Students() {
             </div>
 
 
-            {/* FEES */}
+            {/* ==================================
+                FEES
+            ================================== */}
 
             <div className="student-view-section">
 
@@ -3577,13 +3834,22 @@ function Students() {
                   value={`₹${selectedStudent.remainingFees || 0}`}
                 />
 
+
+                {/* ==================================
+                    ACTUAL FEE STATUS
+                ================================== */}
+
                 <Detail
-                  label="Fees Status"
+                  label="Fee Status"
                   value={
-                    selectedStudent.feesStatus ||
-                    'Pending'
+                    <FeeStatusBadge
+                      student={
+                        selectedStudent
+                      }
+                    />
                   }
                 />
+
 
                 <Detail
                   label="Payment Plan"
@@ -3614,20 +3880,90 @@ function Students() {
                   value={`₹${selectedStudent.fullPaymentFee || 0}`}
                 />
 
+
+                {/* ==================================
+                    NEXT DUE DATE
+                ================================== */}
+
                 <Detail
-                  label="Due Date"
+                  label="Next Due Date"
                   value={
-                    selectedStudent.dueDate ||
-                    '-'
+                    selectedStudent.dueDate
+                      ? formatDate(
+                          selectedStudent.dueDate
+                        )
+                      : '-'
                   }
                 />
+
+              </div>
+
+
+              {/* ==================================
+                  FEE SUMMARY
+              ================================== */}
+
+              <div className="alert alert-light border mt-3">
+
+                <div className="row">
+
+                  <div className="col-md-4">
+
+                    <small className="text-muted">
+                      Total Course Fee
+                    </small>
+
+                    <div className="fw-bold">
+                      ₹{
+                        selectedStudent.totalFees ||
+                        0
+                      }
+                    </div>
+
+                  </div>
+
+
+                  <div className="col-md-4">
+
+                    <small className="text-muted">
+                      Paid
+                    </small>
+
+                    <div className="fw-bold text-success">
+                      ₹{
+                        selectedStudent.paidFees ||
+                        0
+                      }
+                    </div>
+
+                  </div>
+
+
+                  <div className="col-md-4">
+
+                    <small className="text-muted">
+                      Remaining
+                    </small>
+
+                    <div className="fw-bold text-danger">
+                      ₹{
+                        selectedStudent.remainingFees ||
+                        0
+                      }
+                    </div>
+
+                  </div>
+
+                </div>
 
               </div>
 
             </div>
 
 
-            {/* PAYMENT */}
+            {/* ==================================
+                PAYMENT
+            ================================== */}
 
             <div className="student-view-section">
 
@@ -3654,7 +3990,9 @@ function Students() {
             </div>
 
 
-            {/* RECEIPT */}
+            {/* ==================================
+                RECEIPT
+            ================================== */}
 
             <div className="student-view-section">
 
@@ -3667,7 +4005,9 @@ function Students() {
             </div>
 
 
-            {/* HISTORY */}
+            {/* ==================================
+                HISTORY
+            ================================== */}
 
             <div className="student-view-section">
 
@@ -3687,6 +4027,43 @@ function Students() {
       )}
 
     </div>
+
+  )
+
+}
+
+
+// ======================================
+// FEE STATUS BADGE
+// ======================================
+
+function FeeStatusBadge({
+  student,
+}) {
+
+  const status =
+    getActualFeeStatus(
+      student
+    )
+
+
+  const statusClass =
+    getFeeStatusClass(
+      status
+    )
+
+
+  return (
+
+    <span
+      className={
+        `status ${statusClass}`
+      }
+    >
+
+      {status}
+
+    </span>
 
   )
 
