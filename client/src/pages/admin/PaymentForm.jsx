@@ -1,13 +1,4 @@
-import {
-  useState,
-} from 'react'
-
 import '../../assets/styles/admin.css'
-
-import {
-  createRazorpayOrder,
-  verifyRazorpayPayment,
-} from '../../services/studentService'
 
 
 function PaymentForm({
@@ -24,32 +15,11 @@ function PaymentForm({
 
 
   // ======================================
-  // RAZORPAY LOADING
-  // ======================================
-
-  const [
-    razorpayLoading,
-    setRazorpayLoading
-  ] =
-    useState(false)
-
-
-  // ======================================
   // EXISTING PAYMENT PLAN
   // ======================================
 
-  const lockedPlan =
-    selectedStudent?.paymentPlan || ''
-
-
-  // ======================================
-  // SELECTED PAYMENT PLAN
-  // ======================================
-
   const selectedPlan =
-    lockedPlan ||
-    paymentData.paymentPlan ||
-    ''
+    selectedStudent?.paymentPlan || ''
 
 
   // ======================================
@@ -63,44 +33,343 @@ function PaymentForm({
 
 
   // ======================================
-  // GET MINIMUM PAYMENT
+  // INSTALLMENT SCHEDULE
+  // ======================================
+
+  const installmentSchedule =
+    Array.isArray(
+      selectedStudent?.installmentSchedule
+    )
+      ? selectedStudent.installmentSchedule
+      : []
+
+
+  // ======================================
+  // GET CURRENT DUE / MINIMUM PAYMENT
+  // ======================================
+  //
+  // Full:
+  // → Complete remaining fee
+  //
+  // Monthly:
+  // → Monthly amount
+  //
+  // Custom Installment:
+  // → Current due installment balance
+  //
   // ======================================
 
   const getMinimumAmount = () => {
 
-    switch (selectedPlan) {
+    // ==================================
+    // NOTHING REMAINING
+    // ==================================
 
-      case 'monthly':
+    if (
+      remainingFee <= 0
+    ) {
 
-        return Number(
-          selectedStudent?.monthlyInstallment || 0
-        )
-
-
-      case 'three_month':
-
-        return Number(
-          selectedStudent?.threeMonthInstallment || 0
-        )
-
-
-      case 'six_month':
-
-        return Number(
-          selectedStudent?.sixMonthInstallment || 0
-        )
-
-
-      case 'full':
-
-        return remainingFee
-
-
-      default:
-
-        return 0
+      return 0
 
     }
+
+
+    // ==================================
+    // FULL PAYMENT
+    // ==================================
+
+    if (
+      selectedPlan === 'full'
+    ) {
+
+      return remainingFee
+
+    }
+
+
+    // ==================================
+    // MONTHLY
+    // ==================================
+
+    if (
+      selectedPlan === 'monthly'
+    ) {
+
+      return Math.min(
+
+        Number(
+          selectedStudent?.monthlyAmount ||
+          selectedStudent?.monthlyInstallment ||
+          0
+        ),
+
+        remainingFee
+
+      )
+
+    }
+
+
+    // ==================================
+    // CUSTOM INSTALLMENT
+    // ==================================
+
+    if (
+      selectedPlan === 'installment'
+    ) {
+
+      const today =
+        new Date()
+
+      today.setHours(
+        23,
+        59,
+        59,
+        999
+      )
+
+
+      // ==================================
+      // CURRENT DUE INSTALLMENTS
+      // ==================================
+
+      const dueInstallments =
+        installmentSchedule
+          .filter(
+            (item) => {
+
+              const amount =
+                Number(
+                  item?.amount || 0
+                )
+
+              const paidAmount =
+                Number(
+                  item?.paidAmount || 0
+                )
+
+              const balance =
+                Math.max(
+                  0,
+                  amount - paidAmount
+                )
+
+
+              if (
+                balance <= 0
+              ) {
+
+                return false
+
+              }
+
+
+              if (
+                item?.status === 'Due'
+              ) {
+
+                return true
+
+              }
+
+
+              if (
+                !item?.dueDate
+              ) {
+
+                return false
+
+              }
+
+
+              const dueDate =
+                new Date(
+                  item.dueDate
+                )
+
+
+              if (
+                Number.isNaN(
+                  dueDate.getTime()
+                )
+              ) {
+
+                return false
+
+              }
+
+
+              return (
+                dueDate <= today
+              )
+
+            }
+          )
+          .sort(
+            (a, b) => {
+
+              const dateA =
+                a?.dueDate
+                  ? new Date(
+                      a.dueDate
+                    ).getTime()
+                  : 0
+
+              const dateB =
+                b?.dueDate
+                  ? new Date(
+                      b.dueDate
+                    ).getTime()
+                  : 0
+
+              return (
+                dateA - dateB
+              )
+
+            }
+          )
+
+
+      // ==================================
+      // CURRENT DUE FOUND
+      // ==================================
+
+      if (
+        dueInstallments.length > 0
+      ) {
+
+        const currentDue =
+          dueInstallments[0]
+
+
+        const amount =
+          Number(
+            currentDue?.amount || 0
+          )
+
+        const paidAmount =
+          Number(
+            currentDue?.paidAmount || 0
+          )
+
+        const balance =
+          Math.max(
+            0,
+            amount - paidAmount
+          )
+
+
+        return Math.min(
+          balance,
+          remainingFee
+        )
+
+      }
+
+
+      // ==================================
+      // NO CURRENT DUE
+      // GET NEXT PENDING
+      // ==================================
+
+      const pendingInstallments =
+        installmentSchedule
+          .filter(
+            (item) => {
+
+              const amount =
+                Number(
+                  item?.amount || 0
+                )
+
+              const paidAmount =
+                Number(
+                  item?.paidAmount || 0
+                )
+
+              const balance =
+                Math.max(
+                  0,
+                  amount - paidAmount
+                )
+
+
+              return (
+                balance > 0 &&
+                (
+                  item?.status ===
+                    'Pending' ||
+                  !item?.status
+                )
+              )
+
+            }
+          )
+          .sort(
+            (a, b) => {
+
+              const dateA =
+                a?.dueDate
+                  ? new Date(
+                      a.dueDate
+                    ).getTime()
+                  : 0
+
+              const dateB =
+                b?.dueDate
+                  ? new Date(
+                      b.dueDate
+                    ).getTime()
+                  : 0
+
+              return (
+                dateA - dateB
+              )
+
+            }
+          )
+
+
+      if (
+        pendingInstallments.length > 0
+      ) {
+
+        const nextInstallment =
+          pendingInstallments[0]
+
+
+        const amount =
+          Number(
+            nextInstallment?.amount || 0
+          )
+
+        const paidAmount =
+          Number(
+            nextInstallment?.paidAmount || 0
+          )
+
+        const balance =
+          Math.max(
+            0,
+            amount - paidAmount
+          )
+
+
+        return Math.min(
+          balance,
+          remainingFee
+        )
+
+      }
+
+    }
+
+
+    // ==================================
+    // DEFAULT
+    // ==================================
+
+    return 0
 
   }
 
@@ -110,76 +379,158 @@ function PaymentForm({
 
 
   // ======================================
-  // HANDLE PAYMENT PLAN CHANGE
+  // PLAN LABEL
   // ======================================
 
-  const handlePlanChange =
-    (e) => {
+  const getPlanLabel = () => {
 
-      const plan =
-        e.target.value
+    switch (
+      selectedPlan
+    ) {
 
+      case 'monthly':
 
-      let amount =
-        ''
-
-
-      if (
-        plan === 'full'
-      ) {
-
-        amount =
-          remainingFee
-
-      }
-
-      else if (
-        plan === 'monthly'
-      ) {
-
-        amount =
-          Number(
-            selectedStudent?.monthlyInstallment || 0
-          )
-
-      }
-
-      else if (
-        plan === 'three_month'
-      ) {
-
-        amount =
-          Number(
-            selectedStudent?.threeMonthInstallment || 0
-          )
-
-      }
-
-      else if (
-        plan === 'six_month'
-      ) {
-
-        amount =
-          Number(
-            selectedStudent?.sixMonthInstallment || 0
-          )
-
-      }
+        return 'Monthly Installment'
 
 
-      setPaymentData({
+      case 'installment':
 
-        ...paymentData,
+        return 'Custom Installment'
 
-        paymentPlan:
-          plan,
 
-        amount:
-          amount,
+      case 'full':
 
-      })
+        return 'Full Payment'
+
+
+      default:
+
+        return 'Not Selected'
 
     }
+
+  }
+
+
+  // ======================================
+  // GET CURRENT DUE INSTALLMENT
+  // ======================================
+
+  const getCurrentDueInstallment = () => {
+
+    if (
+      selectedPlan !== 'installment'
+    ) {
+
+      return null
+
+    }
+
+
+    const today =
+      new Date()
+
+    today.setHours(
+      23,
+      59,
+      59,
+      999
+    )
+
+
+    const dueInstallments =
+      installmentSchedule
+        .filter(
+          (item) => {
+
+            const amount =
+              Number(
+                item?.amount || 0
+              )
+
+            const paidAmount =
+              Number(
+                item?.paidAmount || 0
+              )
+
+            const balance =
+              Math.max(
+                0,
+                amount - paidAmount
+              )
+
+
+            if (
+              balance <= 0
+            ) {
+
+              return false
+
+            }
+
+
+            if (
+              item?.status === 'Due'
+            ) {
+
+              return true
+
+            }
+
+
+            if (
+              !item?.dueDate
+            ) {
+
+              return false
+
+            }
+
+
+            const dueDate =
+              new Date(
+                item.dueDate
+              )
+
+
+            if (
+              Number.isNaN(
+                dueDate.getTime()
+              )
+            ) {
+
+              return false
+
+            }
+
+
+            return (
+              dueDate <= today
+            )
+
+          }
+        )
+        .sort(
+          (a, b) =>
+            new Date(
+              a.dueDate
+            ) -
+            new Date(
+              b.dueDate
+            )
+        )
+
+
+    return (
+      dueInstallments[0] ||
+      null
+    )
+
+  }
+
+
+  const currentDueInstallment =
+    getCurrentDueInstallment()
 
 
   // ======================================
@@ -202,756 +553,327 @@ function PaymentForm({
 
 
   // ======================================
-  // VALIDATE PAYMENT
+  // HANDLE PAYMENT METHOD
   // ======================================
 
-  const validatePayment =
-    () => {
+  const handlePaymentMethodChange =
+    (e) => {
 
-      const amount =
-        Number(
-          paymentData.amount || 0
-        )
+      setPaymentData({
 
+        ...paymentData,
 
-      // ==================================
-      // VALIDATE AMOUNT
-      // ==================================
+        paymentMethod:
+          e.target.value,
 
-      if (
-        !amount ||
-        amount <= 0
-      ) {
-
-        alert(
-          'Please enter a valid payment amount.'
-        )
-
-        return false
-
-      }
-
-
-      // ==================================
-      // VALIDATE REMAINING FEE
-      // ==================================
-
-      if (
-        remainingFee <= 0
-      ) {
-
-        alert(
-          'Course fee is already fully paid.'
-        )
-
-        return false
-
-      }
-
-
-      // ==================================
-      // AMOUNT CANNOT EXCEED REMAINING
-      // ==================================
-
-      if (
-        amount >
-        remainingFee
-      ) {
-
-        alert(
-
-          `Payment cannot be greater than remaining fee of ₹${remainingFee}.`
-
-        )
-
-        return false
-
-      }
-
-
-      // ==================================
-      // PAYMENT PLAN
-      // ==================================
-
-      if (
-        !selectedPlan
-      ) {
-
-        alert(
-          'Please select a payment plan.'
-        )
-
-        return false
-
-      }
-
-
-      // ==================================
-      // MINIMUM PAYMENT
-      // ==================================
-
-      if (
-
-        selectedPlan !== 'full' &&
-
-        minimumAmount > 0 &&
-
-        amount < minimumAmount
-
-      ) {
-
-        alert(
-
-          `Minimum payment for this plan is ₹${minimumAmount}.`
-
-        )
-
-        return false
-
-      }
-
-
-      // ==================================
-      // FULL PAYMENT
-      // ==================================
-
-      if (
-
-        selectedPlan === 'full' &&
-
-        amount !== remainingFee
-
-      ) {
-
-        alert(
-
-          `Full payment must be ₹${remainingFee}.`
-
-        )
-
-        return false
-
-      }
-
-
-      return true
+      })
 
     }
 
 
   // ======================================
-  // LOAD RAZORPAY CHECKOUT SCRIPT
+  // HANDLE PAYMENT DATE
   // ======================================
 
-  const loadRazorpayScript =
-    () => {
+  const handlePaymentDateChange =
+    (e) => {
 
-      return new Promise(
-        (resolve) => {
+      setPaymentData({
 
-          const existingScript =
-            document.querySelector(
-              'script[src="https://checkout.razorpay.com/v1/checkout.js"]'
-            )
+        ...paymentData,
 
+        paymentDate:
+          e.target.value,
 
-          if (
-            existingScript
-          ) {
+      })
 
-            resolve(true)
-
-            return
-
-          }
+    }
 
 
-          const script =
-            document.createElement(
-              'script'
-            )
+  // ======================================
+  // SET MINIMUM AMOUNT
+  // ======================================
+
+  const useMinimumAmount = () => {
+
+    if (
+      minimumAmount <= 0
+    ) {
+
+      return
+
+    }
 
 
-          script.src =
-            'https://checkout.razorpay.com/v1/checkout.js'
+    setPaymentData({
+
+      ...paymentData,
+
+      amount:
+        String(
+          minimumAmount
+        ),
+
+    })
+
+  }
 
 
-          script.onload =
-            () => {
+  // ======================================
+  // ADD OFFLINE PAYMENT
+  // ======================================
 
-              resolve(true)
+  const handleAddPayment = () => {
 
-            }
-
-
-          script.onerror =
-            () => {
-
-              resolve(false)
-
-            }
-
-
-          document.body.appendChild(
-            script
-          )
-
-        }
+    const amount =
+      Number(
+        paymentData.amount || 0
       )
 
-    }
 
+    // ==================================
+    // VALID AMOUNT
+    // ==================================
 
-  // ======================================
-  // RAZORPAY ONLINE PAYMENT
-  // ======================================
+    if (
+      !amount ||
+      amount <= 0
+    ) {
 
-  const handleRazorpayPayment =
-    async () => {
-
-      if (
-        razorpayLoading
-      ) {
-
-        return
-
-      }
-
-
-      // ==================================
-      // VALIDATE
-      // ==================================
-
-      const valid =
-        validatePayment()
-
-
-      if (!valid) {
-
-        return
-
-      }
-
-
-      try {
-
-        setRazorpayLoading(
-          true
-        )
-
-
-        // ==================================
-        // LOAD RAZORPAY
-        // ==================================
-
-        const scriptLoaded =
-          await loadRazorpayScript()
-
-
-        if (!scriptLoaded) {
-
-          alert(
-            'Unable to load Razorpay Checkout.'
-          )
-
-          setRazorpayLoading(
-            false
-          )
-
-          return
-
-        }
-
-
-        // ==================================
-        // CREATE ORDER
-        // ==================================
-
-        const orderResponse =
-          await createRazorpayOrder({
-
-            studentId:
-              selectedStudent._id,
-
-            amount:
-              Number(
-                paymentData.amount
-              ),
-
-            paymentPlan:
-              selectedPlan,
-
-          })
-
-
-        if (
-          !orderResponse?.success
-        ) {
-
-          alert(
-
-            orderResponse?.message ||
-
-            'Unable to create Razorpay order.'
-
-          )
-
-          setRazorpayLoading(
-            false
-          )
-
-          return
-
-        }
-
-
-        // ==================================
-        // RAZORPAY OPTIONS
-        // ==================================
-
-        const options = {
-
-          // ==================================
-          // LIVE KEY ID
-          // ==================================
-
-          key:
-            orderResponse.keyId,
-
-
-          // ==================================
-          // AMOUNT
-          // ==================================
-
-          amount:
-            orderResponse.order.amount,
-
-
-          // ==================================
-          // CURRENCY
-          // ==================================
-
-          currency:
-            orderResponse.order.currency,
-
-
-          // ==================================
-          // INSTITUTE NAME
-          // ==================================
-
-          name:
-            'Prerna Institute Of Excellence',
-
-
-          // ==================================
-          // DESCRIPTION
-          // ==================================
-
-          description:
-
-            `Course Fee - ${selectedStudent.name}`,
-
-
-          // ==================================
-          // ORDER ID
-          // ==================================
-
-          order_id:
-            orderResponse.order.id,
-
-
-          // ==================================
-          // PREFILL
-          // ==================================
-
-          prefill: {
-
-            name:
-              selectedStudent.name || '',
-
-            email:
-              selectedStudent.email || '',
-
-            contact:
-              selectedStudent.contact || '',
-
-          },
-
-
-          // ==================================
-          // NOTES
-          // ==================================
-
-          notes: {
-
-            admissionNumber:
-              selectedStudent.admissionNumber || '',
-
-            course:
-              selectedStudent.course || '',
-
-            paymentPlan:
-              selectedPlan || '',
-
-          },
-
-
-          // ==================================
-          // THEME
-          // ==================================
-
-          theme: {
-
-            color:
-              '#00adb5',
-
-          },
-
-
-          // ==================================
-          // PAYMENT SUCCESS
-          // ==================================
-
-          handler:
-            async (response) => {
-
-              try {
-
-                // ==========================
-                // VERIFY PAYMENT
-                // ==========================
-
-                const verifyResponse =
-                  await verifyRazorpayPayment({
-
-                    razorpay_payment_id:
-                      response.razorpay_payment_id,
-
-                    razorpay_order_id:
-                      response.razorpay_order_id,
-
-                    razorpay_signature:
-                      response.razorpay_signature,
-
-                  })
-
-
-                // ==========================
-                // VERIFICATION FAILED
-                // ==========================
-
-                if (
-                  !verifyResponse?.success
-                ) {
-
-                  alert(
-
-                    verifyResponse?.message ||
-
-                    'Payment verification failed.'
-
-                  )
-
-                  setRazorpayLoading(
-                    false
-                  )
-
-                  return
-
-                }
-
-
-                // ==========================
-                // UPDATE PAYMENT DATA
-                // ==========================
-
-                if (
-                  verifyResponse.student
-                ) {
-
-                  setPaymentData({
-
-                    amount:
-                      '',
-
-                    paymentMethod:
-                      'Razorpay',
-
-                    paymentDate:
-
-                      new Date()
-                        .toISOString()
-                        .split('T')[0],
-
-                    paymentPlan:
-
-                      verifyResponse.student
-                        .paymentPlan ||
-
-                      selectedPlan ||
-
-                      '',
-
-                  })
-
-                }
-
-
-                // ==========================
-                // SUCCESS MESSAGE
-                // ==========================
-
-                alert(
-                  'Online Payment Successful.'
-                )
-
-
-                // ==========================
-                // RELOAD
-                // ==========================
-                //
-                // Existing parent component
-                // ko fresh student data mil jayega.
-                //
-                // ==========================
-
-                window.location.reload()
-
-              }
-
-              catch (error) {
-
-                console.log(
-
-                  'Razorpay Verification Error:',
-
-                  error
-
-                )
-
-
-                alert(
-
-                  error?.response?.data?.message ||
-
-                  'Payment was received but verification failed. Please contact admin.'
-
-                )
-
-              }
-
-              finally {
-
-                setRazorpayLoading(
-                  false
-                )
-
-              }
-
-            },
-
-
-          // ==================================
-          // CHECKOUT CLOSE
-          // ==================================
-
-          modal: {
-
-            ondismiss:
-              () => {
-
-                setRazorpayLoading(
-                  false
-                )
-
-              },
-
-          },
-
-        }
-
-
-        // ==================================
-        // CREATE RAZORPAY INSTANCE
-        // ==================================
-
-        if (
-          !window.Razorpay
-        ) {
-
-          alert(
-            'Razorpay Checkout is not available.'
-          )
-
-          setRazorpayLoading(
-            false
-          )
-
-          return
-
-        }
-
-
-        const razorpay =
-          new window.Razorpay(
-            options
-          )
-
-
-        // ==================================
-        // PAYMENT FAILED
-        // ==================================
-
-        razorpay.on(
-
-          'payment.failed',
-
-          (response) => {
-
-            console.log(
-
-              'Razorpay Payment Failed:',
-
-              response
-
-            )
-
-
-            alert(
-
-              response?.error?.description ||
-
-              'Razorpay payment failed.'
-
-            )
-
-
-            setRazorpayLoading(
-              false
-            )
-
-          }
-
-        )
-
-
-        // ==================================
-        // OPEN RAZORPAY
-        // ==================================
-
-        razorpay.open()
-
-      }
-
-      catch (error) {
-
-        console.log(
-
-          'Razorpay Payment Error:',
-
-          error
-
-        )
-
-
-        alert(
-
-          error?.response?.data?.message ||
-
-          'Unable to start Razorpay payment.'
-
-        )
-
-
-        setRazorpayLoading(
-          false
-        )
-
-      }
-
-    }
-
-
-  // ======================================
-  // OFFLINE PAYMENT
-  // ======================================
-
-  const handleOfflinePayment =
-    () => {
-
-      const valid =
-        validatePayment()
-
-
-      if (!valid) {
-
-        return
-
-      }
-
-
-      addPayment(
-        selectedStudent._id
+      alert(
+        'Please enter a valid payment amount.'
       )
 
+      return
+
+    }
+
+
+    // ==================================
+    // REMAINING VALIDATION
+    // ==================================
+
+    if (
+      amount >
+      remainingFee
+    ) {
+
+      alert(
+
+        `Payment cannot be greater than remaining fee of ₹${remainingFee}.`
+
+      )
+
+      return
+
     }
 
 
-  // ======================================
-  // PAYMENT PLAN LABEL
-  // ======================================
+    // ==================================
+    // PAYMENT PLAN
+    // ==================================
 
-  const getPlanLabel =
-    () => {
+    if (
+      !selectedPlan
+    ) {
 
-      switch (
-        selectedPlan
-      ) {
+      alert(
+        'Payment plan is not selected for this student.'
+      )
 
-        case 'monthly':
-
-          return 'Monthly'
-
-
-        case 'three_month':
-
-          return 'Every 3 Months'
-
-
-        case 'six_month':
-
-          return 'Every 6 Months'
-
-
-        case 'full':
-
-          return 'Full Payment'
-
-
-        default:
-
-          return ''
-
-      }
+      return
 
     }
+
+
+    // ==================================
+    // MINIMUM PAYMENT
+    // ==================================
+
+    if (
+      minimumAmount > 0 &&
+      amount < minimumAmount
+    ) {
+
+      alert(
+
+        `Minimum payment required is ₹${minimumAmount}.`
+
+      )
+
+      return
+
+    }
+
+
+    // ==================================
+    // PAYMENT DATE
+    // ==================================
+
+    if (
+      !paymentData.paymentDate
+    ) {
+
+      alert(
+        'Please select payment date.'
+      )
+
+      return
+
+    }
+
+
+    // ==================================
+    // CONFIRM
+    // ==================================
+
+    const confirmed =
+      window.confirm(
+
+        `Add offline payment of ₹${amount.toLocaleString(
+          'en-IN'
+        )}?`
+
+      )
+
+
+    if (
+      !confirmed
+    ) {
+
+      return
+
+    }
+
+
+    // ==================================
+    // SEND PAYMENT
+    // ==================================
+
+    addPayment(
+      selectedStudent._id
+    )
+
+  }
+
+
+  // ======================================
+  // NO STUDENT
+  // ======================================
+
+  if (
+    !selectedStudent
+  ) {
+
+    return null
+
+  }
 
 
   return (
 
-    <div className="mb-4">
+    <div>
 
 
-      {/* ==================================
+      {/* ======================================
           HEADING
-      ================================== */}
+      ====================================== */}
 
-      <h4 className="mb-3">
+      <h5 className="mb-4">
 
-        Add Course Fee Payment
+        💳 Add Course Fee Payment
 
-      </h4>
+      </h5>
 
+
+      {/* ======================================
+          CURRENT DUE
+      ====================================== */}
+
+      {currentDueInstallment && (
+
+        <div
+          className="alert alert-danger mb-4"
+        >
+
+          <div className="d-flex justify-content-between align-items-center flex-wrap gap-2">
+
+            <div>
+
+              <strong>
+                Current Fee Due
+              </strong>
+
+              <br />
+
+              ₹{
+                Math.max(
+
+                  0,
+
+                  Number(
+                    currentDueInstallment.amount || 0
+                  ) -
+
+                  Number(
+                    currentDueInstallment.paidAmount || 0
+                  )
+
+                ).toLocaleString(
+                  'en-IN'
+                )
+              }
+
+              {' • '}
+
+              Installment #
+              {
+                currentDueInstallment.installmentNumber ||
+                '-'
+              }
+
+            </div>
+
+
+            <div>
+
+              <small>
+                Due Date
+              </small>
+
+              <br />
+
+              <strong>
+
+                {
+                  currentDueInstallment.dueDate
+                    ? new Date(
+                        currentDueInstallment.dueDate
+                      ).toLocaleDateString(
+                        'en-IN',
+                        {
+                          day: '2-digit',
+                          month: 'short',
+                          year: 'numeric',
+                        }
+                      )
+                    : '-'
+                }
+
+              </strong>
+
+            </div>
+
+          </div>
+
+        </div>
+
+      )}
+
+
+      {/* ======================================
+          PAYMENT FORM
+      ====================================== */}
 
       <div className="row">
 
@@ -969,110 +891,21 @@ function PaymentForm({
           </label>
 
 
-          {lockedPlan ? (
-
-            <>
-
-              <select
-                className="form-control"
-                value={
-                  lockedPlan
-                }
-                disabled
-              >
-
-                <option value="monthly">
-
-                  Monthly
-
-                </option>
-
-                <option value="three_month">
-
-                  Every 3 Months
-
-                </option>
-
-                <option value="six_month">
-
-                  Every 6 Months
-
-                </option>
-
-                <option value="full">
-
-                  Full Payment
-
-                </option>
-
-              </select>
+          <input
+            type="text"
+            className="form-control bg-light"
+            value={
+              getPlanLabel()
+            }
+            readOnly
+          />
 
 
-              <small className="text-success">
+          <small className="text-success d-block mt-1">
 
-                Payment plan is locked for this student.
+            Payment plan is locked for this student.
 
-              </small>
-
-            </>
-
-          ) : (
-
-            <>
-
-              <select
-                className="form-control"
-                value={
-                  paymentData.paymentPlan || ''
-                }
-                onChange={
-                  handlePlanChange
-                }
-              >
-
-                <option value="">
-
-                  Select Payment Plan
-
-                </option>
-
-                <option value="monthly">
-
-                  Monthly
-
-                </option>
-
-                <option value="three_month">
-
-                  Every 3 Months
-
-                </option>
-
-                <option value="six_month">
-
-                  Every 6 Months
-
-                </option>
-
-                <option value="full">
-
-                  Full Payment
-
-                </option>
-
-              </select>
-
-
-              <small className="text-muted">
-
-                Select once. It will be locked after
-                the first course-fee payment.
-
-              </small>
-
-            </>
-
-          )}
+          </small>
 
         </div>
 
@@ -1090,38 +923,66 @@ function PaymentForm({
           </label>
 
 
-          <input
-            type="number"
-            className="form-control"
-            placeholder="Enter Amount"
-            value={
-              paymentData.amount
-            }
-            onChange={
-              handleAmountChange
-            }
-            min="1"
-            max={
-              remainingFee
-            }
-          />
+          <div className="input-group">
+
+            <span className="input-group-text">
+
+              ₹
+
+            </span>
 
 
-          {selectedPlan && (
+            <input
+              type="number"
+              className="form-control"
+              placeholder="Enter Amount"
+              min="1"
+              max={
+                remainingFee
+              }
+              value={
+                paymentData.amount
+              }
+              onChange={
+                handleAmountChange
+              }
+            />
+
+          </div>
+
+
+          <div className="d-flex justify-content-between mt-1">
 
             <small className="text-muted">
 
-              {selectedPlan === 'full'
-
-                ? `Full payment: ₹${remainingFee}`
-
-                : `Minimum payment: ₹${minimumAmount}`
-
+              Minimum payment:
+              {' '}
+              ₹{
+                minimumAmount.toLocaleString(
+                  'en-IN'
+                )
               }
 
             </small>
 
-          )}
+
+            {minimumAmount > 0 && (
+
+              <button
+                type="button"
+                className="btn btn-link btn-sm p-0"
+                onClick={
+                  useMinimumAmount
+                }
+              >
+
+                Use Minimum
+
+              </button>
+
+            )}
+
+          </div>
 
         </div>
 
@@ -1144,48 +1005,29 @@ function PaymentForm({
             value={
               paymentData.paymentMethod
             }
-            onChange={(e) =>
-
-              setPaymentData({
-
-                ...paymentData,
-
-                paymentMethod:
-                  e.target.value,
-
-              })
-
+            onChange={
+              handlePaymentMethodChange
             }
           >
 
             <option value="Cash">
-
               Cash
-
             </option>
 
             <option value="UPI">
-
               UPI
-
             </option>
 
             <option value="Card">
-
               Card
-
             </option>
 
             <option value="Bank Transfer">
-
               Bank Transfer
-
             </option>
 
-            <option value="Razorpay">
-
-              Razorpay - Online
-
+            <option value="Cheque">
+              Cheque
             </option>
 
           </select>
@@ -1212,17 +1054,8 @@ function PaymentForm({
             value={
               paymentData.paymentDate
             }
-            onChange={(e) =>
-
-              setPaymentData({
-
-                ...paymentData,
-
-                paymentDate:
-                  e.target.value,
-
-              })
-
+            onChange={
+              handlePaymentDateChange
             }
           />
 
@@ -1255,7 +1088,7 @@ function PaymentForm({
 
 
         {/* ==================================
-            CURRENT DUE DATE
+            DUE DATE
         ================================== */}
 
         <div className="col-md-4 mb-3">
@@ -1268,10 +1101,21 @@ function PaymentForm({
 
 
           <input
-            type="date"
-            className="form-control"
+            type="text"
+            className="form-control bg-light"
             value={
-              selectedStudent?.dueDate || ''
+              selectedStudent.dueDate
+                ? new Date(
+                    selectedStudent.dueDate
+                  ).toLocaleDateString(
+                    'en-IN',
+                    {
+                      day: '2-digit',
+                      month: 'short',
+                      year: 'numeric',
+                    }
+                  )
+                : '-'
             }
             readOnly
           />
@@ -1279,13 +1123,12 @@ function PaymentForm({
 
           <small className="text-muted">
 
-            Next due date is automatically updated
+            Next due date will update automatically
             after payment.
 
           </small>
 
         </div>
-
 
       </div>
 
@@ -1294,170 +1137,114 @@ function PaymentForm({
           PAYMENT SUMMARY
       ====================================== */}
 
-      {selectedPlan && (
+      <div className="alert alert-info">
 
-        <div className="alert alert-info">
-
-          <div className="row">
-
-            <div className="col-md-4">
-
-              <strong>
-
-                Plan:
-
-              </strong>
-
-              <br />
-
-              {
-                getPlanLabel()
-              }
-
-            </div>
+        <div className="row">
 
 
-            <div className="col-md-4">
+          <div className="col-md-4">
 
-              <strong>
+            <strong>
+              Plan:
+            </strong>
 
-                Minimum:
+            <br />
 
-              </strong>
+            {
+              getPlanLabel()
+            }
 
-              <br />
-
-              ₹{
-                minimumAmount
-              }
-
-            </div>
+          </div>
 
 
-            <div className="col-md-4">
+          <div className="col-md-4">
 
-              <strong>
+            <strong>
+              Minimum:
+            </strong>
 
-                Remaining:
+            <br />
 
-              </strong>
+            ₹{
+              minimumAmount.toLocaleString(
+                'en-IN'
+              )
+            }
 
-              <br />
+          </div>
 
-              ₹{
-                remainingFee
-              }
 
-            </div>
+          <div className="col-md-4">
+
+            <strong>
+              Remaining:
+            </strong>
+
+            <br />
+
+            ₹{
+              remainingFee.toLocaleString(
+                'en-IN'
+              )
+            }
 
           </div>
 
         </div>
 
-      )}
+      </div>
 
 
       {/* ======================================
-          PAYMENT BUTTONS
+          PAYMENT BUTTON
       ====================================== */}
 
       <div className="d-flex gap-2 flex-wrap">
 
+        <button
+          type="button"
+          className="table-btn approve-btn"
+          onClick={
+            handleAddPayment
+          }
+          disabled={
+            remainingFee <= 0
+          }
+        >
 
-        {/* ==================================
-            RAZORPAY BUTTON
-        ================================== */}
+          {
+            remainingFee <= 0
 
-        {paymentData.paymentMethod ===
-          'Razorpay' ? (
+              ? 'Course Fee Paid'
 
-          <button
-            type="button"
-            className="table-btn approve-btn"
-            onClick={
-              handleRazorpayPayment
-            }
-            disabled={
-              remainingFee <= 0 ||
-              razorpayLoading
-            }
-          >
+              : 'Add Payment'
 
-            {
+          }
 
-              razorpayLoading
-
-                ? 'Processing...'
-
-                : remainingFee <= 0
-
-                  ? 'Course Fee Paid'
-
-                  : 'Pay Online with Razorpay'
-
-            }
-
-          </button>
-
-        ) : (
-
-          /* ==================================
-             OFFLINE PAYMENT BUTTON
-          ================================== */
-
-          <button
-            type="button"
-            className="table-btn approve-btn"
-            onClick={
-              handleOfflinePayment
-            }
-            disabled={
-              remainingFee <= 0
-            }
-          >
-
-            {
-
-              remainingFee <= 0
-
-                ? 'Course Fee Paid'
-
-                : 'Add Payment'
-
-            }
-
-          </button>
-
-        )}
+        </button>
 
       </div>
 
 
       {/* ======================================
-          RAZORPAY INFORMATION
+          INFO
       ====================================== */}
 
-      {paymentData.paymentMethod ===
-        'Razorpay' && (
+      <div className="alert alert-secondary mt-3 mb-0">
 
-        <div className="alert alert-warning mt-3 mb-0">
+        <strong>
+          Offline Payment:
+        </strong>
 
-          <strong>
+        {' '}
 
-            Online Payment:
+        Admin can record Cash, UPI, Card,
+        Bank Transfer or Cheque payment here.
 
-          </strong>
+        The payment will be applied to the
+        student's unpaid installment automatically.
 
-          <br />
-
-          Student will pay securely through
-          Razorpay Checkout. The payment will be
-          added to the student's account only after
-          server-side verification.
-
-        </div>
-
-      )}
+      </div>
 
     </div>
 

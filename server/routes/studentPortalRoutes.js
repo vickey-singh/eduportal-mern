@@ -3440,8 +3440,24 @@ router.put(
 // GET /api/student/fees
 //
 // Logged-in student only.
-// Student ID frontend se nahi aayegi.
-// req.student.id se student identify hoga.
+//
+// IMPORTANT:
+//
+// Due Amount
+// = Currently due installments ka
+//   total outstanding amount.
+//
+// Due Installments
+// = Currently due installments ki count.
+//
+// Latest Due Date
+// = Currently due installments mein
+//   sabse latest due date.
+//
+// Next Due Date
+// = Future pending installment ki
+//   sabse pehli due date.
+//
 // ======================================
 
 router.get(
@@ -3493,6 +3509,7 @@ router.get(
             (a, b) => {
 
               return (
+
                 new Date(
                   b.paymentDate ||
                   b.createdAt ||
@@ -3504,6 +3521,7 @@ router.get(
                   a.createdAt ||
                   0
                 )
+
               )
 
             }
@@ -3512,23 +3530,394 @@ router.get(
 
 
       // ==================================
-      // SELECTED PAYMENT PLAN
+      // INSTALLMENT SCHEDULE
+      // ==================================
+
+      const installmentSchedule =
+        Array.isArray(
+          student.installmentSchedule
+        )
+          ? student.installmentSchedule.map(
+
+              (item) => {
+
+                const amount =
+                  Number(
+                    item.amount ||
+                    0
+                  )
+
+                const paidAmount =
+                  Number(
+                    item.paidAmount ||
+                    0
+                  )
+
+                const balance =
+                  Math.max(
+                    0,
+                    amount - paidAmount
+                  )
+
+                return {
+
+                  _id:
+                    item._id,
+
+                  installmentNumber:
+                    Number(
+                      item.installmentNumber ||
+                      0
+                    ),
+
+                  amount,
+
+                  paidAmount,
+
+                  balance,
+
+                  dueDate:
+                    item.dueDate ||
+                    null,
+
+                  paidDate:
+                    item.paidDate ||
+                    null,
+
+                  status:
+                    item.status ||
+                    'Pending',
+
+                }
+
+              }
+
+            )
+          : []
+
+
+      // ==================================
+      // TODAY
+      // ==================================
+
+      const today =
+        new Date()
+
+      today.setHours(
+        0,
+        0,
+        0,
+        0
+      )
+
+
+      // ==================================
+      // CURRENT DUE INSTALLMENTS
+      // ==================================
+      //
+      // Due status is primary.
+      //
+      // If an old record has a stale status
+      // but its due date has arrived and balance
+      // remains, it is also treated as Due.
+      //
+      // ==================================
+
+      const dueInstallments =
+        installmentSchedule
+          .filter(
+
+            (item) => {
+
+              if (
+                Number(
+                  item.balance ||
+                  0
+                ) <= 0
+              ) {
+
+                return false
+
+              }
+
+              if (
+                item.status ===
+                'Paid'
+              ) {
+
+                return false
+
+              }
+
+              if (
+                item.status ===
+                'Due'
+              ) {
+
+                return true
+
+              }
+
+              if (
+                item.dueDate
+              ) {
+
+                const dueDate =
+                  new Date(
+                    item.dueDate
+                  )
+
+                dueDate.setHours(
+                  0,
+                  0,
+                  0,
+                  0
+                )
+
+                return (
+                  dueDate <=
+                  today
+                )
+
+              }
+
+              return false
+
+            }
+
+          )
+          .sort(
+
+            (a, b) => {
+
+              return (
+
+                new Date(
+                  a.dueDate ||
+                  0
+                ) -
+
+                new Date(
+                  b.dueDate ||
+                  0
+                )
+
+              )
+
+            }
+
+          )
+
+
+      // ==================================
+      // DUE AMOUNT
+      // ==================================
+
+      const dueAmount =
+        dueInstallments.reduce(
+
+          (
+            total,
+            item
+          ) => {
+
+            return (
+
+              total +
+
+              Number(
+                item.balance ||
+                0
+              )
+
+            )
+
+          },
+
+          0
+
+        )
+
+
+      // ==================================
+      // DUE COUNT
+      // ==================================
+
+      const dueInstallmentCount =
+        dueInstallments.length
+
+
+      // ==================================
+      // LATEST DUE DATE
+      // ==================================
+
+      const dueWithDates =
+        dueInstallments
+          .filter(
+            (item) =>
+              item.dueDate
+          )
+          .slice()
+          .sort(
+
+            (a, b) => {
+
+              return (
+
+                new Date(
+                  b.dueDate
+                ) -
+
+                new Date(
+                  a.dueDate
+                )
+
+              )
+
+            }
+
+          )
+
+
+      const latestDueDate =
+        dueWithDates[0]
+          ?.dueDate ||
+        null
+
+
+      // ==================================
+      // NEXT PENDING DATE
+      // ==================================
+
+      const pendingInstallments =
+        installmentSchedule
+          .filter(
+
+            (item) => {
+
+              if (
+                Number(
+                  item.balance ||
+                  0
+                ) <= 0
+              ) {
+
+                return false
+
+              }
+
+              if (
+                item.status ===
+                'Paid'
+              ) {
+
+                return false
+
+              }
+
+              if (
+                !item.dueDate
+              ) {
+
+                return false
+
+              }
+
+              const dueDate =
+                new Date(
+                  item.dueDate
+                )
+
+              dueDate.setHours(
+                0,
+                0,
+                0,
+                0
+              )
+
+              return (
+                dueDate >
+                today
+              )
+
+            }
+
+          )
+          .sort(
+
+            (a, b) => {
+
+              return (
+
+                new Date(
+                  a.dueDate
+                ) -
+
+                new Date(
+                  b.dueDate
+                )
+
+              )
+
+            }
+
+          )
+
+
+      const nextDueDate =
+        pendingInstallments[0]
+          ?.dueDate ||
+        null
+
+
+      // ==================================
+      // PAYMENT PLAN
+      // ==================================
+
+      const paymentPlan =
+        student.paymentPlan ||
+        ''
+
+
+      // ==================================
+      // INSTALLMENT AMOUNT
       // ==================================
 
       let installmentAmount = 0
 
 
       switch (
-        student.paymentPlan
+        paymentPlan
       ) {
 
         case 'monthly':
 
           installmentAmount =
             Number(
+              student.monthlyAmount ||
               student.monthlyInstallment ||
               0
             )
+
+          if (
+            installmentAmount <= 0
+          ) {
+
+            installmentAmount =
+              Number(
+                installmentSchedule.find(
+
+                  (item) =>
+                    Number(
+                      item.balance ||
+                      0
+                    ) > 0
+
+                )?.amount ||
+                0
+              )
+
+          }
 
           break
 
@@ -3567,10 +3956,99 @@ router.get(
           break
 
 
-        default:
+        case 'installment':
 
           installmentAmount =
-            0
+            Number(
+              dueInstallments[0]
+                ?.balance ||
+              installmentSchedule.find(
+
+                (item) =>
+                  Number(
+                    item.balance ||
+                    0
+                  ) > 0
+
+              )?.balance ||
+              0
+            )
+
+          break
+
+
+        default:
+
+          installmentAmount = 0
+
+      }
+
+
+      // ==================================
+      // COURSE FEE SUMMARY
+      // ==================================
+
+      const totalFees =
+        Number(
+          student.totalFees ||
+          0
+        )
+
+
+      const paidFees =
+        Number(
+          student.paidFees ||
+          0
+        )
+
+
+      const remainingFees =
+        Math.max(
+          0,
+          totalFees - paidFees
+        )
+
+
+      // ==================================
+      // FEE STATUS
+      // ==================================
+
+      let feesStatus =
+        student.feesStatus ||
+        'Pending'
+
+
+      if (
+        remainingFees <= 0
+      ) {
+
+        feesStatus =
+          'Paid'
+
+      }
+
+      else if (
+        dueAmount > 0
+      ) {
+
+        feesStatus =
+          'Due'
+
+      }
+
+      else if (
+        paidFees > 0
+      ) {
+
+        feesStatus =
+          'Partial'
+
+      }
+
+      else {
+
+        feesStatus =
+          'Pending'
 
       }
 
@@ -3610,9 +4088,9 @@ router.get(
 
         fees: {
 
-          // ==================================
-          // REGISTRATION
-          // ==================================
+          // ================================
+          // REGISTRATION FEE
+          // ================================
 
           registrationFee:
             Number(
@@ -3631,47 +4109,37 @@ router.get(
             'Pending',
 
 
-          // ==================================
+          // ================================
           // COURSE FEE
-          // ==================================
+          // ================================
 
-          totalFees:
-            Number(
-              student.totalFees ||
-              0
-            ),
+          totalFees,
 
-          paidFees:
-            Number(
-              student.paidFees ||
-              0
-            ),
+          paidFees,
 
-          remainingFees:
-            Number(
-              student.remainingFees ||
-              0
-            ),
+          remainingFees,
 
-          feesStatus:
-            student.feesStatus ||
-            'Pending',
+          feesStatus,
 
 
-          // ==================================
+          // ================================
           // PAYMENT PLAN
-          // ==================================
+          // ================================
 
-          paymentPlan:
-            student.paymentPlan ||
-            '',
+          paymentPlan,
 
           installmentAmount,
 
+          monthlyAmount:
+            Number(
+              student.monthlyAmount ||
+              0
+            ),
 
           monthlyInstallment:
             Number(
               student.monthlyInstallment ||
+              student.monthlyAmount ||
               0
             ),
 
@@ -3694,18 +4162,40 @@ router.get(
             ),
 
 
-          // ==================================
-          // DUE DATE
-          // ==================================
+          // ================================
+          // DUE SUMMARY
+          // ================================
+
+          dueAmount,
+
+          dueInstallmentCount,
+
+          dueInstallments,
+
+
+          // ================================
+          // DUE DATES
+          // ================================
 
           dueDate:
-            student.dueDate ||
-            '',
+            latestDueDate ||
+            null,
+
+          latestDueDate,
+
+          nextDueDate,
 
 
-          // ==================================
-          // LAST PAYMENT MODE
-          // ==================================
+          // ================================
+          // COMPLETE SCHEDULE
+          // ================================
+
+          installmentSchedule,
+
+
+          // ================================
+          // PAYMENT MODE
+          // ================================
 
           paymentMode:
             student.paymentMode ||
@@ -3741,6 +4231,9 @@ router.get(
 
         message:
           'Server Error',
+
+        error:
+          error.message,
 
       })
 

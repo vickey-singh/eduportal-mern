@@ -131,6 +131,12 @@ const paymentSchema =
       // ======================================
       // PAYMENT PLAN
       // ======================================
+      //
+      // full
+      // monthly
+      // installment = Custom Installment
+      //
+      // ======================================
 
       paymentPlan: {
 
@@ -138,13 +144,11 @@ const paymentSchema =
 
         enum: [
 
+          'full',
+
           'monthly',
 
-          'three_month',
-
-          'six_month',
-
-          'full',
+          'installment',
 
           '',
 

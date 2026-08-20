@@ -2,7 +2,8 @@ const express = require('express')
 
 const router = express.Router()
 
-const jwt = require('jsonwebtoken')
+const jwt =
+  require('jsonwebtoken')
 
 const Student =
   require('../models/Student')
@@ -16,6 +17,10 @@ const Student =
 const normalizeDOB =
   (dob) => {
 
+    // ==================================
+    // EMPTY DOB
+    // ==================================
+
     if (!dob) {
 
       return ''
@@ -23,9 +28,62 @@ const normalizeDOB =
     }
 
 
+    // ==================================
+    // MONGOOSE / JAVASCRIPT DATE OBJECT
+    // ==================================
+
+    if (
+      dob instanceof Date
+    ) {
+
+      if (
+        Number.isNaN(
+          dob.getTime()
+        )
+      ) {
+
+        return ''
+
+      }
+
+
+      const day =
+        String(
+          dob.getUTCDate()
+        ).padStart(
+          2,
+          '0'
+        )
+
+
+      const month =
+        String(
+          dob.getUTCMonth() + 1
+        ).padStart(
+          2,
+          '0'
+        )
+
+
+      const year =
+        dob.getUTCFullYear()
+
+
+      return (
+        `${day}${month}${year}`
+      )
+
+    }
+
+
+    // ==================================
+    // STRING VALUE
+    // ==================================
+
     const value =
-      String(dob)
-        .trim()
+      String(
+        dob
+      ).trim()
 
 
     // ==================================
@@ -33,7 +91,9 @@ const normalizeDOB =
     // ==================================
 
     if (
-      /^\d{8}$/.test(value)
+      /^\d{8}$/.test(
+        value
+      )
     ) {
 
       return value
@@ -52,9 +112,13 @@ const normalizeDOB =
     ) {
 
       const [
+
         day,
+
         month,
+
         year,
+
       ] =
         value.split('/')
 
@@ -77,9 +141,13 @@ const normalizeDOB =
     ) {
 
       const [
+
         day,
+
         month,
+
         year,
+
       ] =
         value.split('-')
 
@@ -102,9 +170,13 @@ const normalizeDOB =
     ) {
 
       const [
+
         year,
+
         month,
+
         day,
+
       ] =
         value.split('-')
 
@@ -117,18 +189,75 @@ const normalizeDOB =
 
 
     // ==================================
+    // ISO DATE STRING
+    // ==================================
+
+    if (
+      /^\d{4}-\d{2}-\d{2}T/.test(
+        value
+      )
+    ) {
+
+      const [
+
+        datePart,
+
+      ] =
+        value.split('T')
+
+
+      const [
+
+        year,
+
+        month,
+
+        day,
+
+      ] =
+        datePart.split('-')
+
+
+      if (
+        year &&
+        month &&
+        day
+      ) {
+
+        return (
+          `${day}${month}${year}`
+        )
+
+      }
+
+    }
+
+
+    // ==================================
     // FALLBACK
     // ==================================
 
-    return (
+    const digits =
+      value.replace(
+        /[^0-9]/g,
+        ''
+      )
 
-      value
-        .replace(
-          /[^0-9]/g,
-          ''
-        )
 
-    )
+    // ==================================
+    // DDMMYYYY
+    // ==================================
+
+    if (
+      digits.length === 8
+    ) {
+
+      return digits
+
+    }
+
+
+    return ''
 
   }
 
@@ -142,6 +271,18 @@ const normalizeDOB =
 //
 // Password:
 // DOB → DDMMYYYY
+//
+// Example:
+//
+// Admission Number:
+// PIE0001
+//
+// DOB:
+// 16/01/2001
+//
+// Password:
+// 16012001
+//
 // ======================================
 
 router.post(
@@ -151,6 +292,10 @@ router.post(
   async (req, res) => {
 
     try {
+
+      // ==================================
+      // REQUEST DATA
+      // ==================================
 
       const {
 
@@ -202,15 +347,20 @@ router.post(
 
       // ==================================
       // FIND STUDENT
-      // ==================================
+      // ======================================
 
       const student =
         await Student.findOne({
 
-          admissionNumber,
+          admissionNumber:
+            admissionNumber,
 
         })
 
+
+      // ==================================
+      // STUDENT NOT FOUND
+      // ==================================
 
       if (!student) {
 
@@ -227,7 +377,7 @@ router.post(
 
 
       // ==================================
-      // GET STUDENT DOB
+      // GET DOB PASSWORD
       // ==================================
 
       const studentDOB =
@@ -237,7 +387,72 @@ router.post(
 
 
       // ==================================
-      // COMPARE PASSWORD
+      // DEBUG
+      // ==================================
+
+      console.log(
+        '======================================'
+      )
+
+      console.log(
+        'STUDENT LOGIN DEBUG'
+      )
+
+      console.log(
+        'Student ID:',
+        admissionNumber
+      )
+
+      console.log(
+        'Student Found:',
+        !!student
+      )
+
+      console.log(
+        'Admission Number:',
+        student.admissionNumber
+      )
+
+      console.log(
+        'DOB:',
+        student.dob
+      )
+
+      console.log(
+        'DOB Password:',
+        studentDOB
+      )
+
+      console.log(
+        'Entered Password:',
+        enteredPassword
+      )
+
+      console.log(
+        '======================================'
+      )
+
+
+      // ==================================
+      // DOB NOT AVAILABLE
+      // ==================================
+
+      if (!studentDOB) {
+
+        return res.status(400).json({
+
+          success: false,
+
+          message:
+            'Student DOB is not available. Please contact Admin.',
+
+        })
+
+      }
+
+
+      // ==================================
+      // PASSWORD CHECK
       // ==================================
 
       if (
@@ -255,6 +470,15 @@ router.post(
         })
 
       }
+
+
+      // ==================================
+      // JWT SECRET
+      // ==================================
+
+      const secret =
+        process.env.JWT_SECRET ||
+        'Prerna Institute Of Excellence_secret_key'
 
 
       // ==================================
@@ -277,7 +501,7 @@ router.post(
 
           },
 
-          'Prerna Institute Of Excellence_secret_key',
+          secret,
 
           {
 
@@ -290,7 +514,7 @@ router.post(
 
 
       // ==================================
-      // RESPONSE
+      // SUCCESS
       // ==================================
 
       return res.status(200).json({
@@ -322,6 +546,9 @@ router.post(
 
         message:
           'Server Error',
+
+        error:
+          error.message,
 
       })
 

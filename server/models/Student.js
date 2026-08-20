@@ -1,4 +1,5 @@
-const mongoose = require('mongoose')
+const mongoose =
+  require('mongoose')
 
 
 // ======================================
@@ -6,146 +7,329 @@ const mongoose = require('mongoose')
 // ======================================
 
 const paymentSchema =
-  new mongoose.Schema({
+  new mongoose.Schema(
 
-    amount: {
+    {
 
-      type: Number,
+      // ==================================
+      // PAYMENT AMOUNT
+      // ==================================
 
-      required: true,
+      amount: {
+
+        type: Number,
+
+        required: true,
+
+        min: 0,
+
+      },
+
+
+      // ==================================
+      // PAYMENT METHOD
+      // ==================================
+
+      paymentMethod: {
+
+        type: String,
+
+        enum: [
+
+          'Cash',
+
+          'UPI',
+
+          'Razorpay',
+
+          'Card',
+
+          'Bank Transfer',
+
+          'Other',
+
+          'Online',
+
+          'Offline',
+
+        ],
+
+        default: 'Cash',
+
+      },
+
+
+      // ==================================
+      // PAYMENT DATE
+      // ==================================
+
+      paymentDate: {
+
+        type: Date,
+
+        default: Date.now,
+
+      },
+
+
+      // ==================================
+      // PAYMENT TYPE
+      // ==================================
+
+      paymentType: {
+
+        type: String,
+
+        default: 'Installment',
+
+      },
+
+
+      // ==================================
+      // PAYMENT CATEGORY
+      // ==================================
+
+      paymentCategory: {
+
+        type: String,
+
+        default: 'CourseFee',
+
+      },
+
+
+      // ==================================
+      // PAYMENT PLAN
+      // ==================================
+
+      paymentPlan: {
+
+        type: String,
+
+        enum: [
+
+          'full',
+
+          'monthly',
+
+          'installment',
+
+          '',
+
+        ],
+
+        default: '',
+
+      },
+
+
+      // ==================================
+      // PAYMENT MODE
+      // ==================================
+
+      paymentMode: {
+
+        type: String,
+
+        enum: [
+
+          'Online',
+
+          'Offline',
+
+        ],
+
+        default: 'Offline',
+
+      },
+
+
+      // ==================================
+      // PAYMENT STATUS
+      // ==================================
+
+      paymentStatus: {
+
+        type: String,
+
+        default: 'Success',
+
+      },
+
+
+      // ==================================
+      // TRANSACTION ID
+      // ==================================
+
+      transactionId: {
+
+        type: String,
+
+        default: '',
+
+      },
+
+
+      // ==================================
+      // ORDER ID
+      // ==================================
+
+      orderId: {
+
+        type: String,
+
+        default: '',
+
+      },
+
+
+      // ==================================
+      // INSTALLMENT NUMBER
+      // ==================================
+
+      installmentNumber: {
+
+        type: Number,
+
+        default: null,
+
+      },
+
+
+      // ==================================
+      // RECEIPT NUMBER
+      // ==================================
+
+      receiptNumber: {
+
+        type: String,
+
+        default: '',
+
+      },
 
     },
 
+    {
 
-    paymentCategory: {
+      timestamps: true,
 
-      type: String,
+    }
 
-      enum: [
-
-        'Registration',
-
-        'CourseFee',
-
-      ],
-
-      required: true,
-
-    },
+  )
 
 
-    paymentMethod: {
+// ======================================
+// INSTALLMENT SCHEMA
+// ======================================
 
-      type: String,
+const installmentSchema =
+  new mongoose.Schema(
 
-      required: true,
+    {
 
-    },
+      // ==================================
+      // INSTALLMENT NUMBER
+      // ==================================
 
+      installmentNumber: {
 
-    paymentType: {
+        type: Number,
 
-      type: String,
+        required: true,
 
-      enum: [
+        min: 1,
 
-        'Full',
-
-        'Installment',
-
-      ],
-
-      default: 'Installment',
-
-    },
+      },
 
 
-    paymentPlan: {
+      // ==================================
+      // INSTALLMENT AMOUNT
+      // ==================================
 
-      type: String,
+      amount: {
 
-      enum: [
+        type: Number,
 
-        'monthly',
+        required: true,
 
-        'three_month',
+        min: 0,
 
-        'six_month',
-
-        'full',
-
-        '',
-
-      ],
-
-      default: '',
-
-    },
+      },
 
 
-    paymentMode: {
+      // ==================================
+      // DUE DATE
+      // ==================================
 
-      type: String,
+      dueDate: {
 
-      enum: [
+        type: Date,
 
-        'Offline',
+        default: null,
 
-        'Online',
-
-      ],
-
-      default: 'Offline',
-
-    },
+      },
 
 
-    paymentStatus: {
+      // ==================================
+      // PAID AMOUNT
+      // ==================================
 
-      type: String,
+      paidAmount: {
 
-      enum: [
+        type: Number,
 
-        'Success',
+        default: 0,
 
-        'Pending',
+        min: 0,
 
-        'Failed',
-
-      ],
-
-      default: 'Success',
-
-    },
+      },
 
 
-    transactionId: {
+      // ==================================
+      // STATUS
+      // ==================================
 
-      type: String,
+      status: {
 
-      default: '',
+        type: String,
 
-    },
+        enum: [
+
+          'Pending',
+
+          'Due',
+
+          'Paid',
+
+        ],
+
+        default: 'Pending',
+
+      },
 
 
-    orderId: {
+      // ==================================
+      // PAID DATE
+      // ==================================
 
-      type: String,
+      paidDate: {
 
-      default: '',
+        type: Date,
+
+        default: null,
+
+      },
 
     },
 
+    {
 
-    paymentDate: {
+      _id: true,
 
-      type: String,
+    }
 
-      required: true,
-
-    },
-
-  })
+  )
 
 
 // ======================================
@@ -158,7 +342,7 @@ const studentSchema =
     {
 
       // ======================================
-      // BASIC INFORMATION
+      // PERSONAL INFORMATION
       // ======================================
 
       name: {
@@ -174,20 +358,34 @@ const studentSchema =
 
       dob: {
 
-        type: String,
+        type: Date,
 
-        default: '',
+        default: null,
 
       },
 
 
-      // ======================================
-      // AADHAAR
-      // ======================================
-      //
-      // OPTIONAL
-      //
-      // ======================================
+      gender: {
+
+        type: String,
+
+        default: '',
+
+        trim: true,
+
+      },
+
+
+      category: {
+
+        type: String,
+
+        default: '',
+
+        trim: true,
+
+      },
+
 
       aadharNumber: {
 
@@ -200,180 +398,8 @@ const studentSchema =
       },
 
 
-      admissionNumber: {
-
-        type: String,
-
-        required: true,
-
-        unique: true,
-
-        trim: true,
-
-      },
-
-
       // ======================================
-      // COURSE
-      // ======================================
-      //
-      // OPTIONAL
-      //
-      // Student admission ke time course
-      // baad mein bhi add/update kiya ja
-      // sakta hai.
-      //
-      // ======================================
-
-      course: {
-
-        type: String,
-
-        default: '',
-
-        trim: true,
-
-      },
-
-
-      batchTime: {
-
-        type: String,
-
-        default: '',
-
-        trim: true,
-
-      },
-
-
-      // ======================================
-      // STUDENT MOBILE
-      // ======================================
-      //
-      // REQUIRED
-      //
-      // ======================================
-
-      contact: {
-
-        type: String,
-
-        required: true,
-
-        trim: true,
-
-      },
-
-
-      // ======================================
-      // EMAIL
-      // ======================================
-      //
-      // OPTIONAL
-      //
-      // ======================================
-
-      email: {
-
-        type: String,
-
-        default: '',
-
-        lowercase: true,
-
-        trim: true,
-
-      },
-
-
-      // ======================================
-      // ADMISSION DATE
-      // ======================================
-
-      admissionDate: {
-
-        type: String,
-
-        required: true,
-
-      },
-
-
-      // ======================================
-      // ACADEMIC SESSION
-      // ======================================
-      //
-      // Example:
-      // 2026-2027
-      // 2027-2028
-      //
-      // New admission ke time backend
-      // automatically session assign karega.
-      //
-      // ======================================
-
-      session: {
-
-        type: String,
-
-        default: '',
-
-        trim: true,
-
-        index: true,
-
-      },
-
-
-      // ======================================
-      // STUDENT STATUS
-      // ======================================
-      //
-      // Active:
-      // Student currently institute me active hai.
-      //
-      // Inactive:
-      // Student temporarily inactive hai.
-      //
-      // Example:
-      // Student 1-2 month ke liye bahar gaya
-      // ho to admin Inactive kar sakta hai.
-      //
-      // ======================================
-
-      studentStatus: {
-
-        type: String,
-
-        enum: [
-
-          'Active',
-
-          'Inactive',
-
-        ],
-
-        default: 'Active',
-
-        trim: true,
-
-        index: true,
-
-      },
-
-
-      image: {
-
-        type: String,
-
-        default: '',
-
-      },
-
-
-      // ======================================
-      // PARENTS INFORMATION
+      // PARENT INFORMATION
       // ======================================
 
       fatherName: {
@@ -398,14 +424,6 @@ const studentSchema =
       },
 
 
-      // ======================================
-      // FATHER OCCUPATION
-      // ======================================
-      //
-      // OPTIONAL
-      //
-      // ======================================
-
       fatherOccupation: {
 
         type: String,
@@ -416,14 +434,6 @@ const studentSchema =
 
       },
 
-
-      // ======================================
-      // MOTHER OCCUPATION
-      // ======================================
-      //
-      // OPTIONAL
-      //
-      // ======================================
 
       motherOccupation: {
 
@@ -436,14 +446,6 @@ const studentSchema =
       },
 
 
-      // ======================================
-      // FATHER MOBILE
-      // ======================================
-      //
-      // OPTIONAL
-      //
-      // ======================================
-
       fatherMobile: {
 
         type: String,
@@ -454,14 +456,6 @@ const studentSchema =
 
       },
 
-
-      // ======================================
-      // MOTHER MOBILE
-      // ======================================
-      //
-      // OPTIONAL
-      //
-      // ======================================
 
       motherMobile: {
 
@@ -475,7 +469,46 @@ const studentSchema =
 
 
       // ======================================
-      // ADDRESS
+      // CONTACT INFORMATION
+      // ======================================
+
+      contact: {
+
+        type: String,
+
+        required: true,
+
+        trim: true,
+
+      },
+
+
+      alternateContact: {
+
+        type: String,
+
+        default: '',
+
+        trim: true,
+
+      },
+
+
+      email: {
+
+        type: String,
+
+        default: '',
+
+        lowercase: true,
+
+        trim: true,
+
+      },
+
+
+      // ======================================
+      // ADDRESS INFORMATION
       // ======================================
 
       permanentAddress: {
@@ -500,8 +533,52 @@ const studentSchema =
       },
 
 
+      address: {
+
+        type: String,
+
+        default: '',
+
+        trim: true,
+
+      },
+
+
+      city: {
+
+        type: String,
+
+        default: '',
+
+        trim: true,
+
+      },
+
+
+      state: {
+
+        type: String,
+
+        default: '',
+
+        trim: true,
+
+      },
+
+
+      pinCode: {
+
+        type: String,
+
+        default: '',
+
+        trim: true,
+
+      },
+
+
       // ======================================
-      // EDUCATION
+      // EDUCATION INFORMATION
       // ======================================
 
       schoolCollegeName: {
@@ -516,34 +593,103 @@ const studentSchema =
 
 
       // ======================================
-      // ADMISSION
+      // ADMISSION INFORMATION
       // ======================================
+
+      admissionNumber: {
+
+        type: String,
+
+        unique: true,
+
+        sparse: true,
+
+        trim: true,
+
+      },
+
+
+      admissionDate: {
+
+        type: Date,
+
+        default: Date.now,
+
+      },
+
 
       admissionType: {
 
         type: String,
 
-        enum: [
+        default: '',
 
-          'Offline',
+        trim: true,
 
-          'Online',
+      },
 
-        ],
 
-        default: 'Offline',
+      course: {
+
+        type: String,
+
+        required: true,
+
+        trim: true,
+
+      },
+
+
+      batchTime: {
+
+        type: String,
+
+        default: '',
+
+        trim: true,
+
+      },
+
+
+      session: {
+
+        type: String,
+
+        default: '',
+
+        trim: true,
+
+      },
+
+
+      // ======================================
+      // STUDENT IMAGE
+      // ======================================
+
+      image: {
+
+        type: String,
+
+        default: '',
+
+      },
+
+
+      // ======================================
+      // LOGIN PASSWORD
+      // ======================================
+
+      password: {
+
+        type: String,
+
+        default: '',
 
       },
 
 
       // ======================================
       // REGISTRATION FEE
-      // ======================================
-      //
-      // OPTIONAL
-      //
-      // Default 0
-      //
       // ======================================
 
       registrationFee: {
@@ -552,8 +698,14 @@ const studentSchema =
 
         default: 0,
 
+        min: 0,
+
       },
 
+
+      // ======================================
+      // REGISTRATION FEE PAID
+      // ======================================
 
       registrationFeePaid: {
 
@@ -561,8 +713,14 @@ const studentSchema =
 
         default: 0,
 
+        min: 0,
+
       },
 
+
+      // ======================================
+      // REGISTRATION FEE STATUS
+      // ======================================
 
       registrationFeeStatus: {
 
@@ -570,9 +728,9 @@ const studentSchema =
 
         enum: [
 
-          'Pending',
-
           'Paid',
+
+          'Pending',
 
         ],
 
@@ -582,13 +740,7 @@ const studentSchema =
 
 
       // ======================================
-      // COURSE FEE
-      // ======================================
-      //
-      // OPTIONAL
-      //
-      // Default 0
-      //
+      // TOTAL COURSE FEE
       // ======================================
 
       totalFees: {
@@ -597,17 +749,13 @@ const studentSchema =
 
         default: 0,
 
+        min: 0,
+
       },
 
 
       // ======================================
-      // PAID FEE
-      // ======================================
-      //
-      // OPTIONAL
-      //
-      // Default 0
-      //
+      // PAID COURSE FEE
       // ======================================
 
       paidFees: {
@@ -616,8 +764,14 @@ const studentSchema =
 
         default: 0,
 
+        min: 0,
+
       },
 
+
+      // ======================================
+      // REMAINING COURSE FEE
+      // ======================================
 
       remainingFees: {
 
@@ -625,8 +779,14 @@ const studentSchema =
 
         default: 0,
 
+        min: 0,
+
       },
 
+
+      // ======================================
+      // COURSE FEE STATUS
+      // ======================================
 
       feesStatus: {
 
@@ -634,55 +794,15 @@ const studentSchema =
 
         enum: [
 
-          'Pending',
+          'Paid',
 
           'Partial',
 
-          'Paid',
+          'Due',
 
         ],
 
-        default: 'Pending',
-
-      },
-
-
-      // ======================================
-      // STUDENT-SPECIFIC PAYMENT OPTIONS
-      // ======================================
-
-      monthlyInstallment: {
-
-        type: Number,
-
-        default: 0,
-
-      },
-
-
-      threeMonthInstallment: {
-
-        type: Number,
-
-        default: 0,
-
-      },
-
-
-      sixMonthInstallment: {
-
-        type: Number,
-
-        default: 0,
-
-      },
-
-
-      fullPaymentFee: {
-
-        type: Number,
-
-        default: 0,
+        default: 'Partial',
 
       },
 
@@ -697,13 +817,11 @@ const studentSchema =
 
         enum: [
 
+          'full',
+
           'monthly',
 
-          'three_month',
-
-          'six_month',
-
-          'full',
+          'installment',
 
           '',
 
@@ -715,20 +833,22 @@ const studentSchema =
 
 
       // ======================================
-      // DUE DATE
+      // MONTHLY AMOUNT
       // ======================================
 
-      dueDate: {
+      monthlyAmount: {
 
-        type: String,
+        type: Number,
 
-        default: '',
+        default: 0,
+
+        min: 0,
 
       },
 
 
       // ======================================
-      // LAST PAYMENT MODE
+      // PAYMENT MODE
       // ======================================
 
       paymentMode: {
@@ -737,9 +857,9 @@ const studentSchema =
 
         enum: [
 
-          'Offline',
-
           'Online',
+
+          'Offline',
 
         ],
 
@@ -749,17 +869,174 @@ const studentSchema =
 
 
       // ======================================
+      // INSTALLMENT COUNT
+      // ======================================
+
+      installmentCount: {
+
+        type: Number,
+
+        default: 0,
+
+        min: 0,
+
+      },
+
+
+      // ======================================
+      // INSTALLMENT SCHEDULE
+      // ======================================
+
+      installmentSchedule: {
+
+        type: [
+
+          installmentSchema,
+
+        ],
+
+        default: [],
+
+      },
+
+
+      // ======================================
+      // CURRENT / LATEST DUE DATE
+      // ======================================
+
+      dueDate: {
+
+        type: Date,
+
+        default: null,
+
+      },
+
+
+      // ======================================
       // PAYMENT HISTORY
       // ======================================
 
-      paymentHistory: [
+      paymentHistory: {
 
-        paymentSchema
+        type: [
 
-      ],
+          paymentSchema,
+
+        ],
+
+        default: [],
+
+      },
+
+
+      // ======================================
+      // SCHOLARSHIP
+      // ======================================
+
+      scholarship: {
+
+        type: Number,
+
+        default: 0,
+
+        min: 0,
+
+      },
+
+
+      // ======================================
+      // DISCOUNT
+      // ======================================
+
+      discount: {
+
+        type: Number,
+
+        default: 0,
+
+        min: 0,
+
+      },
+
+
+      // ======================================
+      // COUPON CODE
+      // ======================================
+
+      couponCode: {
+
+        type: String,
+
+        default: '',
+
+        trim: true,
+
+      },
+
+
+      // ======================================
+      // APPLICATION REFERENCE
+      // ======================================
+
+      applicationId: {
+
+        type:
+          mongoose.Schema.Types.ObjectId,
+
+        ref: 'Application',
+
+        default: null,
+
+      },
+
+
+      // ======================================
+      // STUDENT STATUS
+      // ======================================
+
+      studentStatus: {
+
+        type: String,
+
+        enum: [
+
+          'Active',
+
+          'Inactive',
+
+          'Completed',
+
+        ],
+
+        default: 'Active',
+
+      },
+
+
+      // ======================================
+      // OLD STATUS SUPPORT
+      // ======================================
+
+      status: {
+
+        type: String,
+
+        enum: [
+
+          'Active',
+
+          'Inactive',
+
+          'Completed',
+
+        ],
+
+        default: 'Active',
+
+      },
 
     },
-
 
     {
 
@@ -771,84 +1048,124 @@ const studentSchema =
 
 
 // ======================================
-// SESSION INDEX
+// PRE VALIDATE
 // ======================================
 //
-// Session-wise student filtering fast
-// karne ke liye.
+// IMPORTANT:
 //
-// ======================================
-
-studentSchema.index({
-
-  session: 1,
-
-  admissionDate: -1,
-
-})
-
-
-// ======================================
-// SESSION + FEE STATUS INDEX
-// ======================================
+// No next() here.
 //
-// Current session ke Paid / Partial /
-// Pending students fast filter karne
-// ke liye.
+// This prevents:
+// TypeError: next is not a function
 //
 // ======================================
 
-studentSchema.index({
+studentSchema.pre(
 
-  session: 1,
+  'validate',
 
-  feesStatus: 1,
+  function () {
 
-})
+    // ==================================
+    // TOTAL COURSE FEE
+    // ==================================
 
-
-// ======================================
-// SESSION + COURSE INDEX
-// ======================================
-
-studentSchema.index({
-
-  session: 1,
-
-  course: 1,
-
-})
+    const total =
+      Number(
+        this.totalFees || 0
+      )
 
 
-// ======================================
-// SESSION + BATCH INDEX
-// ======================================
+    // ==================================
+    // PAID COURSE FEE
+    // ==================================
 
-studentSchema.index({
-
-  session: 1,
-
-  batchTime: 1,
-
-})
+    const paid =
+      Number(
+        this.paidFees || 0
+      )
 
 
-// ======================================
-// SESSION + STUDENT STATUS INDEX
-// ======================================
-//
-// Active / Inactive students ko
-// session-wise fast filter karne ke liye.
-//
-// ======================================
+    // ==================================
+    // REMAINING COURSE FEE
+    // ==================================
 
-studentSchema.index({
+    this.remainingFees =
+      Math.max(
 
-  session: 1,
+        total -
+        paid,
 
-  studentStatus: 1,
+        0
 
-})
+      )
+
+
+    // ==================================
+    // REGISTRATION FEE STATUS
+    // ==================================
+
+    const registration =
+      Number(
+        this.registrationFee || 0
+      )
+
+    const registrationPaid =
+      Number(
+        this.registrationFeePaid || 0
+      )
+
+
+    if (
+      registration > 0 &&
+      registrationPaid >= registration
+    ) {
+
+      this.registrationFeeStatus =
+        'Paid'
+
+    }
+
+    else {
+
+      this.registrationFeeStatus =
+        'Pending'
+
+    }
+
+
+    // ==================================
+    // INSTALLMENT COUNT
+    // ==================================
+
+    if (
+      Array.isArray(
+        this.installmentSchedule
+      )
+    ) {
+
+      this.installmentCount =
+        this.installmentSchedule.length
+
+    }
+
+
+    // ==================================
+    // FULL COURSE FEE PAID
+    // ==================================
+
+    if (
+      this.remainingFees <= 0
+    ) {
+
+      this.feesStatus =
+        'Paid'
+
+    }
+
+  }
+
+)
 
 
 // ======================================

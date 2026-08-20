@@ -39,6 +39,669 @@ const upload =
 
 
 // ======================================
+// FEE HELPERS
+// ======================================
+
+const ALLOWED_PLANS = [
+  'full',
+  'monthly',
+  'installment',
+]
+
+
+const toDate = (value) => {
+
+  if (!value) {
+    return null
+  }
+
+  if (value instanceof Date) {
+
+    const date =
+      new Date(value)
+
+    date.setHours(
+      0,
+      0,
+      0,
+      0
+    )
+
+    return Number.isNaN(
+      date.getTime()
+    )
+      ? null
+      : date
+
+  }
+
+  const text =
+    String(value).trim()
+
+  let date
+
+  if (
+    /^\d{4}-\d{2}-\d{2}$/.test(text)
+  ) {
+
+    const [
+      year,
+      month,
+      day,
+    ] =
+      text
+        .split('-')
+        .map(Number)
+
+    date =
+      new Date(
+        year,
+        month - 1,
+        day
+      )
+
+  }
+
+  else if (
+    /^\d{2}-\d{2}-\d{4}$/.test(text)
+  ) {
+
+    const [
+      day,
+      month,
+      year,
+    ] =
+      text
+        .split('-')
+        .map(Number)
+
+    date =
+      new Date(
+        year,
+        month - 1,
+        day
+      )
+
+  }
+
+  else {
+
+    date =
+      new Date(text)
+
+  }
+
+  if (
+    Number.isNaN(
+      date.getTime()
+    )
+  ) {
+
+    return null
+  }
+
+  date.setHours(
+    0,
+    0,
+    0,
+    0
+  )
+
+  return date
+
+}
+
+
+// ======================================
+// REFRESH INSTALLMENT STATUS
+// ======================================
+
+const refreshInstallmentStatuses =
+  (student) => {
+
+    const schedule =
+      Array.isArray(
+        student.installmentSchedule
+      )
+        ? student.installmentSchedule
+        : []
+
+    const today =
+      toDate(
+        new Date()
+      )
+
+    schedule.forEach(
+      (item) => {
+
+        const amount =
+          Number(
+            item.amount || 0
+          )
+
+        const paidAmount =
+          Number(
+            item.paidAmount || 0
+          )
+
+        if (
+          amount > 0 &&
+          paidAmount >= amount
+        ) {
+
+          item.paidAmount =
+            amount
+
+          item.status =
+            'Paid'
+
+          return
+        }
+
+        const dueDate =
+          toDate(
+            item.dueDate
+          )
+
+        if (
+          dueDate &&
+          dueDate <= today
+        ) {
+
+          item.status =
+            'Due'
+
+        }
+
+        else {
+
+          item.status =
+            'Pending'
+
+        }
+
+      }
+    )
+
+  }
+
+
+// ======================================
+// REFRESH MASTER FEE STATE
+// ======================================
+
+const refreshMasterFeeState =
+  (student) => {
+
+    refreshInstallmentStatuses(
+      student
+    )
+
+    const schedule =
+      Array.isArray(
+        student.installmentSchedule
+      )
+        ? student.installmentSchedule
+        : []
+
+    const due =
+      schedule.filter(
+        item =>
+          item.status ===
+          'Due'
+      )
+
+    const pending =
+      schedule.filter(
+        item =>
+          item.status ===
+          'Pending'
+      )
+
+    const remaining =
+      Number(
+        student.remainingFees || 0
+      )
+
+    if (
+      remaining <= 0
+    ) {
+
+      student.feesStatus =
+        'Paid'
+
+      student.dueDate =
+        null
+
+      return
+
+    }
+
+    // Multiple installments can be Due.
+    // The master dueDate shows the latest
+    // currently Due installment.
+
+    if (
+      due.length > 0
+    ) {
+
+      due.sort(
+        (a, b) =>
+          new Date(a.dueDate) -
+          new Date(b.dueDate)
+      )
+
+      student.dueDate =
+        due[due.length - 1].dueDate
+
+      student.feesStatus =
+        'Due'
+
+      return
+
+    }
+
+    // Nothing is Due yet.
+    // Show the next upcoming installment.
+
+    if (
+      pending.length > 0
+    ) {
+
+      pending.sort(
+        (a, b) =>
+          new Date(a.dueDate) -
+          new Date(b.dueDate)
+      )
+
+      student.dueDate =
+        pending[0].dueDate
+
+      student.feesStatus =
+        'Partial'
+
+      return
+
+    }
+
+    student.dueDate =
+      null
+
+    student.feesStatus =
+      'Partial'
+
+  }
+
+
+// ======================================
+// ALLOCATE PAYMENT
+// ======================================
+//
+// Payment is applied to the oldest
+// unpaid installment first.
+//
+// This allows:
+//
+// ₹5,000 payment
+// → first Due installment cleared.
+//
+// If two months are Due and student
+// pays one month, only the oldest Due
+// installment becomes Paid.
+// ======================================
+
+const allocatePayment =
+  (
+    student,
+    amount,
+    paymentDate
+  ) => {
+
+    let remaining =
+      Number(amount || 0)
+
+    const paidInstallments =
+      []
+
+    const schedule =
+      Array.isArray(
+        student.installmentSchedule
+      )
+        ? student.installmentSchedule
+        : []
+
+    refreshInstallmentStatuses(
+      student
+    )
+
+    const unpaid =
+      schedule
+        .filter(
+          item =>
+            item.status !==
+            'Paid'
+        )
+        .sort(
+          (a, b) =>
+            new Date(a.dueDate) -
+            new Date(b.dueDate)
+        )
+
+    for (
+      const item of unpaid
+    ) {
+
+      if (
+        remaining <= 0
+      ) {
+        break
+      }
+
+      const installmentAmount =
+        Number(
+          item.amount || 0
+        )
+
+      const alreadyPaid =
+        Number(
+          item.paidAmount || 0
+        )
+
+      const balance =
+        Math.max(
+          0,
+          installmentAmount -
+          alreadyPaid
+        )
+
+      if (
+        balance <= 0
+      ) {
+        continue
+      }
+
+      const allocation =
+        Math.min(
+          remaining,
+          balance
+        )
+
+      item.paidAmount =
+        alreadyPaid +
+        allocation
+
+      remaining -=
+        allocation
+
+      if (
+        item.paidAmount >=
+        item.amount
+      ) {
+
+        item.paidAmount =
+          item.amount
+
+        item.status =
+          'Paid'
+
+        item.paidDate =
+          toDate(
+            paymentDate
+          )
+
+        paidInstallments.push(
+          item.installmentNumber
+        )
+
+      }
+
+    }
+
+    return {
+
+      allocatedAmount:
+        Number(amount || 0) -
+        remaining,
+
+      unallocatedAmount:
+        remaining,
+
+      paidInstallments,
+
+    }
+
+  }
+
+
+// ======================================
+// APPLY PAYMENT TO STUDENT
+// ======================================
+
+const applyCoursePayment =
+  async ({
+    student,
+    amount,
+    paymentMethod,
+    paymentMode,
+    transactionId,
+    orderId,
+    signature,
+    paymentDate,
+  }) => {
+
+    const paymentAmount =
+      Number(amount)
+
+    const remainingFee =
+      Number(
+        student.remainingFees || 0
+      )
+
+    if (
+      !paymentAmount ||
+      paymentAmount <= 0
+    ) {
+
+      throw new Error(
+        'Enter a valid payment amount.'
+      )
+
+    }
+
+    if (
+      paymentAmount >
+      remainingFee
+    ) {
+
+      throw new Error(
+        `Payment cannot be greater than remaining fee of ₹${remainingFee}.`
+      )
+
+    }
+
+    const finalPaymentDate =
+      toDate(
+        paymentDate ||
+        new Date()
+      )
+
+    const allocation =
+      allocatePayment(
+        student,
+        paymentAmount,
+        finalPaymentDate
+      )
+
+    if (
+      allocation.allocatedAmount <= 0
+    ) {
+
+      throw new Error(
+        'No unpaid installment is available.'
+      )
+
+    }
+
+    student.paidFees =
+      Math.min(
+
+        Number(
+          student.totalFees || 0
+        ),
+
+        Number(
+          student.paidFees || 0
+        ) +
+
+        allocation.allocatedAmount
+
+      )
+
+    student.remainingFees =
+      Math.max(
+
+        0,
+
+        Number(
+          student.totalFees || 0
+        ) -
+
+        Number(
+          student.paidFees || 0
+        )
+
+      )
+
+    student.paymentMode =
+      paymentMode ||
+      'Offline'
+
+    refreshMasterFeeState(
+      student
+    )
+
+    const paymentType =
+      student.paymentPlan ===
+      'full'
+        ? 'Full'
+        : 'Installment'
+
+    student.paymentHistory.push({
+
+      amount:
+        allocation.allocatedAmount,
+
+      paymentCategory:
+        'CourseFee',
+
+      paymentMethod:
+        paymentMethod ||
+        'Cash',
+
+      paymentType,
+
+      paymentPlan:
+        student.paymentPlan || '',
+
+      paymentMode:
+        paymentMode ||
+        'Offline',
+
+      paymentStatus:
+        'Success',
+
+      transactionId:
+        transactionId || '',
+
+      orderId:
+        orderId || '',
+
+      paymentDate:
+        finalPaymentDate,
+
+      installmentNumber:
+        allocation.paidInstallments.length === 1
+          ? allocation.paidInstallments[0]
+          : null,
+
+    })
+
+    await student.save()
+
+    const payment =
+      await Payment.create({
+
+        studentName:
+          student.name,
+
+        admissionNumber:
+          student.admissionNumber,
+
+        email:
+          student.email,
+
+        phone:
+          student.contact,
+
+        course:
+          student.course,
+
+        totalFee:
+          student.totalFees,
+
+        registrationFee:
+          student.registrationFee,
+
+        paymentCategory:
+          'CourseFee',
+
+        paymentPlan:
+          student.paymentPlan || '',
+
+        paymentType,
+
+        amountPaid:
+          allocation.allocatedAmount,
+
+        paymentMethod:
+          paymentMethod ||
+          'Cash',
+
+        paymentMode:
+          paymentMode ||
+          'Offline',
+
+        paymentStatus:
+          'Success',
+
+        transactionId:
+          transactionId || '',
+
+        razorpayOrderId:
+          orderId || '',
+
+        razorpayPaymentId:
+          transactionId || '',
+
+        razorpaySignature:
+          signature || '',
+
+      })
+
+    return {
+
+      student,
+
+      payment,
+
+      allocation,
+
+    }
+
+  }
+
+
+// ======================================
 // GET ALL PAYMENTS
 // ======================================
 
@@ -53,7 +716,6 @@ router.get(
           .sort({
             createdAt: -1,
           })
-
 
       res.status(200).json(
         payments
@@ -84,14 +746,7 @@ router.get(
 
 
 // ======================================
-// ADD PAYMENT
-// ======================================
-//
-// General offline/manual payment.
-//
-// Default:
-// paymentMode = Offline
-//
+// ADD OFFLINE PAYMENT
 // ======================================
 
 router.post(
@@ -100,25 +755,18 @@ router.post(
 
     try {
 
-      const paymentData = {
-
-        ...req.body,
-
-        paymentMode:
-          req.body.paymentMode ||
-          'Offline',
-
-      }
-
-
       const payment =
-        new Payment(
-          paymentData
-        )
+        new Payment({
 
+          ...req.body,
+
+          paymentMode:
+            req.body.paymentMode ||
+            'Offline',
+
+        })
 
       await payment.save()
-
 
       res.status(201).json({
 
@@ -158,13 +806,6 @@ router.post(
 // ======================================
 // CREATE RAZORPAY ORDER
 // ======================================
-//
-// NEW ONLINE ADMISSION
-//
-// POST
-// /api/payments/create-order
-//
-// ======================================
 
 router.post(
   '/payments/create-order',
@@ -176,14 +817,8 @@ router.post(
         amount,
       } = req.body
 
-
       const paymentAmount =
         Number(amount)
-
-
-      // ==================================
-      // VALIDATION
-      // ==================================
 
       if (
         !paymentAmount ||
@@ -201,36 +836,21 @@ router.post(
 
       }
 
-
-      // ==================================
-      // RAZORPAY ORDER
-      // ==================================
-
-      const options = {
-
-        amount:
-          Math.round(
-            paymentAmount * 100
-          ),
-
-        currency:
-          'INR',
-
-        receipt:
-          `receipt_${Date.now()}`,
-
-      }
-
-
       const order =
-        await razorpay.orders.create(
-          options
-        )
+        await razorpay.orders.create({
 
+          amount:
+            Math.round(
+              paymentAmount * 100
+            ),
 
-      // ==================================
-      // RESPONSE
-      // ==================================
+          currency:
+            'INR',
+
+          receipt:
+            `receipt_${Date.now()}`,
+
+        })
 
       res.status(200).json({
 
@@ -268,11 +888,9 @@ router.post(
 // VERIFY ONLINE REGISTRATION PAYMENT
 // ======================================
 //
-// NEW ONLINE ADMISSION
-//
-// POST
-// /api/payments/verify
-//
+// Registration payment creates admission.
+// Course fee remains unpaid until admin
+// creates/selects the plan.
 // ======================================
 
 router.post(
@@ -285,26 +903,15 @@ router.post(
       const {
 
         razorpay_order_id,
-
         razorpay_payment_id,
-
         razorpay_signature,
 
       } = req.body
 
-
-      // ==================================
-      // RAZORPAY DATA VALIDATION
-      // ==================================
-
       if (
-
         !razorpay_order_id ||
-
         !razorpay_payment_id ||
-
         !razorpay_signature
-
       ) {
 
         return res.status(400).json({
@@ -318,38 +925,19 @@ router.post(
 
       }
 
-
-      // ==================================
-      // SIGNATURE VERIFICATION
-      // ==================================
-
       const signatureBody =
-
-        razorpay_order_id +
-
-        '|' +
-
-        razorpay_payment_id
-
+        `${razorpay_order_id}|${razorpay_payment_id}`
 
       const expectedSignature =
-
         crypto
-
           .createHmac(
-
             'sha256',
-
             process.env.RAZORPAY_KEY_SECRET
-
           )
-
           .update(
             signatureBody
           )
-
           .digest('hex')
-
 
       if (
         expectedSignature !==
@@ -366,11 +954,6 @@ router.post(
         })
 
       }
-
-
-      // ==================================
-      // DUPLICATE PAYMENT CHECK
-      // ==================================
 
       const existingPayment =
         await Payment.findOne({
@@ -391,7 +974,6 @@ router.post(
 
         })
 
-
       if (
         existingPayment
       ) {
@@ -407,11 +989,6 @@ router.post(
 
       }
 
-
-      // ==================================
-      // INPUT DATA
-      // ==================================
-
       const studentEmail =
         String(
           req.body.email || ''
@@ -419,13 +996,11 @@ router.post(
           .trim()
           .toLowerCase()
 
-
       const studentPhone =
         String(
           req.body.phone || ''
         )
           .trim()
-
 
       const studentName =
         String(
@@ -433,14 +1008,7 @@ router.post(
         )
           .trim()
 
-
-      // ==================================
-      // BASIC STUDENT VALIDATION
-      // ==================================
-
-      if (
-        !studentName
-      ) {
+      if (!studentName) {
 
         return res.status(400).json({
 
@@ -453,10 +1021,7 @@ router.post(
 
       }
 
-
-      if (
-        !studentPhone
-      ) {
+      if (!studentPhone) {
 
         return res.status(400).json({
 
@@ -469,10 +1034,7 @@ router.post(
 
       }
 
-
-      if (
-        !req.body.course
-      ) {
+      if (!req.body.course) {
 
         return res.status(400).json({
 
@@ -485,17 +1047,6 @@ router.post(
 
       }
 
-
-      // ==================================
-      // CHECK EXISTING STUDENT
-      // ==================================
-      //
-      // Email optional hai.
-      // Isliye email blank ho to
-      // email condition query mein nahi jayegi.
-      //
-      // ==================================
-
       const existingConditions = [
 
         {
@@ -505,10 +1056,7 @@ router.post(
 
       ]
 
-
-      if (
-        studentEmail
-      ) {
+      if (studentEmail) {
 
         existingConditions.push({
 
@@ -519,7 +1067,6 @@ router.post(
 
       }
 
-
       const alreadyExistingStudent =
         await Student.findOne({
 
@@ -527,7 +1074,6 @@ router.post(
             existingConditions,
 
         })
-
 
       if (
         alreadyExistingStudent
@@ -544,11 +1090,6 @@ router.post(
 
       }
 
-
-      // ==================================
-      // FIND COURSE
-      // ==================================
-
       const course =
         await Course.findOne({
 
@@ -556,7 +1097,6 @@ router.post(
             req.body.course,
 
         })
-
 
       if (!course) {
 
@@ -571,33 +1111,21 @@ router.post(
 
       }
 
-
-      // ==================================
-      // COURSE FEES
-      // ==================================
-
       const totalFee =
         Number(
           course.totalFee || 0
         )
-
 
       const registrationFee =
         Number(
           course.registrationFee || 0
         )
 
-
-      // ==================================
-      // REGISTRATION PAYMENT
-      // ==================================
-
       const amountPaid =
         Number(
           req.body.amountPaid ||
           registrationFee
         )
-
 
       if (
         registrationFee <= 0
@@ -613,11 +1141,6 @@ router.post(
         })
 
       }
-
-
-      // ==================================
-      // PAYMENT AMOUNT MUST MATCH
-      // ==================================
 
       if (
         amountPaid !==
@@ -635,17 +1158,6 @@ router.post(
 
       }
 
-
-      // ==================================
-      // ADMISSION NUMBER
-      // ======================================
-      //
-      // PIE001
-      // PIE002
-      // PIE003
-      //
-      // ======================================
-
       const existingStudents =
         await Student.find({
 
@@ -657,35 +1169,33 @@ router.post(
           },
 
         })
-
           .select(
             'admissionNumber'
           )
-
           .lean()
-
 
       let highestAdmissionNumber =
         0
 
-
       for (
-        const student of existingStudents
+        const existingStudent
+        of existingStudents
       ) {
 
         const number =
           parseInt(
 
             String(
-              student.admissionNumber
+              existingStudent.admissionNumber
             )
               .replace(
                 /^PIE/i,
                 ''
-              )
+              ),
+
+            10
 
           ) || 0
-
 
         if (
           number >
@@ -699,62 +1209,30 @@ router.post(
 
       }
 
-
-      const nextAdmissionNumber =
-        highestAdmissionNumber + 1
-
-
       const admissionNumber =
         `PIE${String(
-          nextAdmissionNumber
+          highestAdmissionNumber + 1
         ).padStart(
           4,
           '0'
         )}`
-      
-
-      // ==================================
-      // DATE
-      // ==================================
 
       const today =
         new Date()
-
 
       const admissionDate =
         today
           .toISOString()
           .split('T')[0]
 
-
-      // ==================================
-      // ACADEMIC SESSION
-      // ==================================
-      //
-      // March to March
-      //
-      // March 2026 - February 2027
-      // => 2026-2027
-      //
-      // January / February 2027
-      // => 2026-2027
-      //
-      // March 2027
-      // => 2027-2028
-      //
-      // ==================================
-
       const currentYear =
         today.getFullYear()
-
 
       const currentMonth =
         today.getMonth() + 1
 
-
       let sessionStartYear =
         currentYear
-
 
       if (
         currentMonth < 3
@@ -765,31 +1243,16 @@ router.post(
 
       }
 
-
       const session =
         `${sessionStartYear}-${sessionStartYear + 1}`
-
-
-      // ==================================
-      // IMAGE
-      // ==================================
 
       const image =
         req.file
           ? req.file.path
           : ''
 
-
-      // ==================================
-      // CREATE STUDENT
-      // ==================================
-
       const student =
         new Student({
-
-          // ==================================
-          // BASIC
-          // ==================================
 
           name:
             studentName,
@@ -818,19 +1281,10 @@ router.post(
 
           session,
 
-          // ==================================
-          // STUDENT STATUS
-          // ==================================
-
           studentStatus:
             'Active',
 
           image,
-
-
-          // ==================================
-          // PARENTS
-          // ==================================
 
           fatherName:
             req.body.fatherName || '',
@@ -850,37 +1304,17 @@ router.post(
           motherMobile:
             req.body.motherMobile || '',
 
-
-          // ==================================
-          // ADDRESS
-          // ==================================
-
           permanentAddress:
             req.body.permanentAddress || '',
 
           currentAddress:
             req.body.currentAddress || '',
 
-
-          // ==================================
-          // EDUCATION
-          // ==================================
-
           schoolCollegeName:
             req.body.schoolCollegeName || '',
 
-
-          // ==================================
-          // ADMISSION
-          // ==================================
-
           admissionType:
             'Online',
-
-
-          // ==================================
-          // REGISTRATION FEE
-          // ==================================
 
           registrationFee,
 
@@ -889,11 +1323,6 @@ router.post(
 
           registrationFeeStatus:
             'Paid',
-
-
-          // ==================================
-          // COURSE FEE
-          // ==================================
 
           totalFees:
             totalFee,
@@ -906,63 +1335,17 @@ router.post(
 
           feesStatus:
             totalFee > 0
-              ? 'Pending'
+              ? 'Partial'
               : 'Paid',
-
-
-          // ==================================
-          // PAYMENT PLANS
-          // ==================================
-
-          monthlyInstallment:
-            Number(
-              course.monthlyInstallment || 0
-            ),
-
-          threeMonthInstallment:
-            Number(
-              course.threeMonthInstallment || 0
-            ),
-
-          sixMonthInstallment:
-            Number(
-              course.sixMonthInstallment || 0
-            ),
-
-          fullPaymentFee:
-            Number(
-              course.fullPaymentFee ||
-              totalFee
-            ),
-
-
-          // ==================================
-          // PAYMENT PLAN
-          // ==================================
 
           paymentPlan:
             '',
 
-
-          // ==================================
-          // DUE DATE
-          // ==================================
-
           dueDate:
-            '',
-
-
-          // ==================================
-          // PAYMENT MODE
-          // ==================================
+            null,
 
           paymentMode:
             'Online',
-
-
-          // ==================================
-          // PAYMENT HISTORY
-          // ==================================
 
           paymentHistory: [
 
@@ -1004,17 +1387,7 @@ router.post(
 
         })
 
-
-      // ==================================
-      // SAVE STUDENT
-      // ==================================
-
       await student.save()
-
-
-      // ==================================
-      // SAVE RECEIPT
-      // ==================================
 
       const receipt =
         await saveReceipt({
@@ -1039,11 +1412,6 @@ router.post(
             razorpay_order_id,
 
         })
-
-
-      // ==================================
-      // SAVE PAYMENT
-      // ==================================
 
       const payment =
         new Payment({
@@ -1103,13 +1471,7 @@ router.post(
 
         })
 
-
       await payment.save()
-
-
-      // ======================================
-      // ADMIN NOTIFICATION
-      // ======================================
 
       try {
 
@@ -1132,10 +1494,6 @@ router.post(
 
         })
 
-        console.log(
-          'New Admission Notification Created ✅'
-        )
-
       }
 
       catch (notificationError) {
@@ -1146,11 +1504,6 @@ router.post(
         )
 
       }
-
-
-      // ==================================
-      // RESPONSE
-      // ==================================
 
       res.status(200).json({
 
@@ -1167,11 +1520,6 @@ router.post(
           receipt.receiptNumber,
 
       })
-
-
-      // ==================================
-      // STUDENT EMAIL
-      // ==================================
 
       sendAdmissionEmail({
 
@@ -1192,11 +1540,6 @@ router.post(
         )
 
       })
-
-
-      // ==================================
-      // ADMIN / TEACHER EMAIL
-      // ==================================
 
       sendAdminNotification({
 
@@ -1253,19 +1596,10 @@ router.post(
     try {
 
       const {
-
         admissionNumber,
-
         name,
-
         phone,
-
       } = req.body
-
-
-      // ==================================
-      // VALIDATION
-      // ==================================
 
       if (
         !admissionNumber ||
@@ -1284,11 +1618,6 @@ router.post(
 
       }
 
-
-      // ==================================
-      // FIND STUDENT
-      // ==================================
-
       const student =
         await Student.findOne({
 
@@ -1303,7 +1632,6 @@ router.post(
 
         })
 
-
       if (!student) {
 
         return res.status(404).json({
@@ -1317,10 +1645,11 @@ router.post(
 
       }
 
+      refreshMasterFeeState(
+        student
+      )
 
-      // ==================================
-      // RESPONSE
-      // ==================================
+      await student.save()
 
       res.status(200).json({
 
@@ -1334,7 +1663,10 @@ router.post(
 
     catch (error) {
 
-      console.log(error)
+      console.log(
+        'Verify Student Error:',
+        error
+      )
 
       res.status(500).json({
 
@@ -1366,22 +1698,20 @@ router.post(
         phone,
       } = req.body
 
-
       const conditions = []
-
 
       if (email) {
 
         conditions.push({
 
           email:
-            email.trim()
+            email
+              .trim()
               .toLowerCase(),
 
         })
 
       }
-
 
       if (phone) {
 
@@ -1393,7 +1723,6 @@ router.post(
         })
 
       }
-
 
       if (
         conditions.length === 0
@@ -1410,7 +1739,6 @@ router.post(
 
       }
 
-
       const student =
         await Student.findOne({
 
@@ -1418,7 +1746,6 @@ router.post(
             conditions,
 
         })
-
 
       res.status(200).json({
 
@@ -1433,7 +1760,10 @@ router.post(
 
     catch (error) {
 
-      console.log(error)
+      console.log(
+        'Check Existing Student Error:',
+        error
+      )
 
       res.status(500).json({
 
@@ -1466,8 +1796,6 @@ router.post(
 
         amountPaid,
 
-        paymentPlan,
-
         paymentMethod,
 
         transactionId,
@@ -1479,11 +1807,6 @@ router.post(
         paymentDate,
 
       } = req.body
-
-
-      // ==================================
-      // BASIC VALIDATION
-      // ==================================
 
       if (
         !admissionNumber ||
@@ -1504,18 +1827,12 @@ router.post(
 
       }
 
-
-      // ==================================
-      // FIND STUDENT
-      // ==================================
-
       const student =
         await Student.findOne({
 
           admissionNumber,
 
         })
-
 
       if (!student) {
 
@@ -1530,14 +1847,9 @@ router.post(
 
       }
 
-
-      // ==================================
-      // ALREADY PAID
-      // ==================================
-
       if (
         Number(
-          student.remainingFees
+          student.remainingFees || 0
         ) <= 0
       ) {
 
@@ -1551,11 +1863,6 @@ router.post(
         })
 
       }
-
-
-      // ==================================
-      // DUPLICATE PAYMENT CHECK
-      // ==================================
 
       const duplicatePayment =
         await Payment.findOne({
@@ -1575,7 +1882,6 @@ router.post(
 
         })
 
-
       if (
         duplicatePayment
       ) {
@@ -1591,33 +1897,19 @@ router.post(
 
       }
 
-
-      // ==================================
-      // RAZORPAY SIGNATURE
-      // ==================================
-
       const signatureBody =
-
-        orderId +
-        '|' +
-        transactionId
-
+        `${orderId}|${transactionId}`
 
       const expectedSignature =
-
         crypto
-
           .createHmac(
             'sha256',
             process.env.RAZORPAY_KEY_SECRET
           )
-
           .update(
             signatureBody
           )
-
           .digest('hex')
-
 
       if (
         expectedSignature !==
@@ -1635,14 +1927,13 @@ router.post(
 
       }
 
-
-      // ==================================
-      // PAYMENT AMOUNT
-      // ==================================
-
       const amount =
         Number(amountPaid)
 
+      const remaining =
+        Number(
+          student.remainingFees || 0
+        )
 
       if (
         !amount ||
@@ -1660,21 +1951,6 @@ router.post(
 
       }
 
-
-      // ==================================
-      // REMAINING FEE
-      // ==================================
-
-      const remaining =
-        Number(
-          student.remainingFees || 0
-        )
-
-
-      // ==================================
-      // CANNOT EXCEED REMAINING
-      // ==================================
-
       if (
         amount >
         remaining
@@ -1691,85 +1967,14 @@ router.post(
 
       }
 
-
       // ==================================
-      // PAYMENT PLAN
-      // ==================================
-
-      let selectedPlan =
-        student.paymentPlan || ''
-
-
-      // ==================================
-      // FIRST COURSE PAYMENT
-      // ==================================
-
-      if (!selectedPlan) {
-
-        if (!paymentPlan) {
-
-          return res.status(400).json({
-
-            success: false,
-
-            message:
-              'Please select a payment plan.',
-
-          })
-
-        }
-
-
-        const allowedPlans = [
-
-          'monthly',
-
-          'three_month',
-
-          'six_month',
-
-          'full',
-
-        ]
-
-
-        if (
-          !allowedPlans.includes(
-            paymentPlan
-          )
-        ) {
-
-          return res.status(400).json({
-
-            success: false,
-
-            message:
-              'Invalid payment plan.',
-
-          })
-
-        }
-
-
-        selectedPlan =
-          paymentPlan
-
-      }
-
-
-      // ==================================
-      // PLAN LOCK
+      // PLAN MUST ALREADY BE CREATED BY ADMIN
       // ==================================
 
       if (
-
-        student.paymentPlan &&
-
-        paymentPlan &&
-
-        paymentPlan !==
+        !ALLOWED_PLANS.includes(
           student.paymentPlan
-
+        )
       ) {
 
         return res.status(400).json({
@@ -1777,418 +1982,84 @@ router.post(
           success: false,
 
           message:
-            'Payment plan cannot be changed.',
+            'Payment plan has not been created by admin yet.',
 
         })
 
       }
 
-
       // ==================================
-      // PLAN AMOUNT
-      // ==================================
-
-      let planAmount =
-        0
-
-
-      switch (
-        selectedPlan
-      ) {
-
-        case 'monthly':
-
-          planAmount =
-            Number(
-              student.monthlyInstallment || 0
-            )
-
-          break
-
-
-        case 'three_month':
-
-          planAmount =
-            Number(
-              student.threeMonthInstallment || 0
-            )
-
-          break
-
-
-        case 'six_month':
-
-          planAmount =
-            Number(
-              student.sixMonthInstallment || 0
-            )
-
-          break
-
-
-        case 'full':
-
-          planAmount =
-            Number(
-              student.fullPaymentFee ||
-              remaining
-            )
-
-          break
-
-
-        default:
-
-          return res.status(400).json({
-
-            success: false,
-
-            message:
-              'Invalid payment plan.',
-
-          })
-
-      }
-
-
-      // ==================================
-      // FULL PAYMENT
+      // FULL PLAN
       // ==================================
 
       if (
-        selectedPlan === 'full'
+        student.paymentPlan ===
+        'full' &&
+        amount !== remaining
       ) {
 
-        const fullPaymentAmount =
+        return res.status(400).json({
 
-          Math.min(
+          success: false,
 
-            planAmount > 0
-              ? planAmount
-              : remaining,
+          message:
+            `Full payment must be ₹${remaining}.`,
 
-            remaining
-
-          )
-
-
-        if (
-          amount !==
-          fullPaymentAmount
-        ) {
-
-          return res.status(400).json({
-
-            success: false,
-
-            message:
-              `Full payment amount must be ₹${fullPaymentAmount}.`,
-
-          })
-
-        }
+        })
 
       }
 
+      const result =
+        await applyCoursePayment({
 
-      // ==================================
-      // INSTALLMENT
-      // ======================================
+          student,
 
-      else {
+          amount,
 
-        const minimumAmount =
-          Math.min(
+          paymentMethod:
+            paymentMethod ||
+            'Razorpay',
 
-            planAmount,
+          paymentMode:
+            'Online',
 
-            remaining
+          transactionId,
 
-          )
+          orderId,
 
+          signature,
 
-        if (
-          minimumAmount <= 0
-        ) {
+          paymentDate,
 
-          return res.status(400).json({
-
-            success: false,
-
-            message:
-              'Selected payment plan amount is not configured.',
-
-          })
-
-        }
-
-
-        if (
-          amount <
-          minimumAmount
-        ) {
-
-          return res.status(400).json({
-
-            success: false,
-
-            message:
-              `Minimum payment for this plan is ₹${minimumAmount}.`,
-
-          })
-
-        }
-
-      }
-
-
-      // ==================================
-      // PAYMENT TYPE
-      // ==================================
-
-      const paymentType =
-
-        selectedPlan === 'full'
-
-          ? 'Full'
-
-          : 'Installment'
-
-
-      // ==================================
-      // PAYMENT DATE
-      // ==================================
-
-      const finalPaymentDate =
-
-        paymentDate ||
-
-        new Date()
-          .toISOString()
-          .split('T')[0]
-
-
-      // ==================================
-      // ONLINE PAYMENT
-      // ==================================
-
-      const finalPaymentMethod =
-        paymentMethod ||
-        'Razorpay'
-
-
-      const finalPaymentMode =
-        'Online'
-
-
-      // ==================================
-      // UPDATE PAID FEES
-      // ==================================
-
-      student.paidFees =
-
-        Number(
-          student.paidFees || 0
-        ) +
-
-        amount
-
-
-      // ==================================
-      // UPDATE REMAINING
-      // ==================================
-
-      student.remainingFees =
-
-        Math.max(
-
-          0,
-
-          Number(
-            student.totalFees || 0
-          ) -
-
-          Number(
-            student.paidFees || 0
-          )
-
-        )
-
-
-      // ==================================
-      // FEES STATUS
-      // ==================================
-
-      if (
-        student.remainingFees === 0
-      ) {
-
-        student.feesStatus =
-          'Paid'
-
-      }
-
-      else {
-
-        student.feesStatus =
-          'Partial'
-
-      }
-
-
-      // ==================================
-      // LOCK PAYMENT PLAN
-      // ==================================
-
-      student.paymentPlan =
-        selectedPlan
-
-
-      // ==================================
-      // PAYMENT MODE
-      // ==================================
-
-      student.paymentMode =
-        'Online'
-
-
-      // ==================================
-      // PAYMENT HISTORY
-      // ==================================
-
-      student.paymentHistory.push({
-
-        amount,
-
-        paymentCategory:
-          'CourseFee',
-
-        paymentMethod:
-          finalPaymentMethod,
-
-        paymentType,
-
-        paymentPlan:
-          selectedPlan,
-
-        paymentMode:
-          finalPaymentMode,
-
-        paymentStatus:
-          'Success',
-
-        transactionId,
-
-        orderId,
-
-        paymentDate:
-          finalPaymentDate,
-
-      })
-
-
-      // ==================================
-      // SAVE STUDENT
-      // ==================================
-
-      await student.save()
-
-
-      // ==================================
-      // SAVE RECEIPT
-      // ==================================
+        })
 
       const receipt =
         await saveReceipt({
 
-          student,
+          student:
+            result.student,
 
           amountPaid:
-            amount,
+            result.allocation
+              .allocatedAmount,
 
-          paymentType,
+          paymentType:
+            result.student.paymentPlan ===
+            'full'
+              ? 'Full'
+              : 'Installment',
 
           paymentCategory:
             'CourseFee',
 
           paymentPlan:
-            selectedPlan,
+            result.student.paymentPlan,
 
           transactionId,
 
           orderId,
 
         })
-
-
-      // ==================================
-      // SAVE PAYMENT
-      // ==================================
-
-      const payment =
-        new Payment({
-
-          studentName:
-            student.name,
-
-          admissionNumber:
-            student.admissionNumber,
-
-          email:
-            student.email,
-
-          phone:
-            student.contact,
-
-          course:
-            student.course,
-
-          totalFee:
-            student.totalFees,
-
-          registrationFee:
-            student.registrationFee,
-
-          paymentCategory:
-            'CourseFee',
-
-          paymentPlan:
-            selectedPlan,
-
-          paymentType,
-
-          amountPaid:
-            amount,
-
-          paymentMethod:
-            finalPaymentMethod,
-
-          paymentMode:
-            'Online',
-
-          paymentStatus:
-            'Success',
-
-          transactionId,
-
-          razorpayOrderId:
-            orderId,
-
-          razorpayPaymentId:
-            transactionId,
-
-          razorpaySignature:
-            signature,
-
-        })
-
-
-      await payment.save()
-
-
-      // ======================================
-      // ADMIN NOTIFICATION
-      // ======================================
 
       try {
 
@@ -2201,19 +2072,15 @@ router.post(
             'Course Fee Payment Received',
 
           message:
-            `${student.name} has made a course fee payment of ₹${amount}.`,
+            `${result.student.name} has made a course fee payment of ₹${result.allocation.allocatedAmount}.`,
 
           link:
             '/admin/payments',
 
           relatedId:
-            payment._id.toString(),
+            result.payment._id.toString(),
 
         })
-
-        console.log(
-          'Course Fee Payment Notification Created ✅'
-        )
 
       }
 
@@ -2226,11 +2093,6 @@ router.post(
 
       }
 
-
-      // ==================================
-      // RESPONSE
-      // ==================================
-
       return res.status(200).json({
 
         success: true,
@@ -2238,12 +2100,18 @@ router.post(
         message:
           'Payment Successful',
 
-        student,
+        student:
+          result.student,
 
-        payment,
+        payment:
+          result.payment,
 
         receiptNumber:
           receipt.receiptNumber,
+
+        paidInstallments:
+          result.allocation
+            .paidInstallments,
 
       })
 
@@ -2261,6 +2129,7 @@ router.post(
         success: false,
 
         message:
+          error.message ||
           'Server Error',
 
       })
@@ -2281,18 +2150,17 @@ router.get(
 
     try {
 
-      // ==================================
-      // TOTAL REVENUE
-      // ==================================
-
       const totalRevenueResult =
         await Payment.aggregate([
 
           {
             $match: {
+
               paymentStatus:
                 'Success',
+
             },
+
           },
 
           {
@@ -2301,7 +2169,8 @@ router.get(
               _id: null,
 
               totalRevenue: {
-                $sum: '$amountPaid',
+                $sum:
+                  '$amountPaid',
               },
 
               totalPayments: {
@@ -2314,18 +2183,13 @@ router.get(
 
         ])
 
-
       const totalRevenue =
-        totalRevenueResult[0]?.totalRevenue || 0
-
+        totalRevenueResult[0]
+          ?.totalRevenue || 0
 
       const totalPayments =
-        totalRevenueResult[0]?.totalPayments || 0
-
-
-      // ==================================
-      // TODAY REVENUE
-      // ==================================
+        totalRevenueResult[0]
+          ?.totalPayments || 0
 
       const todayIST =
         new Date()
@@ -2337,15 +2201,17 @@ router.get(
             }
           )
 
-
       const todayRevenueResult =
         await Payment.aggregate([
 
           {
             $match: {
+
               paymentStatus:
                 'Success',
+
             },
+
           },
 
           {
@@ -2388,7 +2254,8 @@ router.get(
               _id: null,
 
               revenue: {
-                $sum: '$amountPaid',
+                $sum:
+                  '$amountPaid',
               },
 
               payments: {
@@ -2401,18 +2268,13 @@ router.get(
 
         ])
 
-
       const todayRevenue =
-        todayRevenueResult[0]?.revenue || 0
-
+        todayRevenueResult[0]
+          ?.revenue || 0
 
       const todayPayments =
-        todayRevenueResult[0]?.payments || 0
-
-
-      // ==================================
-      // THIS MONTH REVENUE
-      // ==================================
+        todayRevenueResult[0]
+          ?.payments || 0
 
       const currentMonth =
         todayIST.substring(
@@ -2420,15 +2282,17 @@ router.get(
           7
         )
 
-
       const monthRevenueResult =
         await Payment.aggregate([
 
           {
             $match: {
+
               paymentStatus:
                 'Success',
+
             },
+
           },
 
           {
@@ -2471,7 +2335,8 @@ router.get(
               _id: null,
 
               revenue: {
-                $sum: '$amountPaid',
+                $sum:
+                  '$amountPaid',
               },
 
               payments: {
@@ -2484,18 +2349,13 @@ router.get(
 
         ])
 
-
       const monthlyRevenue =
-        monthRevenueResult[0]?.revenue || 0
-
+        monthRevenueResult[0]
+          ?.revenue || 0
 
       const monthlyPayments =
-        monthRevenueResult[0]?.payments || 0
-
-
-      // ==================================
-      // REGISTRATION REVENUE
-      // ==================================
+        monthRevenueResult[0]
+          ?.payments || 0
 
       const registrationResult =
         await Payment.aggregate([
@@ -2519,7 +2379,8 @@ router.get(
               _id: null,
 
               revenue: {
-                $sum: '$amountPaid',
+                $sum:
+                  '$amountPaid',
               },
 
             },
@@ -2528,14 +2389,9 @@ router.get(
 
         ])
 
-
       const registrationRevenue =
-        registrationResult[0]?.revenue || 0
-
-
-      // ==================================
-      // COURSE FEE REVENUE
-      // ==================================
+        registrationResult[0]
+          ?.revenue || 0
 
       const courseFeeResult =
         await Payment.aggregate([
@@ -2559,7 +2415,8 @@ router.get(
               _id: null,
 
               revenue: {
-                $sum: '$amountPaid',
+                $sum:
+                  '$amountPaid',
               },
 
             },
@@ -2568,14 +2425,9 @@ router.get(
 
         ])
 
-
       const courseFeeRevenue =
-        courseFeeResult[0]?.revenue || 0
-
-
-      // ==================================
-      // ONLINE REVENUE
-      // ==================================
+        courseFeeResult[0]
+          ?.revenue || 0
 
       const onlineRevenueResult =
         await Payment.aggregate([
@@ -2599,7 +2451,8 @@ router.get(
               _id: null,
 
               revenue: {
-                $sum: '$amountPaid',
+                $sum:
+                  '$amountPaid',
               },
 
             },
@@ -2608,14 +2461,9 @@ router.get(
 
         ])
 
-
       const onlineRevenue =
-        onlineRevenueResult[0]?.revenue || 0
-
-
-      // ==================================
-      // OFFLINE REVENUE
-      // ==================================
+        onlineRevenueResult[0]
+          ?.revenue || 0
 
       const offlineRevenueResult =
         await Payment.aggregate([
@@ -2639,7 +2487,8 @@ router.get(
               _id: null,
 
               revenue: {
-                $sum: '$amountPaid',
+                $sum:
+                  '$amountPaid',
               },
 
             },
@@ -2648,14 +2497,9 @@ router.get(
 
         ])
 
-
       const offlineRevenue =
-        offlineRevenueResult[0]?.revenue || 0
-
-
-      // ==================================
-      // RESPONSE
-      // ==================================
+        offlineRevenueResult[0]
+          ?.revenue || 0
 
       res.status(200).json({
 
@@ -2721,18 +2565,17 @@ router.get(
 
     try {
 
-      // ==================================
-      // DAILY REVENUE
-      // ==================================
-
       const dailyRevenue =
         await Payment.aggregate([
 
           {
             $match: {
+
               paymentStatus:
                 'Success',
+
             },
+
           },
 
           {
@@ -2785,7 +2628,8 @@ router.get(
               },
 
               revenue: {
-                $sum: '$amountPaid',
+                $sum:
+                  '$amountPaid',
               },
 
               payments: {
@@ -2814,19 +2658,17 @@ router.get(
 
         ])
 
-
-      // ==================================
-      // MONTHLY REVENUE
-      // ==================================
-
       const monthlyRevenue =
         await Payment.aggregate([
 
           {
             $match: {
+
               paymentStatus:
                 'Success',
+
             },
+
           },
 
           {
@@ -2865,7 +2707,8 @@ router.get(
               },
 
               revenue: {
-                $sum: '$amountPaid',
+                $sum:
+                  '$amountPaid',
               },
 
               payments: {
@@ -2890,11 +2733,6 @@ router.get(
           },
 
         ])
-
-
-      // ==================================
-      // RESPONSE
-      // ==================================
 
       res.status(200).json({
 
@@ -2931,7 +2769,7 @@ router.get(
 
 
 // ======================================
-// EXPORT ROUTER
+// EXPORT
 // ======================================
 
 module.exports =

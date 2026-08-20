@@ -91,19 +91,6 @@ const getSessionList = () => {
 // ======================================
 // GET ACTUAL FEE STATUS
 // ======================================
-//
-// PAID
-// remainingFees = 0
-//
-// PARTIAL
-// remainingFees > 0
-// AND due date is in future
-//
-// DUE
-// remainingFees > 0
-// AND due date has arrived
-//
-// ======================================
 
 const getActualFeeStatus = (
   student
@@ -298,32 +285,428 @@ const getPaymentPlanLabel = (
   switch (plan) {
 
     case 'monthly':
-
       return 'Monthly'
 
-
-    case 'three_month':
-
-      return 'Every 3 Months'
-
-
-    case 'six_month':
-
-      return 'Every 6 Months'
-
+    case 'installment':
+      return 'Custom Installment'
 
     case 'full':
-
       return 'Full Payment'
 
-
     default:
-
       return 'Not Selected'
 
   }
 
 }
+
+
+// ======================================
+// FEE DUE SUMMARY
+// ======================================
+
+const getStudentDueSummary = (
+  student
+) => {
+
+  const remaining =
+    Number(
+      student?.remainingFees || 0
+    )
+
+  if (
+    remaining <= 0
+  ) {
+
+    return {
+
+      dueAmount: 0,
+
+      dueCount: 0,
+
+      dueDate: null,
+
+      hasDue: false,
+
+    }
+
+  }
+
+
+  // ==================================
+  // FULL PAYMENT
+  // ==================================
+
+  if (
+    student?.paymentPlan === 'full'
+  ) {
+
+    return {
+
+      dueAmount:
+        remaining,
+
+      dueCount:
+        1,
+
+      dueDate:
+        student?.dueDate || null,
+
+      hasDue:
+        remaining > 0,
+
+    }
+
+  }
+
+
+  const schedule =
+    Array.isArray(
+      student?.installmentSchedule
+    )
+      ? student.installmentSchedule
+      : []
+
+
+  const today =
+    new Date()
+
+  today.setHours(
+    23,
+    59,
+    59,
+    999
+  )
+
+
+  // ==================================
+  // CURRENTLY DUE
+  // ==================================
+
+  const dueItems =
+    schedule.filter(
+      (item) => {
+
+        const amount =
+          Number(
+            item?.amount || 0
+          )
+
+        const paidAmount =
+          Number(
+            item?.paidAmount || 0
+          )
+
+        const balance =
+          Math.max(
+            0,
+            amount - paidAmount
+          )
+
+        if (
+          balance <= 0
+        ) {
+
+          return false
+
+        }
+
+
+        if (
+          item?.status === 'Due'
+        ) {
+
+          return true
+
+        }
+
+
+        if (
+          !item?.dueDate
+        ) {
+
+          return false
+
+        }
+
+
+        const dueDate =
+          new Date(
+            item.dueDate
+          )
+
+        if (
+          Number.isNaN(
+            dueDate.getTime()
+          )
+        ) {
+
+          return false
+
+        }
+
+
+        return (
+          dueDate <= today
+        )
+
+      }
+    )
+
+
+  const dueAmount =
+    dueItems.reduce(
+
+      (
+        total,
+        item
+      ) => {
+
+        const amount =
+          Number(
+            item?.amount || 0
+          )
+
+        const paidAmount =
+          Number(
+            item?.paidAmount || 0
+          )
+
+        return (
+          total +
+          Math.max(
+            0,
+            amount - paidAmount
+          )
+        )
+
+      },
+
+      0
+
+    )
+
+
+  const latestDueItem =
+    [...dueItems]
+      .filter(
+        item =>
+          item?.dueDate
+      )
+      .sort(
+        (a, b) =>
+          new Date(b.dueDate) -
+          new Date(a.dueDate)
+      )[0]
+
+
+  // ==================================
+  // CURRENT DUE EXISTS
+  // ==================================
+
+  if (
+    dueItems.length > 0
+  ) {
+
+    return {
+
+      dueAmount:
+        Math.min(
+          dueAmount,
+          remaining
+        ),
+
+      dueCount:
+        dueItems.length,
+
+      dueDate:
+        latestDueItem?.dueDate ||
+        student?.dueDate ||
+        null,
+
+      hasDue:
+        dueAmount > 0,
+
+    }
+
+  }
+
+
+  // ==================================
+  // NEXT PENDING
+  // ==================================
+
+  const nextPending =
+    schedule
+      .filter(
+        (item) => {
+
+          const amount =
+            Number(
+              item?.amount || 0
+            )
+
+          const paidAmount =
+            Number(
+              item?.paidAmount || 0
+            )
+
+          const balance =
+            Math.max(
+              0,
+              amount - paidAmount
+            )
+
+          if (
+            balance <= 0 ||
+            !item?.dueDate
+          ) {
+
+            return false
+
+          }
+
+          const dueDate =
+            new Date(
+              item.dueDate
+            )
+
+          return (
+            !Number.isNaN(
+              dueDate.getTime()
+            ) &&
+            dueDate > today
+          )
+
+        }
+      )
+      .sort(
+        (a, b) =>
+          new Date(a.dueDate) -
+          new Date(b.dueDate)
+      )[0]
+
+
+  return {
+
+    dueAmount:
+      0,
+
+    dueCount:
+      0,
+
+    dueDate:
+      nextPending?.dueDate ||
+      student?.dueDate ||
+      null,
+
+    hasDue:
+      false,
+
+  }
+
+}
+
+
+// ======================================
+// DATE HELPERS
+// ======================================
+
+const getDateInputValue = (date) => {
+
+  if (!date) return ''
+
+  const parsed =
+    new Date(date)
+
+  if (
+    Number.isNaN(
+      parsed.getTime()
+    )
+  ) {
+    return ''
+  }
+
+  const year =
+    parsed.getFullYear()
+
+  const month =
+    String(
+      parsed.getMonth() + 1
+    ).padStart(2, '0')
+
+  const day =
+    String(
+      parsed.getDate()
+    ).padStart(2, '0')
+
+  return `${year}-${month}-${day}`
+
+}
+
+
+const addOneMonth = (dateValue) => {
+
+  if (!dateValue) return ''
+
+  const date =
+    new Date(
+      `${dateValue}T00:00:00`
+    )
+
+  if (
+    Number.isNaN(
+      date.getTime()
+    )
+  ) {
+    return ''
+  }
+
+  const day =
+    date.getDate()
+
+  date.setDate(1)
+
+  date.setMonth(
+    date.getMonth() + 1
+  )
+
+  const lastDay =
+    new Date(
+      date.getFullYear(),
+      date.getMonth() + 1,
+      0
+    ).getDate()
+
+  date.setDate(
+    Math.min(day, lastDay)
+  )
+
+  return getDateInputValue(date)
+
+}
+
+
+const createEmptyInstallment = (
+  number
+) => ({
+
+  installmentNumber:
+    number,
+
+  amount:
+    '',
+
+  dueDate:
+    '',
+
+  paidAmount:
+    0,
+
+  status:
+    'Pending',
+
+})
 
 
 function Students() {
@@ -349,9 +732,7 @@ function Students() {
   // ======================================
 
   const [sessionFilter, setSessionFilter] =
-    useState(
-      getCurrentSession()
-    )
+    useState('All')
 
 
   const [sessions] =
@@ -443,14 +824,13 @@ function Students() {
       totalFees: '',
       paidFees: '',
 
-      monthlyInstallment: '',
-      threeMonthInstallment: '',
-      sixMonthInstallment: '',
-      fullPaymentFee: '',
+      monthlyAmount: '',
 
       paymentPlan: '',
 
       dueDate: '',
+
+      installments: [],
 
       image: null,
 
@@ -652,14 +1032,13 @@ function Students() {
       totalFees: '',
       paidFees: '',
 
-      monthlyInstallment: '',
-      threeMonthInstallment: '',
-      sixMonthInstallment: '',
-      fullPaymentFee: '',
+      monthlyAmount: '',
 
       paymentPlan: '',
 
       dueDate: '',
+
+      installments: [],
 
       image: null,
 
@@ -710,17 +1089,19 @@ function Students() {
             registrationFee:
               selectedCourse.registrationFee ?? '',
 
-            monthlyInstallment:
-              selectedCourse.monthlyInstallment ?? '',
+            monthlyAmount:
+              selectedCourse.minimumInstallment ??
+              selectedCourse.monthlyAmount ??
+              '',
 
-            threeMonthInstallment:
-              selectedCourse.threeMonthInstallment ?? '',
+            paymentPlan:
+              previous.paymentPlan || '',
 
-            sixMonthInstallment:
-              selectedCourse.sixMonthInstallment ?? '',
+            dueDate:
+              previous.dueDate || '',
 
-            fullPaymentFee:
-              selectedCourse.fullPaymentFee ?? '',
+            installments:
+              previous.installments || [],
 
           })
         )
@@ -744,6 +1125,367 @@ function Students() {
     )
 
   }
+
+
+  // ======================================
+  // PAYMENT PLAN CHANGE
+  // ======================================
+
+  const handlePaymentPlanChange = (e) => {
+
+    const plan =
+      e.target.value
+
+    setFormData(
+      (previous) => {
+
+        let nextInstallments =
+          previous.installments || []
+
+        // ==================================
+        // CUSTOM INSTALLMENT
+        // ==================================
+        //
+        // If changing from Monthly/Full to
+        // Custom Installment, start the new
+        // schedule from REMAINING FEE only.
+        //
+        // Example:
+        // Total = 12000
+        // Paid  = 3000
+        // Due   = 9000
+        //
+        // New installment schedule = 9000
+        // NOT 12000.
+        // ==================================
+
+        if (
+          plan === 'installment'
+        ) {
+
+          const totalFees =
+            Number(
+              previous.totalFees || 0
+            )
+
+          const paidFees =
+            Number(
+              previous.paidFees || 0
+            )
+
+          const remainingFee =
+            Math.max(
+              0,
+              totalFees - paidFees
+            )
+
+          // Preserve an already existing
+          // custom installment schedule.
+          if (
+            previous.paymentPlan ===
+              'installment' &&
+            nextInstallments.length > 0
+          ) {
+
+            return {
+
+              ...previous,
+
+              paymentPlan:
+                plan,
+
+              installments:
+                nextInstallments,
+
+            }
+
+          }
+
+          // Create a fresh schedule from
+          // remaining course fee.
+          const firstInstallment =
+            createEmptyInstallment(1)
+
+          firstInstallment.amount =
+            remainingFee
+
+          firstInstallment.dueDate =
+            previous.dueDate || ''
+
+          nextInstallments = [
+            firstInstallment
+          ]
+
+        }
+
+        if (
+          plan !== 'installment'
+        ) {
+
+          nextInstallments = []
+
+        }
+
+        let nextDueDate =
+          previous.dueDate || ''
+
+        if (
+          plan === 'monthly' &&
+          previous.admissionDate &&
+          !nextDueDate
+        ) {
+
+          nextDueDate =
+            addOneMonth(
+              previous.admissionDate
+            )
+
+        }
+
+        if (
+          plan === 'full' &&
+          previous.admissionDate &&
+          !nextDueDate
+        ) {
+
+          nextDueDate =
+            previous.admissionDate
+
+        }
+
+        return {
+
+          ...previous,
+
+          paymentPlan:
+            plan,
+
+          dueDate:
+            nextDueDate,
+
+          installments:
+            nextInstallments,
+
+        }
+
+      }
+    )
+
+  }
+
+
+  // ======================================
+  // INSTALLMENT COUNT
+  // ======================================
+
+  const setInstallmentCount = (
+    count
+  ) => {
+
+    const safeCount =
+      Math.max(
+        1,
+        Number(count || 1)
+      )
+
+    setFormData(
+      (previous) => {
+
+        const current =
+          previous.installments || []
+
+        const next = []
+
+        for (
+          let i = 0;
+          i < safeCount;
+          i++
+        ) {
+
+          next.push({
+
+            ...(current[i] ||
+              createEmptyInstallment(
+                i + 1
+              )),
+
+            installmentNumber:
+              i + 1,
+
+          })
+
+        }
+
+        return {
+
+          ...previous,
+
+          installments:
+            next,
+
+        }
+
+      }
+    )
+
+  }
+
+
+  // ======================================
+  // INSTALLMENT FIELD
+  // ======================================
+
+  const handleInstallmentChange = (
+    index,
+    field,
+    value
+  ) => {
+
+    setFormData(
+      (previous) => {
+
+        const installments =
+          [
+            ...(previous.installments || [])
+          ]
+
+        installments[index] = {
+
+          ...installments[index],
+
+          [field]:
+            value,
+
+        }
+
+        return {
+
+          ...previous,
+
+          installments,
+
+        }
+
+      }
+    )
+
+  }
+
+
+  // ======================================
+  // REMOVE INSTALLMENT
+  // ======================================
+
+  const removeInstallment = (
+    index
+  ) => {
+
+    setFormData(
+      (previous) => {
+
+        const installments =
+          [
+            ...(previous.installments || [])
+          ]
+
+        if (
+          installments.length <= 1
+        ) {
+
+          return previous
+
+        }
+
+        installments.splice(
+          index,
+          1
+        )
+
+        return {
+
+          ...previous,
+
+          installments:
+            installments.map(
+              (item, itemIndex) => ({
+
+                ...item,
+
+                installmentNumber:
+                  itemIndex + 1,
+
+              })
+            ),
+
+        }
+
+      }
+    )
+
+  }
+
+
+  // ======================================
+  // AUTO MONTHLY DUE DATE
+  // ======================================
+
+  useEffect(() => {
+
+    if (
+      formData.paymentPlan !==
+      'monthly'
+    ) {
+
+      return
+
+    }
+
+    if (
+      !formData.admissionDate
+    ) {
+
+      return
+
+    }
+
+    if (
+      editId &&
+      formData.dueDate
+    ) {
+
+      return
+
+    }
+
+    const nextDate =
+      addOneMonth(
+        formData.admissionDate
+      )
+
+    if (
+      nextDate &&
+      nextDate !==
+        formData.dueDate
+    ) {
+
+      setFormData(
+        (previous) => ({
+
+          ...previous,
+
+          dueDate:
+            nextDate,
+
+        })
+      )
+
+    }
+
+  }, [
+    formData.paymentPlan,
+    formData.admissionDate,
+    editId,
+  ])
 
 
   // ======================================
@@ -793,15 +1535,7 @@ function Students() {
 
     Number(
       formData.registrationFee || 0
-    ) > 0 &&
-
-    Number(
-      formData.registrationFeePaid || 0
-    ) >=
-
-    Number(
-      formData.registrationFee || 0
-    )
+    ) > 0
 
       ? 'Paid'
 
@@ -849,9 +1583,7 @@ function Students() {
 
 
         const registrationFeePaid =
-          Number(
-            formData.registrationFeePaid || 0
-          )
+          registrationFee
 
 
         if (
@@ -869,35 +1601,137 @@ function Students() {
 
 
         if (
-          registrationFeePaid < 0 ||
-          registrationFeePaid >
-            registrationFee
+          paidFees > 0 &&
+          !formData.paymentPlan
         ) {
 
           alert(
-            'Registration Paid cannot be greater than Registration Fee.'
+            'Please select Full Payment, Monthly or Installment.'
           )
 
           return
 
         }
 
-
         if (
-
-          !editId &&
-
-          paidFees > 0 &&
-
-          !formData.paymentPlan
-
+          formData.paymentPlan ===
+          'installment'
         ) {
 
-          alert(
-            'Please select a payment plan for the paid course fee.'
-          )
+          const schedule =
+            formData.installments || []
 
-          return
+          if (
+            schedule.length === 0
+          ) {
+
+            alert(
+              'Please create at least one installment.'
+            )
+
+            return
+
+          }
+
+
+          // ==================================
+          // CUSTOM INSTALLMENT VALIDATION
+          // ==================================
+          //
+          // IMPORTANT:
+          // Already paid installment amount
+          // must NOT be counted again.
+          //
+          // Example:
+          //
+          // Total Fee      = ₹12,000
+          // Paid           = ₹3,000
+          // Remaining      = ₹9,000
+          //
+          // Existing:
+          // ₹1,000 Paid
+          // ₹1,000 Paid
+          // ₹1,000 Paid
+          //
+          // New Pending:
+          // ₹3,000
+          // ₹3,000
+          // ₹3,000
+          //
+          // Valid schedule total for remaining
+          // fee = ₹9,000.
+          // ==================================
+
+          const scheduleTotal =
+            schedule.reduce(
+              (sum, item) => {
+
+                const amount =
+                  Number(
+                    item.amount || 0
+                  )
+
+                const paidAmount =
+                  Number(
+                    item.paidAmount || 0
+                  )
+
+                const balance =
+                  Math.max(
+                    0,
+                    amount - paidAmount
+                  )
+
+                return (
+                  sum +
+                  balance
+                )
+
+              },
+              0
+            )
+
+
+          const remainingCourseFee =
+            Math.max(
+              0,
+              totalFees -
+              paidFees
+            )
+
+
+          if (
+            Math.abs(
+              scheduleTotal -
+              remainingCourseFee
+            ) > 0.01
+          ) {
+
+            alert(
+              `Installment total ₹${scheduleTotal} must equal remaining fee ₹${remainingCourseFee}.`
+            )
+
+            return
+
+          }
+
+
+          const invalid =
+            schedule.some(
+              (item) =>
+                Number(item.amount || 0) <= 0 ||
+                !item.dueDate
+            )
+
+          if (invalid) {
+
+            alert(
+              'Every installment needs a valid amount and due date.'
+            )
+
+            return
+
+          }
 
         }
 
@@ -1053,32 +1887,9 @@ function Students() {
 
         data.append(
           'paidFees',
-          paidFees
-        )
-
-
-        // ==================================
-        // INSTALLMENTS
-        // ==================================
-
-        data.append(
-          'monthlyInstallment',
-          formData.monthlyInstallment || 0
-        )
-
-        data.append(
-          'threeMonthInstallment',
-          formData.threeMonthInstallment || 0
-        )
-
-        data.append(
-          'sixMonthInstallment',
-          formData.sixMonthInstallment || 0
-        )
-
-        data.append(
-          'fullPaymentFee',
-          formData.fullPaymentFee || 0
+          editId
+            ? paidFees
+            : 0
         )
 
 
@@ -1091,19 +1902,27 @@ function Students() {
           formData.paymentPlan || ''
         )
 
+        data.append(
+          'monthlyAmount',
+          formData.monthlyAmount || 0
+        )
+
+        data.append(
+          'installments',
+          JSON.stringify(
+            formData.installments || []
+          )
+        )
+
 
         // ==================================
         // DUE DATE
         // ==================================
 
-        if (editId) {
-
-          data.append(
-            'dueDate',
-            formData.dueDate || ''
-          )
-
-        }
+        data.append(
+          'dueDate',
+          formData.dueDate || ''
+        )
 
 
         // ==================================
@@ -1122,7 +1941,7 @@ function Students() {
 
         // ==================================
         // CREATE
-        // ==================================
+        // ======================================
 
         if (!editId) {
 
@@ -1141,8 +1960,9 @@ function Students() {
 
 
             if (
+              sessionFilter === 'All' ||
               newStudent.session ===
-              sessionFilter
+                sessionFilter
             ) {
 
               setStudentData(
@@ -1326,7 +2146,7 @@ function Students() {
           student.registrationFee || 0,
 
         registrationFeePaid:
-          student.registrationFeePaid || 0,
+          student.registrationFee || 0,
 
         totalFees:
           student.totalFees || 0,
@@ -1334,23 +2154,48 @@ function Students() {
         paidFees:
           student.paidFees || 0,
 
-        monthlyInstallment:
-          student.monthlyInstallment || 0,
-
-        threeMonthInstallment:
-          student.threeMonthInstallment || 0,
-
-        sixMonthInstallment:
-          student.sixMonthInstallment || 0,
-
-        fullPaymentFee:
-          student.fullPaymentFee || 0,
+        monthlyAmount:
+          student.monthlyAmount ||
+          student.monthlyInstallment ||
+          '',
 
         paymentPlan:
           student.paymentPlan || '',
 
         dueDate:
-          student.dueDate || '',
+          getDateInputValue(
+            student.dueDate
+          ),
+
+        installments:
+          Array.isArray(
+            student.installmentSchedule
+          )
+            ? student.installmentSchedule.map(
+                (item, index) => ({
+
+                  installmentNumber:
+                    item.installmentNumber ||
+                    index + 1,
+
+                  amount:
+                    item.amount ?? '',
+
+                  dueDate:
+                    getDateInputValue(
+                      item.dueDate
+                    ),
+
+                  paidAmount:
+                    item.paidAmount || 0,
+
+                  status:
+                    item.status ||
+                    'Pending',
+
+                })
+              )
+            : [],
 
         image:
           null,
@@ -1660,11 +2505,6 @@ function Students() {
           student.batchTime ===
             batchFilter
 
-
-        // ==================================
-        // IMPORTANT:
-        // USE CALCULATED FEE STATUS
-        // ==================================
 
         const actualFeeStatus =
           getActualFeeStatus(
@@ -2374,34 +3214,6 @@ function Students() {
             <div className="col-md-6 mb-3">
 
               <label className="form-label">
-                Registration Fee Paid
-              </label>
-
-              <input
-                type="number"
-                className="form-control"
-                name="registrationFeePaid"
-                value={
-                  formData.registrationFeePaid
-                }
-                onChange={
-                  handleChange
-                }
-                min="0"
-              />
-
-              <small className="text-muted">
-
-                Status: {registrationStatus}
-
-              </small>
-
-            </div>
-
-
-            <div className="col-md-6 mb-3">
-
-              <label className="form-label">
                 Total Course Fee
               </label>
 
@@ -2430,32 +3242,6 @@ function Students() {
             <div className="col-md-6 mb-3">
 
               <label className="form-label">
-                Paid Course Fee
-              </label>
-
-              <input
-                type="number"
-                className="form-control"
-                name="paidFees"
-                value={
-                  formData.paidFees
-                }
-                onChange={
-                  handleChange
-                }
-                min="0"
-                max={
-                  formData.totalFees ||
-                  undefined
-                }
-              />
-
-            </div>
-
-
-            <div className="col-md-6 mb-3">
-
-              <label className="form-label">
                 Remaining Course Fee
               </label>
 
@@ -2471,131 +3257,19 @@ function Students() {
             </div>
 
 
-            <div className="col-md-6 mb-3">
-
-              <label className="form-label">
-                Next Due Date
-              </label>
-
-              <input
-                type="date"
-                className="form-control"
-                value={
-                  formData.dueDate || ''
-                }
-                readOnly
-              />
-
-              <small className="text-muted">
-
-                Due date is automatically calculated
-                from admission date and payment plan.
-
-              </small>
-
-            </div>
-
           </div>
 
 
           {/* ================================== */}
-          {/* PAYMENT PLAN AMOUNTS */}
+          {/* PAYMENT PLAN */}
           {/* ================================== */}
 
           <h5 className="mt-3 mb-3">
-            Payment Plan Amounts
+            Payment Plan
           </h5>
 
 
           <div className="row">
-
-            <div className="col-md-6 mb-3">
-
-              <label className="form-label">
-                Monthly Installment
-              </label>
-
-              <input
-                type="number"
-                className="form-control"
-                name="monthlyInstallment"
-                value={
-                  formData.monthlyInstallment
-                }
-                onChange={
-                  handleChange
-                }
-                min="0"
-              />
-
-            </div>
-
-
-            <div className="col-md-6 mb-3">
-
-              <label className="form-label">
-                3 Month Installment
-              </label>
-
-              <input
-                type="number"
-                className="form-control"
-                name="threeMonthInstallment"
-                value={
-                  formData.threeMonthInstallment
-                }
-                onChange={
-                  handleChange
-                }
-                min="0"
-              />
-
-            </div>
-
-
-            <div className="col-md-6 mb-3">
-
-              <label className="form-label">
-                6 Month Installment
-              </label>
-
-              <input
-                type="number"
-                className="form-control"
-                name="sixMonthInstallment"
-                value={
-                  formData.sixMonthInstallment
-                }
-                onChange={
-                  handleChange
-                }
-                min="0"
-              />
-
-            </div>
-
-
-            <div className="col-md-6 mb-3">
-
-              <label className="form-label">
-                Full Payment Fee
-              </label>
-
-              <input
-                type="number"
-                className="form-control"
-                name="fullPaymentFee"
-                value={
-                  formData.fullPaymentFee
-                }
-                onChange={
-                  handleChange
-                }
-                min="0"
-              />
-
-            </div>
-
 
             <div className="col-md-6 mb-3">
 
@@ -2610,35 +3284,356 @@ function Students() {
                   formData.paymentPlan
                 }
                 onChange={
-                  handleChange
+                  handlePaymentPlanChange
                 }
               >
 
                 <option value="">
-                  Not Selected
-                </option>
-
-                <option value="monthly">
-                  Monthly
-                </option>
-
-                <option value="three_month">
-                  Every 3 Months
-                </option>
-
-                <option value="six_month">
-                  Every 6 Months
+                  Select Payment Plan
                 </option>
 
                 <option value="full">
                   Full Payment
                 </option>
 
+                <option value="monthly">
+                  Monthly
+                </option>
+
+                <option value="installment">
+                  Installment
+                </option>
+
               </select>
+
+              <small className="text-muted">
+                Student portal par plan choose nahi karega.
+                Admin yahan plan create/change karega.
+              </small>
 
             </div>
 
+
+            {formData.paymentPlan === 'monthly' && (
+
+              <div className="col-md-6 mb-3">
+
+                <label className="form-label">
+                  Monthly Amount
+                </label>
+
+                <input
+                  type="number"
+                  className="form-control"
+                  name="monthlyAmount"
+                  value={
+                    formData.monthlyAmount
+                  }
+                  onChange={
+                    handleChange
+                  }
+                  min="1"
+                />
+
+                <small className="text-muted">
+                  Monthly due dates backend automatically
+                  create karega.
+                </small>
+
+              </div>
+
+            )}
+
+
+            {(formData.paymentPlan === 'monthly' ||
+              formData.paymentPlan === 'full') && (
+
+              <div className="col-md-6 mb-3">
+
+                <label className="form-label">
+                  First / Payment Due Date
+                </label>
+
+                <input
+                  type="date"
+                  className="form-control"
+                  name="dueDate"
+                  value={
+                    formData.dueDate || ''
+                  }
+                  onChange={
+                    handleChange
+                  }
+                />
+
+                <small className="text-muted">
+                  Monthly mein yahi first due date hogi.
+                </small>
+
+              </div>
+
+            )}
+
           </div>
+
+
+          {/* ================================== */}
+          {/* CUSTOM INSTALLMENTS */}
+          {/* ================================== */}
+
+          {formData.paymentPlan === 'installment' && (
+
+            <div className="border rounded p-3 mt-2">
+
+              <div className="d-flex justify-content-between align-items-center mb-3">
+
+                <div>
+
+                  <h6 className="mb-1">
+                    Custom Installment Schedule
+                  </h6>
+
+                  <small className="text-muted">
+                    Admin jitne installments chahe bana sakta hai.
+                    Har installment ka amount aur due date manually set kare.
+                  </small>
+
+                </div>
+
+                <div
+                  style={{
+                    minWidth: '150px',
+                  }}
+                >
+
+                  <label className="form-label mb-1">
+                    No. of Installments
+                  </label>
+
+                  <input
+                    type="number"
+                    className="form-control"
+                    min="1"
+                    max="120"
+                    value={
+                      formData.installments?.length || 1
+                    }
+                    onChange={(e) =>
+                      setInstallmentCount(
+                        e.target.value
+                      )
+                    }
+                  />
+
+                </div>
+
+              </div>
+
+
+              <div className="table-responsive">
+
+                <table className="table table-bordered align-middle">
+
+                  <thead>
+
+                    <tr>
+
+                      <th>
+                        #
+                      </th>
+
+                      <th>
+                        Amount
+                      </th>
+
+                      <th>
+                        Due Date
+                      </th>
+
+                      {editId && (
+                        <th>
+                          Paid
+                        </th>
+                      )}
+
+                      {editId && (
+                        <th>
+                          Status
+                        </th>
+                      )}
+
+                      <th>
+                        Action
+                      </th>
+
+                    </tr>
+
+                  </thead>
+
+
+                  <tbody>
+
+                    {(formData.installments || []).map(
+                      (item, index) => (
+
+                        <tr
+                          key={
+                            index
+                          }
+                        >
+
+                          <td>
+                            {index + 1}
+                          </td>
+
+                          <td>
+
+                            <input
+                              type="number"
+                              className="form-control"
+                              min="1"
+                              value={
+                                item.amount ?? ''
+                              }
+                              onChange={(e) =>
+                                handleInstallmentChange(
+                                  index,
+                                  'amount',
+                                  e.target.value
+                                )
+                              }
+                            />
+
+                          </td>
+
+                          <td>
+
+                            <input
+                              type="date"
+                              className="form-control"
+                              value={
+                                item.dueDate || ''
+                              }
+                              onChange={(e) =>
+                                handleInstallmentChange(
+                                  index,
+                                  'dueDate',
+                                  e.target.value
+                                )
+                              }
+                            />
+
+                          </td>
+
+                          {editId && (
+
+                            <td>
+                              ₹{
+                                Number(
+                                  item.paidAmount || 0
+                                )
+                              }
+                            </td>
+
+                          )}
+
+                          {editId && (
+
+                            <td>
+
+                              <span
+                                className={
+                                  `status ${
+                                    (
+                                      item.status ||
+                                      'Pending'
+                                    ).toLowerCase()
+                                  }`
+                                }
+                              >
+                                {
+                                  item.status ||
+                                  'Pending'
+                                }
+                              </span>
+
+                            </td>
+
+                          )}
+
+                          <td>
+
+                            <button
+                              type="button"
+                              className="table-btn reject-btn"
+                              onClick={() =>
+                                removeInstallment(
+                                  index
+                                )
+                              }
+                              disabled={
+                                (
+                                  formData.installments ||
+                                  []
+                                ).length <= 1
+                              }
+                            >
+                              Remove
+                            </button>
+
+                          </td>
+
+                        </tr>
+
+                      )
+                    )}
+
+                  </tbody>
+
+                </table>
+
+              </div>
+
+
+              <div className="alert alert-info mb-0">
+
+                <strong>
+                  Schedule Total:
+                </strong>
+
+                {' ₹'}
+
+                {
+                  (
+                    formData.installments ||
+                    []
+                  ).reduce(
+                    (sum, item) =>
+                      sum +
+                      Number(
+                        item.amount || 0
+                      ),
+                    0
+                  )
+                }
+
+                {' | '}
+
+                <strong>
+                  Remaining Fee:
+                </strong>
+
+                {' ₹'}
+
+                {
+                  remainingFees
+                }
+
+              </div>
+
+            </div>
+
+          )}
 
 
           {/* ================================== */}
@@ -2660,24 +3655,6 @@ function Students() {
                 ₹{
                   Number(
                     formData.registrationFee ||
-                    0
-                  )
-                }
-
-              </div>
-
-
-              <div className="col-md-3">
-
-                <strong>
-                  Registration Paid:
-                </strong>
-
-                <br />
-
-                ₹{
-                  Number(
-                    formData.registrationFeePaid ||
                     0
                   )
                 }
@@ -2813,6 +3790,10 @@ function Students() {
 
               }}
             >
+
+              <option value="All">
+                All Sessions
+              </option>
 
               {sessions.map(
                 (session) => (
@@ -3059,7 +4040,11 @@ function Students() {
 
         {' '}
 
-        {sessionFilter}
+        {
+          sessionFilter === 'All'
+            ? 'All Sessions'
+            : sessionFilter
+        }
 
         {' | '}
 
@@ -3187,9 +4172,13 @@ function Students() {
                   className="text-center py-4"
                 >
 
-                  No Students Found in Session{' '}
+                  No Students Found for{' '}
 
-                  {sessionFilter}
+                  {
+                    sessionFilter === 'All'
+                      ? 'All Sessions'
+                      : `Session ${sessionFilter}`
+                  }
 
                 </td>
 
@@ -3325,10 +4314,6 @@ function Students() {
 
                       </td>
 
-
-                      {/* ==================================
-                          ACTUAL FEE STATUS
-                      ================================== */}
 
                       <td>
 
@@ -3799,164 +4784,533 @@ function Students() {
               </h5>
 
 
-              <div className="row">
+              {(() => {
 
-                <Detail
-                  label="Registration Fee"
-                  value={`₹${selectedStudent.registrationFee || 0}`}
-                />
+                const dueSummary =
+                  getStudentDueSummary(
+                    selectedStudent
+                  )
 
-                <Detail
-                  label="Registration Paid"
-                  value={`₹${selectedStudent.registrationFeePaid || 0}`}
-                />
+                return (
 
-                <Detail
-                  label="Registration Status"
-                  value={
-                    selectedStudent.registrationFeeStatus ||
-                    'Pending'
-                  }
-                />
+                  <>
 
-                <Detail
-                  label="Total Course Fee"
-                  value={`₹${selectedStudent.totalFees || 0}`}
-                />
+                    {/* ==================================
+                        FEE SUMMARY CARDS
+                    ================================== */}
 
-                <Detail
-                  label="Paid Course Fee"
-                  value={`₹${selectedStudent.paidFees || 0}`}
-                />
+                    <div className="row g-3 mb-4">
 
-                <Detail
-                  label="Remaining Course Fee"
-                  value={`₹${selectedStudent.remainingFees || 0}`}
-                />
+                      <div className="col-md-6 col-lg-3">
 
+                        <div
+                          className="border rounded-3 p-3 h-100 bg-light"
+                        >
 
-                {/* ==================================
-                    ACTUAL FEE STATUS
-                ================================== */}
+                          <small className="text-muted d-block">
+                            Total Course Fee
+                          </small>
 
-                <Detail
-                  label="Fee Status"
-                  value={
-                    <FeeStatusBadge
-                      student={
-                        selectedStudent
-                      }
-                    />
-                  }
-                />
+                          <h5 className="fw-bold mb-0 mt-1">
+                            ₹{
+                              Number(
+                                selectedStudent.totalFees || 0
+                              ).toLocaleString(
+                                'en-IN'
+                              )
+                            }
+                          </h5>
+
+                        </div>
+
+                      </div>
 
 
-                <Detail
-                  label="Payment Plan"
-                  value={
-                    getPaymentPlanLabel(
-                      selectedStudent.paymentPlan
-                    )
-                  }
-                />
+                      <div className="col-md-6 col-lg-3">
 
-                <Detail
-                  label="Monthly Installment"
-                  value={`₹${selectedStudent.monthlyInstallment || 0}`}
-                />
+                        <div
+                          className="border rounded-3 p-3 h-100 bg-light"
+                        >
 
-                <Detail
-                  label="3 Month Installment"
-                  value={`₹${selectedStudent.threeMonthInstallment || 0}`}
-                />
+                          <small className="text-muted d-block">
+                            Paid Course Fee
+                          </small>
 
-                <Detail
-                  label="6 Month Installment"
-                  value={`₹${selectedStudent.sixMonthInstallment || 0}`}
-                />
+                          <h5 className="fw-bold text-success mb-0 mt-1">
+                            ₹{
+                              Number(
+                                selectedStudent.paidFees || 0
+                              ).toLocaleString(
+                                'en-IN'
+                              )
+                            }
+                          </h5>
 
-                <Detail
-                  label="Full Payment Fee"
-                  value={`₹${selectedStudent.fullPaymentFee || 0}`}
-                />
+                        </div>
+
+                      </div>
 
 
-                {/* ==================================
-                    NEXT DUE DATE
-                ================================== */}
+                      <div className="col-md-6 col-lg-3">
 
-                <Detail
-                  label="Next Due Date"
-                  value={
-                    selectedStudent.dueDate
-                      ? formatDate(
-                          selectedStudent.dueDate
-                        )
-                      : '-'
-                  }
-                />
+                        <div
+                          className={`border rounded-3 p-3 h-100 ${
+                            dueSummary.hasDue
+                              ? 'border-danger bg-danger-subtle'
+                              : 'bg-light'
+                          }`}
+                        >
 
-              </div>
+                          <small className="text-muted d-block">
+                            Due Amount
+                          </small>
+
+                          <h5
+                            className={`fw-bold mb-0 mt-1 ${
+                              dueSummary.hasDue
+                                ? 'text-danger'
+                                : 'text-success'
+                            }`}
+                          >
+                            ₹{
+                              Number(
+                                dueSummary.dueAmount || 0
+                              ).toLocaleString(
+                                'en-IN'
+                              )
+                            }
+                          </h5>
+
+                          <small className="text-muted d-block mt-1">
+
+                            {
+                              dueSummary.hasDue
+                                ? `${dueSummary.dueCount} installment${
+                                    dueSummary.dueCount > 1
+                                      ? 's'
+                                      : ''
+                                  } due`
+                                : 'Nothing due now'
+                            }
+
+                          </small>
+
+                        </div>
+
+                      </div>
 
 
-              {/* ==================================
-                  FEE SUMMARY
-              ================================== */}
+                      <div className="col-md-6 col-lg-3">
 
-              <div className="alert alert-light border mt-3">
+                        <div
+                          className="border rounded-3 p-3 h-100 bg-light"
+                        >
 
-                <div className="row">
+                          <small className="text-muted d-block">
+                            Total Remaining
+                          </small>
 
-                  <div className="col-md-4">
+                          <h5 className="fw-bold text-primary mb-0 mt-1">
+                            ₹{
+                              Number(
+                                selectedStudent.remainingFees || 0
+                              ).toLocaleString(
+                                'en-IN'
+                              )
+                            }
+                          </h5>
 
-                    <small className="text-muted">
-                      Total Course Fee
-                    </small>
+                        </div>
 
-                    <div className="fw-bold">
-                      ₹{
-                        selectedStudent.totalFees ||
-                        0
-                      }
+                      </div>
+
                     </div>
 
-                  </div>
+
+                    {/* ==================================
+                        DUE INFORMATION
+                    ================================== */}
+
+                    <div
+                      className={`alert ${
+                        dueSummary.hasDue
+                          ? 'alert-danger'
+                          : 'alert-success'
+                      } border d-flex flex-wrap align-items-center justify-content-between gap-3`}
+                    >
+
+                      <div>
+
+                        <strong>
+                          {
+                            dueSummary.hasDue
+                              ? 'Current Fee Due'
+                              : 'No Payment Due Right Now'
+                          }
+                        </strong>
+
+                        <div className="mt-1">
+
+                          {
+                            dueSummary.hasDue
+                              ? (
+                                <>
+                                  <span className="fw-bold">
+                                    ₹{
+                                      Number(
+                                        dueSummary.dueAmount || 0
+                                      ).toLocaleString(
+                                        'en-IN'
+                                      )
+                                    }
+                                  </span>
+
+                                  {' • '}
+
+                                  <span>
+                                    {
+                                      dueSummary.dueCount
+                                    }
+                                    {' '}
+                                    installment{
+                                      dueSummary.dueCount > 1
+                                        ? 's'
+                                        : ''
+                                    }
+                                  </span>
+                                </>
+                              )
+                              : (
+                                <span>
+                                  ₹0 due currently
+                                </span>
+                              )
+                          }
+
+                        </div>
+
+                      </div>
 
 
-                  <div className="col-md-4">
+                      <div>
 
-                    <small className="text-muted">
-                      Paid
-                    </small>
+                        <small className="d-block text-muted">
+                          {
+                            dueSummary.hasDue
+                              ? 'Latest Due Date'
+                              : 'Next Due Date'
+                          }
+                        </small>
 
-                    <div className="fw-bold text-success">
-                      ₹{
-                        selectedStudent.paidFees ||
-                        0
-                      }
+                        <strong>
+                          {
+                            dueSummary.dueDate
+                              ? formatDate(
+                                  dueSummary.dueDate
+                                )
+                              : '-'
+                          }
+                        </strong>
+
+                      </div>
+
                     </div>
 
-                  </div>
 
+                    <div className="row">
 
-                  <div className="col-md-4">
+                      <Detail
+                        label="Registration Fee"
+                        value={`₹${selectedStudent.registrationFee || 0}`}
+                      />
 
-                    <small className="text-muted">
-                      Remaining
-                    </small>
+                      <Detail
+                        label="Registration Paid"
+                        value={`₹${selectedStudent.registrationFeePaid || 0}`}
+                      />
 
-                    <div className="fw-bold text-danger">
-                      ₹{
-                        selectedStudent.remainingFees ||
-                        0
-                      }
+                      <Detail
+                        label="Registration Status"
+                        value={
+                          selectedStudent.registrationFeeStatus ||
+                          'Pending'
+                        }
+                      />
+
+                      <Detail
+                        label="Fee Status"
+                        value={
+                          <FeeStatusBadge
+                            student={
+                              selectedStudent
+                            }
+                          />
+                        }
+                      />
+
+                      <Detail
+                        label="Payment Plan"
+                        value={
+                          getPaymentPlanLabel(
+                            selectedStudent.paymentPlan
+                          )
+                        }
+                      />
+
+                      <Detail
+                        label="Monthly Amount"
+                        value={`₹${selectedStudent.monthlyAmount || 0}`}
+                      />
+
+                      <Detail
+                        label="Installments"
+                        value={
+                          selectedStudent.installmentCount ||
+                          selectedStudent.installmentSchedule?.length ||
+                          0
+                        }
+                      />
+
+                      <Detail
+                        label={
+                          dueSummary.hasDue
+                            ? 'Latest Due Date'
+                            : 'Next Due Date'
+                        }
+                        value={
+                          dueSummary.dueDate
+                            ? formatDate(
+                                dueSummary.dueDate
+                              )
+                            : '-'
+                        }
+                      />
+
                     </div>
 
-                  </div>
 
-                </div>
+                    {/* ==================================
+                        INSTALLMENT SCHEDULE
+                    ================================== */}
 
-              </div>
+                    {Array.isArray(
+                      selectedStudent.installmentSchedule
+                    ) &&
+                    selectedStudent.installmentSchedule.length > 0 && (
+
+                      <div className="mt-4">
+
+                        <div className="d-flex justify-content-between align-items-center mb-2">
+
+                          <h6 className="mb-0">
+                            Installment Schedule
+                          </h6>
+
+                          <span
+                            className={
+                              `badge ${
+                                dueSummary.hasDue
+                                  ? 'bg-danger'
+                                  : 'bg-success'
+                              }`
+                            }
+                          >
+
+                            {
+                              dueSummary.hasDue
+                                ? `${dueSummary.dueCount} Due`
+                                : 'No Current Due'
+                            }
+
+                          </span>
+
+                        </div>
+
+
+                        <div className="table-responsive">
+
+                          <table className="table table-bordered align-middle">
+
+                            <thead className="table-light">
+
+                              <tr>
+
+                                <th>
+                                  #
+                                </th>
+
+                                <th>
+                                  Amount
+                                </th>
+
+                                <th>
+                                  Due Date
+                                </th>
+
+                                <th>
+                                  Paid
+                                </th>
+
+                                <th>
+                                  Balance
+                                </th>
+
+                                <th>
+                                  Status
+                                </th>
+
+                              </tr>
+
+                            </thead>
+
+
+                            <tbody>
+
+                              {selectedStudent.installmentSchedule.map(
+                                (item, index) => {
+
+                                  const amount =
+                                    Number(
+                                      item?.amount || 0
+                                    )
+
+                                  const paidAmount =
+                                    Number(
+                                      item?.paidAmount || 0
+                                    )
+
+                                  const balance =
+                                    Math.max(
+                                      0,
+                                      amount -
+                                      paidAmount
+                                    )
+
+                                  const itemDue =
+                                    balance > 0 &&
+                                    (
+                                      item?.status === 'Due' ||
+                                      (
+                                        item?.dueDate &&
+                                        new Date(
+                                          item.dueDate
+                                        ) <= new Date()
+                                      )
+                                    )
+
+                                  return (
+
+                                    <tr
+                                      key={
+                                        item._id ||
+                                        index
+                                      }
+                                      className={
+                                        itemDue
+                                          ? 'table-danger'
+                                          : ''
+                                      }
+                                    >
+
+                                      <td>
+                                        {
+                                          item.installmentNumber ||
+                                          index + 1
+                                        }
+                                      </td>
+
+                                      <td className="fw-semibold">
+                                        ₹{
+                                          amount.toLocaleString(
+                                            'en-IN'
+                                          )
+                                        }
+                                      </td>
+
+                                      <td>
+                                        {
+                                          item.dueDate
+                                            ? formatDate(
+                                                item.dueDate
+                                              )
+                                            : '-'
+                                        }
+                                      </td>
+
+                                      <td className="text-success">
+                                        ₹{
+                                          paidAmount.toLocaleString(
+                                            'en-IN'
+                                          )
+                                        }
+                                      </td>
+
+                                      <td
+                                        className={
+                                          balance > 0
+                                            ? 'fw-semibold'
+                                            : 'text-success'
+                                        }
+                                      >
+                                        ₹{
+                                          balance.toLocaleString(
+                                            'en-IN'
+                                          )
+                                        }
+                                      </td>
+
+                                      <td>
+
+                                        <span
+                                          className={
+                                            `status ${
+                                              itemDue
+                                                ? 'due'
+                                                : (
+                                                    item.status ||
+                                                    'Pending'
+                                                  ).toLowerCase()
+                                            }`
+                                          }
+                                        >
+
+                                          {
+                                            itemDue
+                                              ? 'Due'
+                                              : (
+                                                  item.status ||
+                                                  'Pending'
+                                                )
+                                          }
+
+                                        </span>
+
+                                      </td>
+
+                                    </tr>
+
+                                  )
+
+                                }
+                              )}
+
+                            </tbody>
+
+                          </table>
+
+                        </div>
+
+                      </div>
+
+                    )}
+
+
+                  </>
+
+                )
+
+              })()}
+
 
             </div>
 

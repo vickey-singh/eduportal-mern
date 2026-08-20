@@ -1,56 +1,24 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 
 import axios from 'axios'
+
+import { API_URL } from '../../config/api'
 
 import jsPDF from 'jspdf'
 
 import autoTable from 'jspdf-autotable'
 
-import { API_URL } from '../../config/api'
+import '../../assets/styles/admin-dashboard.css'
 
 
 function FeeDueReport() {
 
-
   // ======================================
-  // FILTER OPTIONS
-  // ======================================
-
-  const [courses, setCourses] =
-    useState([])
-
-
-  const [batchTimes, setBatchTimes] =
-    useState([])
-
-
-  // ======================================
-  // FILTER STATE
-  // ======================================
-
-  const [course, setCourse] =
-    useState('All')
-
-
-  const [status, setStatus] =
-    useState('Due')
-
-
-  const [batchTime, setBatchTime] =
-    useState('All')
-
-
-  const [paymentPlan, setPaymentPlan] =
-    useState('All')
-
-
-  // ======================================
-  // REPORT DATA
+  // STATE
   // ======================================
 
   const [students, setStudents] =
     useState([])
-
 
   const [summary, setSummary] =
     useState({
@@ -63,7 +31,45 @@ function FeeDueReport() {
 
       totalDue: 0,
 
+      totalDueAmount: 0,
+
+      totalPendingAmount: 0,
+
+      totalInstallments: 0,
+
+      totalDueInstallments: 0,
+
+      totalPendingInstallments: 0,
+
+      totalPaidInstallments: 0,
+
     })
+
+  const [courses, setCourses] =
+    useState([])
+
+  const [batchTimes, setBatchTimes] =
+    useState([])
+
+  const [paymentPlans, setPaymentPlans] =
+    useState([])
+
+
+  // ======================================
+  // FILTERS
+  // ======================================
+
+  const [course, setCourse] =
+    useState('All')
+
+  const [status, setStatus] =
+    useState('All')
+
+  const [batchTime, setBatchTime] =
+    useState('All')
+
+  const [paymentPlan, setPaymentPlan] =
+    useState('All')
 
 
   // ======================================
@@ -75,417 +81,126 @@ function FeeDueReport() {
 
 
   // ======================================
-  // LOAD DATA
+  // ERROR
+  // ======================================
+
+  const [error, setError] =
+    useState('')
+
+
+  // ======================================
+  // LOAD FILTER OPTIONS
   // ======================================
 
   useEffect(() => {
 
-    fetchFilterOptions()
+    const loadOptions =
+      async () => {
 
-    fetchReport()
+        try {
 
-  }, [])
+          const response =
+            await axios.get(
+              `${API_URL}/admin/fee-reports/options`
+            )
 
+          if (
+            response.data?.success
+          ) {
 
-  // ======================================
-  // FETCH FILTER OPTIONS
-  // ======================================
+            setCourses(
+              response.data.courses || []
+            )
 
-  const fetchFilterOptions =
-    async () => {
+            setBatchTimes(
+              response.data.batchTimes || []
+            )
 
-      try {
+            setPaymentPlans(
+              response.data.paymentPlans || []
+            )
 
-        const response =
-          await axios.get(
+          }
 
-            `${API_URL}/admin/fee-reports/options`
+        }
 
+        catch (err) {
+
+          console.log(
+            'Fee Report Options Error:',
+            err
           )
 
-
-        if (
-          response.data?.success
-        ) {
-
-          setCourses(
-
-            response.data.courses ||
-            []
-
-          )
-
-
-          setBatchTimes(
-
-            response.data.batchTimes ||
-            []
-
+          setError(
+            'Unable to load filter options.'
           )
 
         }
 
       }
 
-      catch (error) {
+    loadOptions()
 
-        console.error(
-
-          'Fee Report Options Error:',
-
-          error
-
-        )
-
-      }
-
-    }
+  }, [])
 
 
   // ======================================
-  // GET ACTUAL FEE STATUS
-  // ======================================
-  //
-  // PAID
-  // Remaining = 0
-  //
-  // PARTIAL
-  // Remaining > 0
-  // Due date is in future
-  //
-  // DUE
-  // Remaining > 0
-  // Due date has arrived
-  //
+  // LOAD REPORT
   // ======================================
 
-  const getActualFeeStatus =
-    (student) => {
-
-      const remainingFees =
-        Number(
-          student?.remainingFees || 0
-        )
-
-
-      // ==================================
-      // FULLY PAID
-      // ==================================
-
-      if (
-        remainingFees <= 0
-      ) {
-
-        return 'Paid'
-
-      }
-
-
-      // ==================================
-      // NO DUE DATE
-      // ==================================
-
-      if (
-        !student?.dueDate
-      ) {
-
-        return 'Partial'
-
-      }
-
-
-      const dueDate =
-        new Date(
-          student.dueDate
-        )
-
-
-      if (
-        Number.isNaN(
-          dueDate.getTime()
-        )
-      ) {
-
-        return 'Partial'
-
-      }
-
-
-      const today =
-        new Date()
-
-
-      today.setHours(
-        0,
-        0,
-        0,
-        0
-      )
-
-
-      dueDate.setHours(
-        0,
-        0,
-        0,
-        0
-      )
-
-
-      // ==================================
-      // DUE
-      // ==================================
-
-      if (
-        dueDate <= today
-      ) {
-
-        return 'Due'
-
-      }
-
-
-      // ==================================
-      // PARTIAL
-      // ==================================
-
-      return 'Partial'
-
-    }
-
-
-  // ======================================
-  // FETCH REPORT
-  // ======================================
-
-  const fetchReport =
+  const loadReport =
     async () => {
 
       try {
 
         setLoading(true)
 
+        setError('')
 
-        const params = {}
+        const params = {
 
+          course,
 
-        // ==================================
-        // COURSE
-        // ==================================
+          status,
 
-        if (
-          course !== 'All'
-        ) {
+          batchTime,
 
-          params.course =
-            course
+          paymentPlan,
 
         }
-
-
-        // ==================================
-        // IMPORTANT
-        // ==================================
-        //
-        // Do NOT send status to backend.
-        //
-        // We calculate:
-        //
-        // Paid / Partial / Due
-        //
-        // from remainingFees + dueDate.
-        //
-        // ==================================
-
-
-        // ==================================
-        // BATCH TIME
-        // ==================================
-
-        if (
-          batchTime !== 'All'
-        ) {
-
-          params.batchTime =
-            batchTime
-
-        }
-
-
-        // ==================================
-        // PAYMENT PLAN
-        // ==================================
-
-        if (
-          paymentPlan !== 'All'
-        ) {
-
-          params.paymentPlan =
-            paymentPlan
-
-        }
-
 
         const response =
           await axios.get(
-
             `${API_URL}/admin/fee-reports`,
-
             {
-
               params,
-
             }
-
           )
-
 
         if (
           response.data?.success
         ) {
 
-          const allStudents =
-            response.data.students ||
-            []
-
-
-          // ==================================
-          // CALCULATE ACTUAL STATUS
-          // ==================================
-
-          const studentsWithStatus =
-            allStudents.map(
-
-              (student) => ({
-
-                ...student,
-
-                actualFeeStatus:
-                  getActualFeeStatus(
-                    student
-                  ),
-
-              })
-
-            )
-
-
-          // ==================================
-          // LOCAL STATUS FILTER
-          // ==================================
-
-          const filteredStudents =
-
-            status === 'All'
-
-              ? studentsWithStatus
-
-              : studentsWithStatus.filter(
-
-                  (student) =>
-
-                    student.actualFeeStatus ===
-                    status
-
-                )
-
-
-          // ==================================
-          // SUMMARY
-          // ==================================
-
-          const calculatedSummary =
-
-            filteredStudents.reduce(
-
-              (
-                result,
-                student
-              ) => {
-
-                result.totalStudents += 1
-
-
-                result.totalCourseFee +=
-                  Number(
-                    student.totalFees || 0
-                  )
-
-
-                result.totalPaid +=
-                  Number(
-                    student.paidFees || 0
-                  )
-
-
-                result.totalDue +=
-                  Number(
-                    student.remainingFees || 0
-                  )
-
-
-                return result
-
-              },
-
-              {
-
-                totalStudents: 0,
-
-                totalCourseFee: 0,
-
-                totalPaid: 0,
-
-                totalDue: 0,
-
-              }
-
-            )
-
-
           setStudents(
-            filteredStudents
+            response.data.students || []
           )
-
 
           setSummary(
-            calculatedSummary
+            response.data.summary || {}
           )
-
-        }
-
-        else {
-
-          setStudents([])
-
-          setSummary({
-
-            totalStudents: 0,
-
-            totalCourseFee: 0,
-
-            totalPaid: 0,
-
-            totalDue: 0,
-
-          })
 
         }
 
       }
 
-      catch (error) {
+      catch (err) {
 
-        console.error(
-
+        console.log(
           'Fee Report Error:',
-
-          error
-
+          err
         )
 
-
         setStudents([])
-
 
         setSummary({
 
@@ -497,7 +212,24 @@ function FeeDueReport() {
 
           totalDue: 0,
 
+          totalDueAmount: 0,
+
+          totalPendingAmount: 0,
+
+          totalInstallments: 0,
+
+          totalDueInstallments: 0,
+
+          totalPendingInstallments: 0,
+
+          totalPaidInstallments: 0,
+
         })
+
+        setError(
+          err.response?.data?.message ||
+          'Unable to load fee report.'
+        )
 
       }
 
@@ -511,121 +243,19 @@ function FeeDueReport() {
 
 
   // ======================================
-  // APPLY FILTER
+  // LOAD REPORT ON FILTER CHANGE
   // ======================================
 
-  const handleApplyFilter =
-    () => {
+  useEffect(() => {
 
-      fetchReport()
+    loadReport()
 
-    }
-
-
-  // ======================================
-  // RESET FILTER
-  // ======================================
-
-  const handleReset =
-    () => {
-
-      setCourse('All')
-
-      setStatus('Due')
-
-      setBatchTime('All')
-
-      setPaymentPlan('All')
-
-
-      // ==================================
-      // RESET REPORT DIRECTLY
-      // ==================================
-
-      setTimeout(
-
-        () => {
-
-          fetchReport()
-
-        },
-
-        0
-
-      )
-
-    }
-
-
-  // ======================================
-  // PAYMENT PLAN LABEL
-  // ======================================
-
-  const getPaymentPlanLabel =
-    (plan) => {
-
-      switch (plan) {
-
-        case 'monthly':
-
-          return 'Monthly'
-
-
-        case 'three_month':
-
-          return 'Every 3 Months'
-
-
-        case 'six_month':
-
-          return 'Every 6 Months'
-
-
-        case 'full':
-
-          return 'Full Payment'
-
-
-        default:
-
-          return '-'
-
-      }
-
-    }
-
-
-  // ======================================
-  // STATUS LABEL
-  // ======================================
-
-  const getStatusLabel =
-    (value) => {
-
-      switch (value) {
-
-        case 'Due':
-
-          return 'Due Students'
-
-
-        case 'Partial':
-
-          return 'Partial Payment'
-
-
-        case 'Paid':
-
-          return 'Fully Paid'
-
-
-        default:
-
-          return 'All Students'
-
-      }
-
-    }
+  }, [
+    course,
+    status,
+    batchTime,
+    paymentPlan,
+  ])
 
 
   // ======================================
@@ -633,10 +263,10 @@ function FeeDueReport() {
   // ======================================
 
   const formatMoney =
-    (amount) => {
+    (value) => {
 
       return Number(
-        amount || 0
+        value || 0
       ).toLocaleString(
         'en-IN'
       )
@@ -649,22 +279,20 @@ function FeeDueReport() {
   // ======================================
 
   const formatDate =
-    (date) => {
+    (value) => {
 
-      if (!date) {
+      if (!value) {
 
         return '-'
 
       }
 
-
-      const parsedDate =
-        new Date(date)
-
+      const date =
+        new Date(value)
 
       if (
         Number.isNaN(
-          parsedDate.getTime()
+          date.getTime()
         )
       ) {
 
@@ -672,11 +300,8 @@ function FeeDueReport() {
 
       }
 
-
-      return parsedDate.toLocaleDateString(
-
+      return date.toLocaleDateString(
         'en-IN',
-
         {
 
           day: '2-digit',
@@ -686,8 +311,43 @@ function FeeDueReport() {
           year: 'numeric',
 
         }
-
       )
+
+    }
+
+
+  // ======================================
+  // PLAN LABEL
+  // ======================================
+
+  const getPlanLabel =
+    (plan) => {
+
+      if (
+        plan === 'full'
+      ) {
+
+        return 'Full Payment'
+
+      }
+
+      if (
+        plan === 'monthly'
+      ) {
+
+        return 'Monthly'
+
+      }
+
+      if (
+        plan === 'installment'
+      ) {
+
+        return 'Installment'
+
+      }
+
+      return '-'
 
     }
 
@@ -697,264 +357,167 @@ function FeeDueReport() {
   // ======================================
 
   const getStatusClass =
-    (student) => {
-
-      const actualStatus =
-        student.actualFeeStatus ||
-        getActualFeeStatus(
-          student
-        )
-
-
-      switch (actualStatus) {
-
-        case 'Paid':
-
-          return 'text-success fw-bold'
-
-
-        case 'Partial':
-
-          return 'text-warning fw-bold'
-
-
-        case 'Due':
-
-          return 'text-danger fw-bold'
-
-
-        default:
-
-          return ''
-
-      }
-
-    }
-
-
-  // ======================================
-  // PRINT REPORT
-  // ======================================
-
-  const handlePrint =
-    () => {
-
-      window.print()
-
-    }
-
-
-  // ======================================
-  // DOWNLOAD PDF
-  // ======================================
-
-  const handleDownloadPDF =
-    () => {
+    (value) => {
 
       if (
-        students.length === 0
+        value === 'Paid'
       ) {
 
-        alert(
-          'No students found for this report.'
-        )
-
-        return
+        return 'paid'
 
       }
 
+      if (
+        value === 'Due'
+      ) {
 
-      const pdf =
+        return 'due'
+
+      }
+
+      if (
+        value === 'Partial'
+      ) {
+
+        return 'partial'
+
+      }
+
+      return 'pending'
+
+    }
+
+
+  // ======================================
+  // STUDENT SCHEDULE SUMMARY
+  // ======================================
+
+  const scheduleSummary =
+    (student) => {
+
+      const schedule =
+        Array.isArray(
+          student.installmentSchedule
+        )
+          ? student.installmentSchedule
+          : []
+
+      const due =
+        schedule.filter(
+          item =>
+            item.status === 'Due'
+        )
+
+      const pending =
+        schedule.filter(
+          item =>
+            item.status === 'Pending'
+        )
+
+      const paid =
+        schedule.filter(
+          item =>
+            item.status === 'Paid'
+        )
+
+      return {
+
+        due,
+
+        pending,
+
+        paid,
+
+      }
+
+    }
+
+
+  // ======================================
+  // FILTERED STUDENTS
+  // ======================================
+  //
+  // Route already filters the data.
+  // This memo is only used for safe rendering.
+  // ======================================
+
+  const reportStudents =
+    useMemo(
+      () => students,
+      [students]
+    )
+
+
+  // ======================================
+  // PDF REPORT
+  // ======================================
+
+  const downloadPDF =
+    () => {
+
+      const doc =
         new jsPDF(
-
-          'l',
-
-          'mm',
-
-          'a4'
-
+          'landscape'
         )
 
-
-      const pageWidth =
-        pdf.internal.pageSize
-          .getWidth()
-
-
-      // ==================================
-      // TITLE
-      // ==================================
-
-      pdf.setFontSize(18)
-
-
-      pdf.text(
-
-        'Prerna Institute Of Excellence',
-
-        pageWidth / 2,
-
-        12,
-
-        {
-
-          align: 'center',
-
-        }
-
+      doc.setFontSize(
+        16
       )
 
-
-      pdf.setFontSize(14)
-
-
-      pdf.text(
-
+      doc.text(
         'Fee Due Report',
-
-        pageWidth / 2,
-
-        20,
-
-        {
-
-          align: 'center',
-
-        }
-
+        14,
+        15
       )
 
-
-      // ==================================
-      // FILTER DETAILS
-      // ==================================
-
-      pdf.setFontSize(9)
-
-
-      const filterText =
-
-        `Course: ${course}` +
-
-        ` | Status: ${getStatusLabel(status)}` +
-
-        ` | Batch: ${batchTime}` +
-
-        ` | Plan: ${getPaymentPlanLabel(paymentPlan)}`
-
-
-      pdf.text(
-
-        filterText,
-
-        10,
-
-        28
-
+      doc.setFontSize(
+        9
       )
 
-
-      // ==================================
-      // GENERATED DATE
-      // ==================================
-
-      pdf.text(
-
-        `Generated: ${new Date().toLocaleDateString('en-IN')}`,
-
-        10,
-
-        34
-
+      doc.text(
+        `Course: ${course}`,
+        14,
+        23
       )
 
+      doc.text(
+        `Status: ${status}`,
+        14,
+        29
+      )
 
-      // ==================================
-      // TABLE DATA
-      // ==================================
+      doc.text(
+        `Batch: ${batchTime}`,
+        14,
+        35
+      )
 
-      const tableData =
-        students.map(
+      doc.text(
+        `Payment Plan: ${getPlanLabel(
+          paymentPlan === 'All'
+            ? ''
+            : paymentPlan
+        ) || 'All'}`,
+        14,
+        41
+      )
 
-          (student, index) => [
-
-            index + 1,
-
-            student.admissionNumber ||
-              '-',
-
-            student.name ||
-              '-',
-
-            student.fatherName ||
-              '-',
-
-            student.contact ||
-              '-',
-
-            student.course ||
-              '-',
-
-            student.batchTime ||
-              '-',
-
-            getPaymentPlanLabel(
-              student.paymentPlan
-            ),
-
-            `₹ ${formatMoney(
-              student.totalFees
-            )}`,
-
-            `₹ ${formatMoney(
-              student.paidFees
-            )}`,
-
-            `₹ ${formatMoney(
-              student.remainingFees
-            )}`,
-
-            formatDate(
-              student.dueDate
-            ),
-
-            student.actualFeeStatus ||
-              getActualFeeStatus(
-                student
-              ),
-
-          ]
-
-        )
-
-
-      // ==================================
-      // PDF TABLE
-      // ==================================
 
       autoTable(
-
-        pdf,
-
+        doc,
         {
 
-          startY: 40,
+          startY: 48,
 
           head: [[
 
-            'S.No',
+            '#',
 
-            'Student ID',
+            'Admission No.',
 
-            'Student Name',
-
-            "Father's Name",
-
-            'Mobile',
+            'Student',
 
             'Course',
-
-            'Batch',
 
             'Plan',
 
@@ -964,189 +527,69 @@ function FeeDueReport() {
 
             'Remaining',
 
-            'Next Due Date',
+            'Due Amount',
+
+            'Due Date',
 
             'Status',
 
           ]],
 
           body:
-            tableData,
 
-          theme:
-            'grid',
+            reportStudents.map(
+              (
+                student,
+                index
+              ) => [
 
-          styles: {
+                index + 1,
 
-            fontSize: 7,
+                student.admissionNumber ||
+                  '-',
 
-            cellPadding: 2,
+                student.name ||
+                  '-',
 
-            valign: 'middle',
+                student.course ||
+                  '-',
 
-          },
+                getPlanLabel(
+                  student.paymentPlan
+                ),
 
-          headStyles: {
+                `Rs. ${formatMoney(
+                  student.totalFees
+                )}`,
 
-            fontSize: 7,
+                `Rs. ${formatMoney(
+                  student.paidFees
+                )}`,
 
-            fontStyle: 'bold',
+                `Rs. ${formatMoney(
+                  student.remainingFees
+                )}`,
 
-          },
+                `Rs. ${formatMoney(
+                  student.dueAmount
+                )}`,
 
-          margin: {
+                formatDate(
+                  student.dueDate
+                ),
 
-            left: 7,
+                student.feesStatus ||
+                  '-',
 
-            right: 7,
-
-          },
-
-          didParseCell:
-            (data) => {
-
-              if (
-                data.section ===
-                'head'
-              ) {
-
-                data.cell.styles
-                  .fontStyle =
-                  'bold'
-
-              }
-
-
-              // ==================================
-              // STATUS COLOR
-              // ==================================
-
-              if (
-
-                data.section ===
-                'body' &&
-
-                data.column.index ===
-                12
-
-              ) {
-
-                const value =
-                  data.cell.text?.[0]
-
-
-                if (
-                  value === 'Paid'
-                ) {
-
-                  data.cell.styles
-                    .textColor =
-                    [25, 135, 84]
-
-                }
-
-
-                if (
-                  value === 'Partial'
-                ) {
-
-                  data.cell.styles
-                    .textColor =
-                    [180, 120, 0]
-
-                }
-
-
-                if (
-                  value === 'Due'
-                ) {
-
-                  data.cell.styles
-                    .textColor =
-                    [220, 53, 69]
-
-                }
-
-              }
-
-            },
+              ]
+            ),
 
         }
-
       )
 
 
-      // ==================================
-      // SUMMARY
-      // ==================================
-
-      const finalY =
-        pdf.lastAutoTable.finalY + 8
-
-
-      pdf.setFontSize(9)
-
-
-      pdf.text(
-
-        `Total Students: ${summary.totalStudents}`,
-
-        10,
-
-        finalY
-
-      )
-
-
-      pdf.text(
-
-        `Total Fee: ₹ ${formatMoney(
-          summary.totalCourseFee
-        )}`,
-
-        65,
-
-        finalY
-
-      )
-
-
-      pdf.text(
-
-        `Total Paid: ₹ ${formatMoney(
-          summary.totalPaid
-        )}`,
-
-        125,
-
-        finalY
-
-      )
-
-
-      pdf.text(
-
-        `Total Remaining: ₹ ${formatMoney(
-          summary.totalDue
-        )}`,
-
-        185,
-
-        finalY
-
-      )
-
-
-      // ==================================
-      // SAVE PDF
-      // ==================================
-
-      pdf.save(
-
-        `fee-due-report-${new Date()
-          .toISOString()
-          .slice(0, 10)}.pdf`
-
+      doc.save(
+        'fee-due-report.pdf'
       )
 
     }
@@ -1154,144 +597,274 @@ function FeeDueReport() {
 
   return (
 
-    <div
-      className="container-fluid py-4"
-    >
+    <div className="container-fluid">
 
 
-      {/* ==================================
-          HEADER
-      ================================== */}
+      {/* ====================================== */}
+      {/* HEADER */}
+      {/* ====================================== */}
 
-      <div
-        className="d-flex justify-content-between align-items-center mb-4"
-      >
+      <div className="d-flex justify-content-between align-items-center mb-4">
 
         <div>
 
           <h2 className="fw-bold mb-1">
-
             Fee Due Report
-
           </h2>
 
-
           <p className="text-muted mb-0">
-
-            Generate student fee reports
-            course-wise and dues-wise.
-
+            Track paid, due and pending installments.
           </p>
 
         </div>
 
 
-        <div
-          className="d-flex gap-2"
+        <button
+          type="button"
+          className="btn btn-dark"
+          onClick={downloadPDF}
+          disabled={
+            reportStudents.length === 0
+          }
         >
 
-          <button
+          Download PDF
 
-            type="button"
+        </button>
 
-            className="btn btn-outline-primary"
-
-            onClick={
-              handlePrint
-            }
-
-          >
-
-            🖨 Print
-
-          </button>
+      </div>
 
 
-          <button
+      {/* ====================================== */}
+      {/* ERROR */}
+      {/* ====================================== */}
 
-            type="button"
+      {error && (
 
-            className="btn btn-primary"
+        <div className="alert alert-danger">
 
-            onClick={
-              handleDownloadPDF
-            }
+          {error}
 
-          >
+        </div>
 
-            📄 Download PDF
+      )}
 
-          </button>
+
+      {/* ====================================== */}
+      {/* SUMMARY CARDS */}
+      {/* ====================================== */}
+
+      <div className="row g-3 mb-4">
+
+
+        <div className="col-md-3">
+
+          <div className="admin-card h-100">
+
+            <h6>
+              Students
+            </h6>
+
+            <h3>
+              {summary.totalStudents || 0}
+            </h3>
+
+          </div>
+
+        </div>
+
+
+        <div className="col-md-3">
+
+          <div className="admin-card h-100">
+
+            <h6>
+              Total Course Fee
+            </h6>
+
+            <h3>
+              ₹ {formatMoney(
+                summary.totalCourseFee
+              )}
+            </h3>
+
+          </div>
+
+        </div>
+
+
+        <div className="col-md-3">
+
+          <div className="admin-card h-100">
+
+            <h6>
+              Total Paid
+            </h6>
+
+            <h3>
+              ₹ {formatMoney(
+                summary.totalPaid
+              )}
+            </h3>
+
+          </div>
+
+        </div>
+
+
+        <div className="col-md-3">
+
+          <div className="admin-card h-100">
+
+            <h6>
+              Remaining Fee
+            </h6>
+
+            <h3>
+              ₹ {formatMoney(
+                summary.totalDue
+              )}
+            </h3>
+
+          </div>
 
         </div>
 
       </div>
 
 
-      {/* ==================================
-          FILTER CARD
-      ================================== */}
+      {/* ====================================== */}
+      {/* INSTALLMENT SUMMARY */}
+      {/* ====================================== */}
 
-      <div
-        className="card shadow-sm mb-4"
-      >
+      <div className="row g-3 mb-4">
+
+
+        <div className="col-md-4">
+
+          <div className="admin-card h-100">
+
+            <h6>
+              Current Due Amount
+            </h6>
+
+            <h3>
+              ₹ {formatMoney(
+                summary.totalDueAmount
+              )}
+            </h3>
+
+            <small className="text-muted">
+
+              {summary.totalDueInstallments || 0}
+              {' '}
+              installments currently due
+
+            </small>
+
+          </div>
+
+        </div>
+
+
+        <div className="col-md-4">
+
+          <div className="admin-card h-100">
+
+            <h6>
+              Future Pending Amount
+            </h6>
+
+            <h3>
+              ₹ {formatMoney(
+                summary.totalPendingAmount
+              )}
+            </h3>
+
+            <small className="text-muted">
+
+              {summary.totalPendingInstallments || 0}
+              {' '}
+              installments pending
+
+            </small>
+
+          </div>
+
+        </div>
+
+
+        <div className="col-md-4">
+
+          <div className="admin-card h-100">
+
+            <h6>
+              Paid Installments
+            </h6>
+
+            <h3>
+              {summary.totalPaidInstallments || 0}
+            </h3>
+
+            <small className="text-muted">
+
+              Total installments:
+              {' '}
+              {summary.totalInstallments || 0}
+
+            </small>
+
+          </div>
+
+        </div>
+
+      </div>
+
+
+      {/* ====================================== */}
+      {/* FILTERS */}
+      {/* ====================================== */}
+
+      <div className="card border-0 shadow-sm mb-4">
 
         <div className="card-body">
 
           <div className="row g-3">
 
 
-            {/* ==================================
-                COURSE
-            ================================== */}
+            {/* Course */}
 
             <div className="col-md-3">
 
-              <label
-                className="form-label fw-semibold"
-              >
-
+              <label className="form-label fw-semibold">
                 Course
-
               </label>
 
-
               <select
-
                 className="form-select"
-
                 value={course}
-
                 onChange={(e) =>
                   setCourse(
                     e.target.value
                   )
                 }
-
               >
 
                 <option value="All">
-
-                  All Courses
-
+                  All
                 </option>
 
-
                 {courses.map(
-
                   (item) => (
 
                     <option
                       key={item}
                       value={item}
                     >
-
                       {item}
-
                     </option>
 
                   )
-
                 )}
 
               </select>
@@ -1299,60 +872,38 @@ function FeeDueReport() {
             </div>
 
 
-            {/* ==================================
-                FEE STATUS
-            ================================== */}
+            {/* Status */}
 
             <div className="col-md-3">
 
-              <label
-                className="form-label fw-semibold"
-              >
-
+              <label className="form-label fw-semibold">
                 Fee Status
-
               </label>
 
-
               <select
-
                 className="form-select"
-
                 value={status}
-
                 onChange={(e) =>
                   setStatus(
                     e.target.value
                   )
                 }
-
               >
 
                 <option value="All">
-
-                  All Students
-
+                  All
                 </option>
-
-
-                <option value="Due">
-
-                  Due Students
-
-                </option>
-
-
-                <option value="Partial">
-
-                  Partial Payment
-
-                </option>
-
 
                 <option value="Paid">
+                  Paid
+                </option>
 
-                  Fully Paid
+                <option value="Partial">
+                  Partial
+                </option>
 
+                <option value="Due">
+                  Due
                 </option>
 
               </select>
@@ -1360,57 +911,39 @@ function FeeDueReport() {
             </div>
 
 
-            {/* ==================================
-                BATCH TIME
-            ================================== */}
+            {/* Batch */}
 
             <div className="col-md-3">
 
-              <label
-                className="form-label fw-semibold"
-              >
-
+              <label className="form-label fw-semibold">
                 Batch Time
-
               </label>
 
-
               <select
-
                 className="form-select"
-
                 value={batchTime}
-
                 onChange={(e) =>
                   setBatchTime(
                     e.target.value
                   )
                 }
-
               >
 
                 <option value="All">
-
-                  All Batches
-
+                  All
                 </option>
 
-
                 {batchTimes.map(
-
                   (item) => (
 
                     <option
                       key={item}
                       value={item}
                     >
-
                       {item}
-
                     </option>
 
                   )
-
                 )}
 
               </select>
@@ -1418,125 +951,44 @@ function FeeDueReport() {
             </div>
 
 
-            {/* ==================================
-                PAYMENT PLAN
-            ================================== */}
+            {/* Payment Plan */}
 
             <div className="col-md-3">
 
-              <label
-                className="form-label fw-semibold"
-              >
-
+              <label className="form-label fw-semibold">
                 Payment Plan
-
               </label>
 
-
               <select
-
                 className="form-select"
-
                 value={paymentPlan}
-
                 onChange={(e) =>
                   setPaymentPlan(
                     e.target.value
                   )
                 }
-
               >
 
                 <option value="All">
-
-                  All Plans
-
+                  All
                 </option>
-
-
-                <option value="monthly">
-
-                  Monthly
-
-                </option>
-
-
-                <option value="three_month">
-
-                  Every 3 Months
-
-                </option>
-
-
-                <option value="six_month">
-
-                  Every 6 Months
-
-                </option>
-
 
                 <option value="full">
-
                   Full Payment
+                </option>
 
+                <option value="monthly">
+                  Monthly
+                </option>
+
+                <option value="installment">
+                  Installment
                 </option>
 
               </select>
 
             </div>
 
-
-            {/* ==================================
-                FILTER BUTTONS
-            ================================== */}
-
-            <div
-              className="col-12 d-flex gap-2"
-            >
-
-              <button
-
-                type="button"
-
-                className="btn btn-primary"
-
-                onClick={
-                  handleApplyFilter
-                }
-
-                disabled={
-                  loading
-                }
-
-              >
-
-                {
-                  loading
-                    ? 'Loading...'
-                    : 'Apply Filter'
-                }
-
-              </button>
-
-
-              <button
-
-                type="button"
-
-                className="btn btn-outline-secondary"
-
-                onClick={
-                  handleReset
-                }
-
-              >
-
-                Reset
-
-              </button>
-
-            </div>
-
           </div>
 
         </div>
@@ -1544,534 +996,391 @@ function FeeDueReport() {
       </div>
 
 
-      {/* ==================================
-          SUMMARY CARDS
-      ================================== */}
+      {/* ====================================== */}
+      {/* LOADING */}
+      {/* ====================================== */}
 
-      <div
-        className="row g-3 mb-4"
-      >
+      {loading && (
 
-
-        {/* TOTAL STUDENTS */}
-
-        <div className="col-md-3">
-
-          <div className="card shadow-sm">
-
-            <div className="card-body">
-
-              <small className="text-muted">
-
-                Total Students
-
-              </small>
-
-
-              <h3 className="fw-bold mb-0">
-
-                {
-                  summary.totalStudents
-                }
-
-              </h3>
-
-            </div>
-
-          </div>
-
-        </div>
-
-
-        {/* TOTAL FEE */}
-
-        <div className="col-md-3">
-
-          <div className="card shadow-sm">
-
-            <div className="card-body">
-
-              <small className="text-muted">
-
-                Total Course Fee
-
-              </small>
-
-
-              <h3 className="fw-bold mb-0">
-
-                ₹ {
-                  formatMoney(
-                    summary.totalCourseFee
-                  )
-                }
-
-              </h3>
-
-            </div>
-
-          </div>
-
-        </div>
-
-
-        {/* TOTAL PAID */}
-
-        <div className="col-md-3">
-
-          <div className="card shadow-sm">
-
-            <div className="card-body">
-
-              <small className="text-muted">
-
-                Total Paid
-
-              </small>
-
-
-              <h3 className="fw-bold mb-0">
-
-                ₹ {
-                  formatMoney(
-                    summary.totalPaid
-                  )
-                }
-
-              </h3>
-
-            </div>
-
-          </div>
-
-        </div>
-
-
-        {/* TOTAL REMAINING */}
-
-        <div className="col-md-3">
-
-          <div className="card shadow-sm">
-
-            <div className="card-body">
-
-              <small className="text-muted">
-
-                Total Remaining
-
-              </small>
-
-
-              <h3 className="fw-bold text-danger mb-0">
-
-                ₹ {
-                  formatMoney(
-                    summary.totalDue
-                  )
-                }
-
-              </h3>
-
-            </div>
-
-          </div>
-
-        </div>
-
-      </div>
-
-
-      {/* ==================================
-          REPORT TABLE
-      ================================== */}
-
-      <div
-        className="card shadow-sm"
-        id="fee-report-print"
-      >
-
-        <div className="card-body">
-
-
-          {/* REPORT HEADER */}
+        <div className="text-center py-5">
 
           <div
-            className="d-flex justify-content-between align-items-center mb-3"
-          >
+            className="spinner-border"
+            role="status"
+          />
 
-            <div>
+          <p className="mt-2 text-muted">
+            Loading fee report...
+          </p>
 
-              <h4 className="fw-bold mb-1">
+        </div>
 
-                Fee Report
-
-              </h4>
-
-
-              <small className="text-muted">
-
-                Course: {course}
-
-                {' | '}
-
-                Status: {
-                  getStatusLabel(
-                    status
-                  )
-                }
-
-                {' | '}
-
-                Batch: {batchTime}
-
-                {' | '}
-
-                Plan: {
-                  getPaymentPlanLabel(
-                    paymentPlan
-                  )
-                }
-
-              </small>
-
-            </div>
-
-          </div>
+      )}
 
 
-          {/* ==================================
-              TABLE
-          ================================== */}
+      {/* ====================================== */}
+      {/* REPORT TABLE */}
+      {/* ====================================== */}
 
-          <div
-            className="table-responsive"
-          >
+      {!loading && (
 
-            <table
-              className="table table-bordered table-hover align-middle"
-            >
+        <div className="card border-0 shadow-sm">
 
-              <thead className="table-light">
+          <div className="card-body">
 
-                <tr>
+            <div className="table-responsive">
 
-                  <th>
-                    S.No
-                  </th>
+              <table className="table table-hover align-middle">
 
-                  <th>
-                    Student ID
-                  </th>
-
-                  <th>
-                    Student Name
-                  </th>
-
-                  <th>
-                    Father's Name
-                  </th>
-
-                  <th>
-                    Mobile
-                  </th>
-
-                  <th>
-                    Course
-                  </th>
-
-                  <th>
-                    Batch
-                  </th>
-
-                  <th>
-                    Payment Plan
-                  </th>
-
-                  <th>
-                    Total Fee
-                  </th>
-
-                  <th>
-                    Paid
-                  </th>
-
-                  <th>
-                    Remaining
-                  </th>
-
-                  <th>
-                    Next Due Date
-                  </th>
-
-                  <th>
-                    Fee Status
-                  </th>
-
-                  <th>
-                    Admission Date
-                  </th>
-
-                </tr>
-
-              </thead>
-
-
-              <tbody>
-
-                {loading ? (
+                <thead>
 
                   <tr>
 
-                    <td
-                      colSpan="14"
-                      className="text-center py-4"
-                    >
+                    <th>
+                      #
+                    </th>
 
-                      Loading report...
+                    <th>
+                      Admission No.
+                    </th>
 
-                    </td>
+                    <th>
+                      Student
+                    </th>
+
+                    <th>
+                      Course
+                    </th>
+
+                    <th>
+                      Plan
+                    </th>
+
+                    <th>
+                      Total Fee
+                    </th>
+
+                    <th>
+                      Paid
+                    </th>
+
+                    <th>
+                      Remaining
+                    </th>
+
+                    <th>
+                      Due Amount
+                    </th>
+
+                    <th>
+                      Latest Due Date
+                    </th>
+
+                    <th>
+                      Status
+                    </th>
 
                   </tr>
 
-                ) : students.length === 0 ? (
+                </thead>
 
-                  <tr>
 
-                    <td
-                      colSpan="14"
-                      className="text-center py-4"
-                    >
+                <tbody>
 
-                      No students found.
+                  {reportStudents.length === 0 && (
 
-                    </td>
+                    <tr>
 
-                  </tr>
-
-                ) : (
-
-                  students.map(
-
-                    (student, index) => (
-
-                      <tr
-
-                        key={
-
-                          student._id ||
-
-                          student.admissionNumber
-
-                        }
-
+                      <td
+                        colSpan="11"
+                        className="text-center py-4 text-muted"
                       >
 
-                        {/* S.NO */}
+                        No fee records found.
 
-                        <td>
+                      </td>
 
-                          {index + 1}
+                    </tr>
 
-                        </td>
+                  )}
 
 
-                        {/* STUDENT ID */}
+                  {reportStudents.map(
+                    (
+                      student,
+                      index
+                    ) => {
 
-                        <td>
+                      const schedule =
+                        scheduleSummary(
+                          student
+                        )
 
-                          {
-                            student.admissionNumber ||
-                            '-'
-                          }
+                      return (
 
-                        </td>
+                        <>
 
-
-                        {/* STUDENT NAME */}
-
-                        <td>
-
-                          {
-                            student.name ||
-                            '-'
-                          }
-
-                        </td>
-
-
-                        {/* FATHER NAME */}
-
-                        <td>
-
-                          {
-                            student.fatherName ||
-                            '-'
-                          }
-
-                        </td>
-
-
-                        {/* MOBILE */}
-
-                        <td>
-
-                          {
-                            student.contact ||
-                            '-'
-                          }
-
-                        </td>
-
-
-                        {/* COURSE */}
-
-                        <td>
-
-                          {
-                            student.course ||
-                            '-'
-                          }
-
-                        </td>
-
-
-                        {/* BATCH */}
-
-                        <td>
-
-                          {
-                            student.batchTime ||
-                            '-'
-                          }
-
-                        </td>
-
-
-                        {/* PAYMENT PLAN */}
-
-                        <td>
-
-                          {
-                            getPaymentPlanLabel(
-                              student.paymentPlan
-                            )
-                          }
-
-                        </td>
-
-
-                        {/* TOTAL FEE */}
-
-                        <td>
-
-                          ₹ {
-                            formatMoney(
-                              student.totalFees
-                            )
-                          }
-
-                        </td>
-
-
-                        {/* PAID */}
-
-                        <td>
-
-                          ₹ {
-                            formatMoney(
-                              student.paidFees
-                            )
-                          }
-
-                        </td>
-
-
-                        {/* REMAINING */}
-
-                        <td>
-
-                          <strong>
-
-                            ₹ {
-                              formatMoney(
-                                student.remainingFees
-                              )
-                            }
-
-                          </strong>
-
-                        </td>
-
-
-                        {/* NEXT DUE DATE */}
-
-                        <td>
-
-                          {
-                            student.dueDate
-                              ? formatDate(
-                                  student.dueDate
-                                )
-                              : '-'
-                          }
-
-                        </td>
-
-
-                        {/* FEE STATUS */}
-
-                        <td>
-
-                          <span
-                            className={
-                              getStatusClass(
-                                student
-                              )
+                          <tr
+                            key={
+                              student._id
                             }
                           >
 
-                            {
-                              student.actualFeeStatus ||
-                              getActualFeeStatus(
-                                student
-                              )
-                            }
+                            <td>
+                              {index + 1}
+                            </td>
 
-                          </span>
+                            <td>
+                              {
+                                student.admissionNumber ||
+                                '-'
+                              }
+                            </td>
 
-                        </td>
+                            <td>
+
+                              <strong>
+                                {
+                                  student.name ||
+                                  '-'
+                                }
+                              </strong>
+
+                              {student.fatherName && (
+
+                                <small className="d-block text-muted">
+
+                                  S/o {
+                                    student.fatherName
+                                  }
+
+                                </small>
+
+                              )}
+
+                            </td>
+
+                            <td>
+                              {
+                                student.course ||
+                                '-'
+                              }
+                            </td>
+
+                            <td>
+                              {
+                                getPlanLabel(
+                                  student.paymentPlan
+                                )
+                              }
+                            </td>
+
+                            <td>
+                              ₹ {formatMoney(
+                                student.totalFees
+                              )}
+                            </td>
+
+                            <td>
+                              ₹ {formatMoney(
+                                student.paidFees
+                              )}
+                            </td>
+
+                            <td>
+                              ₹ {formatMoney(
+                                student.remainingFees
+                              )}
+                            </td>
+
+                            <td>
+
+                              <strong>
+                                ₹ {formatMoney(
+                                  student.dueAmount
+                                )}
+                              </strong>
+
+                              {student.dueInstallmentCount > 0 && (
+
+                                <small className="d-block text-danger">
+
+                                  {
+                                    student.dueInstallmentCount
+                                  }
+                                  {' '}
+                                  due
+
+                                </small>
+
+                              )}
+
+                            </td>
+
+                            <td>
+                              {
+                                formatDate(
+                                  student.dueDate
+                                )
+                              }
+                            </td>
+
+                            <td>
+
+                              <span
+                                className={
+                                  `status ${getStatusClass(
+                                    student.feesStatus
+                                  )}`
+                                }
+                              >
+
+                                {
+                                  student.feesStatus ||
+                                  '-'
+                                }
+
+                              </span>
+
+                            </td>
+
+                          </tr>
 
 
-                        {/* ADMISSION DATE */}
+                          {/* ================================== */}
+                          {/* INSTALLMENT DETAILS */}
+                          {/* ================================== */}
 
-                        <td>
+                          {schedule.due.length > 0 && (
 
-                          {
-                            formatDate(
-                              student.admissionDate
-                            )
-                          }
+                            <tr>
 
-                        </td>
+                              <td
+                                colSpan="11"
+                                className="bg-light"
+                              >
 
-                      </tr>
+                                <div className="small">
 
-                    )
+                                  <strong>
+                                    Due Installments:
+                                  </strong>
 
-                  )
+                                  <div className="table-responsive mt-2">
 
-                )}
+                                    <table className="table table-sm mb-0">
 
-              </tbody>
+                                      <thead>
 
-            </table>
+                                        <tr>
+
+                                          <th>
+                                            #
+                                          </th>
+
+                                          <th>
+                                            Amount
+                                          </th>
+
+                                          <th>
+                                            Due Date
+                                          </th>
+
+                                          <th>
+                                            Paid
+                                          </th>
+
+                                          <th>
+                                            Status
+                                          </th>
+
+                                        </tr>
+
+                                      </thead>
+
+                                      <tbody>
+
+                                        {schedule.due.map(
+                                          (item) => (
+
+                                            <tr
+                                              key={
+                                                `${student._id}-due-${item.installmentNumber}`
+                                              }
+                                            >
+
+                                              <td>
+                                                {
+                                                  item.installmentNumber ||
+                                                  '-'
+                                                }
+                                              </td>
+
+                                              <td>
+                                                ₹ {formatMoney(
+                                                  item.amount
+                                                )}
+                                              </td>
+
+                                              <td>
+                                                {
+                                                  formatDate(
+                                                    item.dueDate
+                                                  )
+                                                }
+                                              </td>
+
+                                              <td>
+                                                ₹ {formatMoney(
+                                                  item.paidAmount
+                                                )}
+                                              </td>
+
+                                              <td>
+
+                                                <span className="status due">
+                                                  Due
+                                                </span>
+
+                                              </td>
+
+                                            </tr>
+
+                                          )
+                                        )}
+
+                                      </tbody>
+
+                                    </table>
+
+                                  </div>
+
+                                </div>
+
+                              </td>
+
+                            </tr>
+
+                          )}
+
+                        </>
+
+                      )
+
+                    }
+                  )}
+
+                </tbody>
+
+              </table>
+
+            </div>
 
           </div>
 
         </div>
 
-      </div>
-
+      )}
 
     </div>
 

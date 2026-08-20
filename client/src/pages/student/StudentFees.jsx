@@ -475,14 +475,9 @@ function StudentFees() {
           return 'Monthly Installment'
 
 
-        case 'three_month':
+        case 'installment':
 
-          return '3 Month Installment'
-
-
-        case 'six_month':
-
-          return '6 Month Installment'
+          return 'Custom Installment'
 
 
         case 'full':
@@ -495,6 +490,468 @@ function StudentFees() {
           return 'Not Selected'
 
       }
+
+    }
+
+
+  // ======================================
+  // DUE SUMMARY
+  // ======================================
+  //
+  // Same rule as Admin Fee Due Report:
+  //
+  // 1. An unpaid installment is Due when
+  //    its due date has arrived.
+  //
+  // 2. Future installments remain Pending.
+  //
+  // 3. Due Amount = sum of all currently
+  //    due unpaid installments.
+  //
+  // 4. Due Count = number of currently
+  //    due installments.
+  //
+  // 5. Latest Due Date = latest date among
+  //    the currently due installments.
+  //
+  // 6. If nothing is due, show the next
+  //    pending installment date.
+  //
+  // ======================================
+
+  const getDueSummary = () => {
+
+    const remaining =
+      Number(
+        fees?.remainingFees || 0
+      )
+
+    if (
+      !fees ||
+      remaining <= 0
+    ) {
+
+      return {
+
+        dueAmount: 0,
+
+        dueDate: null,
+
+        dueCount: 0,
+
+        hasDue: false,
+
+      }
+
+    }
+
+
+    // ==================================
+    // FULL PAYMENT
+    // ==================================
+
+    if (
+      fees?.paymentPlan === 'full'
+    ) {
+
+      return {
+
+        dueAmount:
+          remaining,
+
+        dueDate:
+          fees?.dueDate || null,
+
+        dueCount:
+          1,
+
+        hasDue:
+          remaining > 0,
+
+      }
+
+    }
+
+
+    const schedule =
+      Array.isArray(
+        fees?.installmentSchedule
+      )
+        ? fees.installmentSchedule
+        : []
+
+
+    // ==================================
+    // TODAY
+    // ==================================
+
+    const today =
+      new Date()
+
+    today.setHours(
+      23,
+      59,
+      59,
+      999
+    )
+
+
+    // ==================================
+    // CURRENTLY DUE
+    // ==================================
+    //
+    // Do NOT depend only on item.status.
+    // The due date is the source of truth.
+    // This keeps Student Portal in sync with
+    // Fee Due Report even if an old record has
+    // a stale "Pending" status.
+    //
+    // ==================================
+
+    const dueItems =
+      schedule
+        .filter(
+          (item) => {
+
+            const amount =
+              Number(
+                item?.amount || 0
+              )
+
+            const paidAmount =
+              Number(
+                item?.paidAmount || 0
+              )
+
+            const balance =
+              Math.max(
+                0,
+                amount - paidAmount
+              )
+
+            if (
+              balance <= 0
+            ) {
+
+              return false
+
+            }
+
+            if (
+              item?.status === 'Due'
+            ) {
+
+              return true
+
+            }
+
+            if (
+              !item?.dueDate
+            ) {
+
+              return false
+
+            }
+
+            const dueDate =
+              new Date(
+                item.dueDate
+              )
+
+            if (
+              Number.isNaN(
+                dueDate.getTime()
+              )
+            ) {
+
+              return false
+
+            }
+
+            return (
+              dueDate <= today
+            )
+
+          }
+        )
+
+
+    const dueAmount =
+      dueItems.reduce(
+
+        (
+          total,
+          item
+        ) => {
+
+          const amount =
+            Number(
+              item?.amount || 0
+            )
+
+          const paidAmount =
+            Number(
+              item?.paidAmount || 0
+            )
+
+          return (
+            total +
+            Math.max(
+              0,
+              amount - paidAmount
+            )
+          )
+
+        },
+
+        0
+
+      )
+
+
+    // ==================================
+    // LATEST CURRENT DUE DATE
+    // ==================================
+
+    const latestDueItem =
+      [...dueItems]
+        .filter(
+          item =>
+            item?.dueDate
+        )
+        .sort(
+          (a, b) =>
+            new Date(b.dueDate) -
+            new Date(a.dueDate)
+        )[0]
+
+
+    if (
+      dueItems.length > 0
+    ) {
+
+      return {
+
+        dueAmount:
+          Math.min(
+            dueAmount,
+            remaining
+          ),
+
+        dueDate:
+          latestDueItem?.dueDate ||
+          fees?.dueDate ||
+          null,
+
+        dueCount:
+          dueItems.length,
+
+        hasDue:
+          dueAmount > 0,
+
+      }
+
+    }
+
+
+    // ==================================
+    // NEXT PENDING INSTALLMENT
+    // ==================================
+
+    const nextPending =
+      schedule
+        .filter(
+          item => {
+
+            const amount =
+              Number(
+                item?.amount || 0
+              )
+
+            const paidAmount =
+              Number(
+                item?.paidAmount || 0
+              )
+
+            const balance =
+              Math.max(
+                0,
+                amount - paidAmount
+              )
+
+            if (
+              balance <= 0 ||
+              !item?.dueDate
+            ) {
+
+              return false
+
+            }
+
+            const dueDate =
+              new Date(
+                item.dueDate
+              )
+
+            return (
+              !Number.isNaN(
+                dueDate.getTime()
+              ) &&
+              dueDate > today
+            )
+
+          }
+        )
+        .sort(
+          (a, b) =>
+            new Date(a.dueDate) -
+            new Date(b.dueDate)
+        )[0]
+
+
+    return {
+
+      dueAmount: 0,
+
+      dueDate:
+        nextPending?.dueDate ||
+        fees?.dueDate ||
+        null,
+
+      dueCount: 0,
+
+      hasDue: false,
+
+    }
+
+  }
+
+
+  const dueSummary =
+    getDueSummary()
+
+
+  // ======================================
+  // GET MONTHLY PAYMENT AMOUNT
+  // ======================================
+  //
+  // Priority:
+  // 1. monthlyAmount
+  // 2. monthlyInstallment
+  // 3. First unpaid installment amount
+  //
+  // IMPORTANT:
+  // Due Amount can be ₹2,400 when 3 monthly
+  // installments are due, but one monthly
+  // payment is only ₹800.
+  //
+  // ======================================
+
+  const getMonthlyPaymentAmount =
+    () => {
+
+      const remaining =
+        Number(
+          fees?.remainingFees || 0
+        )
+
+      if (remaining <= 0) {
+
+        return 0
+
+      }
+
+      const configuredMonthlyAmount =
+        Number(
+          fees?.monthlyAmount ||
+          fees?.monthlyInstallment ||
+          0
+        )
+
+      if (
+        configuredMonthlyAmount > 0
+      ) {
+
+        return Math.min(
+
+          configuredMonthlyAmount,
+
+          remaining
+
+        )
+
+      }
+
+      const schedule =
+        Array.isArray(
+          fees?.installmentSchedule
+        )
+          ? fees.installmentSchedule
+          : []
+
+      const firstUnpaid =
+        schedule
+          .map(
+            item => {
+
+              const amount =
+                Number(
+                  item?.amount || 0
+                )
+
+              const paidAmount =
+                Number(
+                  item?.paidAmount || 0
+                )
+
+              return {
+
+                ...item,
+
+                balance:
+                  Math.max(
+                    0,
+                    amount - paidAmount
+                  ),
+
+              }
+
+            }
+          )
+          .filter(
+            item =>
+              item.balance > 0 &&
+              item.status !== 'Paid'
+          )
+          .sort(
+            (a, b) => {
+
+              const numberA =
+                Number(
+                  a.installmentNumber ||
+                  999999
+                )
+
+              const numberB =
+                Number(
+                  b.installmentNumber ||
+                  999999
+                )
+
+              return numberA - numberB
+
+            }
+          )[0]
+
+      return Math.min(
+
+        Number(
+          firstUnpaid?.balance || 0
+        ),
+
+        remaining
+
+      )
 
     }
 
@@ -515,79 +972,243 @@ function StudentFees() {
 
       }
 
-
       const remaining =
         Number(
-          fees.remainingFees ||
-          0
+          fees.remainingFees || 0
         )
 
+      if (remaining <= 0) {
 
-      let planAmount = 0
-
-
-      switch (
-        selectedPlan
-      ) {
-
-        case 'monthly':
-
-          planAmount =
-            Number(
-              fees.monthlyInstallment ||
-              0
-            )
-
-          break
-
-
-        case 'three_month':
-
-          planAmount =
-            Number(
-              fees.threeMonthInstallment ||
-              0
-            )
-
-          break
-
-
-        case 'six_month':
-
-          planAmount =
-            Number(
-              fees.sixMonthInstallment ||
-              0
-            )
-
-          break
-
-
-        case 'full':
-
-          planAmount =
-            Number(
-              fees.fullPaymentFee ||
-              remaining
-            )
-
-          break
-
-
-        default:
-
-          planAmount = 0
+        return 0
 
       }
 
+      // ----------------------------------
+      // FULL PAYMENT
+      // ----------------------------------
 
-      return Math.min(
+      if (
+        selectedPlan === 'full'
+      ) {
 
-        planAmount,
+        return remaining
 
-        remaining
+      }
 
+      // ----------------------------------
+      // MONTHLY
+      // ----------------------------------
+      //
+      // One monthly payment only.
+      // Do NOT use total due amount here.
+      //
+      // Example:
+      // 3 dues × ₹800 = ₹2,400 total due
+      // Minimum monthly payment = ₹800
+      //
+      // ----------------------------------
+
+      if (
+        selectedPlan === 'monthly'
+      ) {
+
+        return getMonthlyPaymentAmount()
+
+      }
+
+      // ----------------------------------
+      // CUSTOM INSTALLMENT
+      // ----------------------------------
+
+      if (
+        selectedPlan === 'installment'
+      ) {
+
+        const schedule =
+          Array.isArray(
+            fees.installmentSchedule
+          )
+            ? fees.installmentSchedule
+            : []
+
+        const due =
+          schedule
+            .filter(
+              item =>
+                item.status === 'Due'
+            )
+            .sort(
+              (a, b) =>
+                new Date(a.dueDate) -
+                new Date(b.dueDate)
+            )
+
+        if (
+          due.length > 0
+        ) {
+
+          return Math.min(
+
+            Number(
+              due[0].amount || 0
+            ) -
+            Number(
+              due[0].paidAmount || 0
+            ),
+
+            remaining
+
+          )
+
+        }
+
+        const pending =
+          schedule
+            .filter(
+              item =>
+                item.status === 'Pending'
+            )
+            .sort(
+              (a, b) =>
+                new Date(a.dueDate) -
+                new Date(b.dueDate)
+            )
+
+        if (
+          pending.length > 0
+        ) {
+
+          return Math.min(
+
+            Number(
+              pending[0].amount || 0
+            ),
+
+            remaining
+
+          )
+
+        }
+
+      }
+
+      return 0
+
+    }
+
+
+  // ======================================
+  // SET DEFAULT PAYMENT AMOUNT
+  // ======================================
+  //
+  // Monthly plan:
+  // automatically select one monthly
+  // installment amount.
+  //
+  // This lets the student simply press
+  // Pay Now to clear one due installment.
+  //
+  // ======================================
+
+  useEffect(() => {
+
+    if (
+      !fees ||
+      !selectedPlan
+    ) {
+
+      return
+
+    }
+
+    const requiredAmount =
+      getRequiredPaymentAmount()
+
+    if (
+      requiredAmount > 0 &&
+      !paymentAmount
+    ) {
+
+      setPaymentAmount(
+        String(requiredAmount)
       )
+
+    }
+
+  }, [
+    fees,
+    selectedPlan,
+  ])
+
+
+  // ======================================
+  // INSTALLMENT SCHEDULE
+  // ======================================
+
+  const installmentSchedule =
+    Array.isArray(
+      fees?.installmentSchedule
+    )
+      ? fees.installmentSchedule
+      : []
+
+
+  // ======================================
+  // INSTALLMENT STATUS CLASS
+  // ======================================
+
+  const getInstallmentStatusClass =
+    (status) => {
+
+      switch (status) {
+
+        case 'Paid':
+
+          return 'bg-success'
+
+        case 'Due':
+
+          return 'bg-danger'
+
+        case 'Pending':
+
+          return 'bg-secondary'
+
+        default:
+
+          return 'bg-secondary'
+
+      }
+
+    }
+
+
+  // ======================================
+  // PAYMENT PLAN BADGE CLASS
+  // ======================================
+
+  const getPlanBadgeClass =
+    (plan) => {
+
+      switch (plan) {
+
+        case 'full':
+
+          return 'bg-success'
+
+        case 'monthly':
+
+          return 'bg-primary'
+
+        case 'installment':
+
+          return 'bg-info text-dark'
+
+        default:
+
+          return 'bg-secondary'
+
+      }
 
     }
 
@@ -667,31 +1288,6 @@ function StudentFees() {
       )
 
       setError('')
-
-    }
-
-
-  // ======================================
-  // HANDLE PLAN CHANGE
-  // ======================================
-
-  const handlePlanChange =
-    (event) => {
-
-      const plan =
-        event.target.value
-
-
-      setSelectedPlan(
-        plan
-      )
-
-
-      setPaymentAmount('')
-
-      setError('')
-
-      setSuccess('')
 
     }
 
@@ -826,9 +1422,7 @@ function StudentFees() {
 
         setError(
 
-          `Minimum payment for ${getPaymentPlanLabel(
-            selectedPlan
-          )} is ₹${formatMoney(
+          `Minimum payment required is ₹${formatMoney(
             requiredAmount
           )}.`
 
@@ -865,7 +1459,7 @@ function StudentFees() {
               amount,
 
               paymentPlan:
-                selectedPlan,
+                fees?.paymentPlan,
 
             },
 
@@ -1014,7 +1608,7 @@ function StudentFees() {
                         amount,
 
                       paymentPlan:
-                        selectedPlan,
+                        fees?.paymentPlan,
 
                       transactionId:
                         razorpayResponse
@@ -1514,40 +2108,38 @@ function StudentFees() {
       <div className="row g-4 mb-4">
 
 
-        <div className="col-md-4">
+        {/* TOTAL COURSE FEE */}
+
+        <div className="col-md-6 col-xl-3">
 
           <div className="card border-0 shadow-sm h-100">
 
-            <div className="card-body p-4 text-center">
+            <div className="card-body p-4">
 
-              <div
-                style={{
-                  fontSize: '40px',
-                }}
-              >
+              <div className="d-flex justify-content-between align-items-start">
 
-                💰
+                <div>
+
+                  <small className="text-muted">
+                    Total Course Fee
+                  </small>
+
+                  <h4 className="fw-bold mt-2 mb-0">
+                    ₹ {formatMoney(
+                      fees?.totalFees
+                    )}
+                  </h4>
+
+                </div>
+
+                <div
+                  className="fs-3"
+                  aria-hidden="true"
+                >
+                  💰
+                </div>
 
               </div>
-
-
-              <small className="text-muted">
-
-                Total Course Fee
-
-              </small>
-
-
-              <h4 className="fw-bold mt-2 mb-0">
-
-                ₹
-                {
-                  formatMoney(
-                    fees?.totalFees
-                  )
-                }
-
-              </h4>
 
             </div>
 
@@ -1556,40 +2148,38 @@ function StudentFees() {
         </div>
 
 
-        <div className="col-md-4">
+        {/* PAID */}
+
+        <div className="col-md-6 col-xl-3">
 
           <div className="card border-0 shadow-sm h-100">
 
-            <div className="card-body p-4 text-center">
+            <div className="card-body p-4">
 
-              <div
-                style={{
-                  fontSize: '40px',
-                }}
-              >
+              <div className="d-flex justify-content-between align-items-start">
 
-                ✅
+                <div>
+
+                  <small className="text-muted">
+                    Paid Amount
+                  </small>
+
+                  <h4 className="fw-bold text-success mt-2 mb-0">
+                    ₹ {formatMoney(
+                      fees?.paidFees
+                    )}
+                  </h4>
+
+                </div>
+
+                <div
+                  className="fs-3"
+                  aria-hidden="true"
+                >
+                  ✅
+                </div>
 
               </div>
-
-
-              <small className="text-muted">
-
-                Paid Amount
-
-              </small>
-
-
-              <h4 className="fw-bold text-success mt-2 mb-0">
-
-                ₹
-                {
-                  formatMoney(
-                    fees?.paidFees
-                  )
-                }
-
-              </h4>
 
             </div>
 
@@ -1598,40 +2188,68 @@ function StudentFees() {
         </div>
 
 
-        <div className="col-md-4">
+        {/* CURRENT DUE */}
 
-          <div className="card border-0 shadow-sm h-100">
+        <div className="col-md-6 col-xl-3">
 
-            <div className="card-body p-4 text-center">
+          <div
+            className={`card border-0 shadow-sm h-100 ${
+              dueSummary.hasDue
+                ? 'border-start border-4 border-danger'
+                : ''
+            }`}
+          >
 
-              <div
-                style={{
-                  fontSize: '40px',
-                }}
-              >
+            <div className="card-body p-4">
 
-                ⏳
+              <div className="d-flex justify-content-between align-items-start">
+
+                <div>
+
+                  <small className="text-muted">
+                    Due Amount
+                  </small>
+
+                  <h4
+                    className={`fw-bold mt-2 mb-0 ${
+                      dueSummary.hasDue
+                        ? 'text-danger'
+                        : 'text-success'
+                    }`}
+                  >
+                    ₹ {formatMoney(
+                      dueSummary.dueAmount
+                    )}
+                  </h4>
+
+                  <small className="text-muted d-block mt-1">
+
+                    {
+                      dueSummary.hasDue
+                        ? `${dueSummary.dueCount} payment${
+                            dueSummary.dueCount > 1
+                              ? 's'
+                              : ''
+                          } due`
+                        : 'Nothing due now'
+                    }
+
+                  </small>
+
+                </div>
+
+                <div
+                  className="fs-3"
+                  aria-hidden="true"
+                >
+                  {
+                    dueSummary.hasDue
+                      ? '⚠️'
+                      : '👍'
+                  }
+                </div>
 
               </div>
-
-
-              <small className="text-muted">
-
-                Remaining Fee
-
-              </small>
-
-
-              <h4 className="fw-bold text-danger mt-2 mb-0">
-
-                ₹
-                {
-                  formatMoney(
-                    fees?.remainingFees
-                  )
-                }
-
-              </h4>
 
             </div>
 
@@ -1639,6 +2257,205 @@ function StudentFees() {
 
         </div>
 
+
+        {/* TOTAL REMAINING */}
+
+        <div className="col-md-6 col-xl-3">
+
+          <div className="card border-0 shadow-sm h-100">
+
+            <div className="card-body p-4">
+
+              <div className="d-flex justify-content-between align-items-start">
+
+                <div>
+
+                  <small className="text-muted">
+                    Total Remaining
+                  </small>
+
+                  <h4 className="fw-bold text-primary mt-2 mb-0">
+                    ₹ {formatMoney(
+                      fees?.remainingFees
+                    )}
+                  </h4>
+
+                </div>
+
+                <div
+                  className="fs-3"
+                  aria-hidden="true"
+                >
+                  📌
+                </div>
+
+              </div>
+
+            </div>
+
+          </div>
+
+        </div>
+
+
+      </div>
+
+
+      {/* ==================================
+          DUE INFORMATION
+      ================================== */}
+
+      <div className="card border-0 shadow-sm mb-4">
+
+        <div className="card-body p-4">
+
+          <div className="row align-items-center g-4">
+
+
+            {/* DUE AMOUNT */}
+
+            <div className="col-md-4">
+
+              <div className="d-flex align-items-center">
+
+                <div
+                  className={`rounded-circle d-flex align-items-center justify-content-center me-3 ${
+                    dueSummary.hasDue
+                      ? 'bg-danger-subtle text-danger'
+                      : 'bg-success-subtle text-success'
+                  }`}
+                  style={{
+                    width: '52px',
+                    height: '52px',
+                    fontSize: '24px',
+                  }}
+                >
+                  ₹
+                </div>
+
+                <div>
+
+                  <small className="text-muted d-block">
+                    Amount Due Now
+                  </small>
+
+                  <h5
+                    className={`fw-bold mb-0 ${
+                      dueSummary.hasDue
+                        ? 'text-danger'
+                        : 'text-success'
+                    }`}
+                  >
+                    ₹ {formatMoney(
+                      dueSummary.dueAmount
+                    )}
+                  </h5>
+
+                </div>
+
+              </div>
+
+            </div>
+
+
+            {/* DUE DATE */}
+
+            <div className="col-md-4">
+
+              <div className="d-flex align-items-center">
+
+                <div
+                  className="rounded-circle bg-primary-subtle text-primary d-flex align-items-center justify-content-center me-3"
+                  style={{
+                    width: '52px',
+                    height: '52px',
+                    fontSize: '22px',
+                  }}
+                >
+                  📅
+                </div>
+
+                <div>
+
+                  <small className="text-muted d-block">
+                    {
+                      dueSummary.hasDue
+                        ? 'Due Till'
+                        : 'Next Due Date'
+                    }
+                  </small>
+
+                  <h6 className="fw-bold mb-0">
+
+                    {
+                      dueSummary.dueDate
+                        ? formatDate(
+                            dueSummary.dueDate
+                          )
+                        : 'No due date'
+                    }
+
+                  </h6>
+
+                </div>
+
+              </div>
+
+            </div>
+
+
+            {/* STATUS */}
+
+            <div className="col-md-4">
+
+              <div className="d-flex align-items-center">
+
+                <div
+                  className={`rounded-circle d-flex align-items-center justify-content-center me-3 ${
+                    dueSummary.hasDue
+                      ? 'bg-warning-subtle text-warning-emphasis'
+                      : 'bg-success-subtle text-success'
+                  }`}
+                  style={{
+                    width: '52px',
+                    height: '52px',
+                    fontSize: '22px',
+                  }}
+                >
+                  {
+                    dueSummary.hasDue
+                      ? '⏳'
+                      : '✓'
+                  }
+                </div>
+
+                <div>
+
+                  <small className="text-muted d-block">
+                    Fee Status
+                  </small>
+
+                  <span
+                    className={`badge ${getStatusClass(
+                      fees?.feesStatus
+                    )}`}
+                  >
+                    {
+                      fees?.feesStatus ||
+                      'Pending'
+                    }
+                  </span>
+
+                </div>
+
+              </div>
+
+            </div>
+
+
+          </div>
+
+        </div>
 
       </div>
 
@@ -1743,14 +2560,48 @@ function StudentFees() {
 
 
                 {/* ==================================
-                    NEXT DUE DATE
+                    DUE AMOUNT
                 ================================== */}
 
                 <div className="col-6">
 
                   <small className="text-muted">
 
-                    Next Due Date
+                    Due Amount
+
+                  </small>
+
+
+                  <div
+                    className={`fw-bold ${
+                      dueSummary.hasDue
+                        ? 'text-danger'
+                        : 'text-success'
+                    }`}
+                  >
+
+                    ₹ {formatMoney(
+                      dueSummary.dueAmount
+                    )}
+
+                  </div>
+
+                </div>
+
+
+                {/* ==================================
+                    DUE DATE
+                ================================== */}
+
+                <div className="col-6">
+
+                  <small className="text-muted">
+
+                    {
+                      dueSummary.hasDue
+                        ? 'Due Till'
+                        : 'Next Due Date'
+                    }
 
                   </small>
 
@@ -1758,9 +2609,9 @@ function StudentFees() {
                   <div className="fw-bold">
 
                     {
-                      fees?.dueDate
+                      dueSummary.dueDate
                         ? formatDate(
-                            fees.dueDate
+                            dueSummary.dueDate
                           )
                         : '-'
                     }
@@ -1787,134 +2638,281 @@ function StudentFees() {
 
             <div className="card-body p-4">
 
-              <h5 className="fw-bold mb-4">
+              <div className="d-flex justify-content-between align-items-center mb-4">
 
-                📆 Payment Plan
+                <h5 className="fw-bold mb-0">
+                  📆 Payment Plan
+                </h5>
 
-              </h5>
-
-
-              <div className="mb-4">
-
-                <small className="text-muted">
-
-                  Selected Plan
-
-                </small>
-
-
-                <div className="fw-bold mt-1">
-
+                <span
+                  className={`badge ${getPlanBadgeClass(
+                    fees?.paymentPlan
+                  )}`}
+                >
                   {
                     getPaymentPlanLabel(
                       fees?.paymentPlan
                     )
                   }
+                </span>
+
+              </div>
+
+
+              <div className="p-3 rounded-3 bg-light mb-3">
+
+                <div className="d-flex justify-content-between align-items-center">
+
+                  <div>
+
+                    <small className="text-muted d-block">
+                      Plan selected by institute
+                    </small>
+
+                    <strong>
+                      {
+                        getPaymentPlanLabel(
+                          fees?.paymentPlan
+                        )
+                      }
+                    </strong>
+
+                  </div>
+
+                  <div className="text-end">
+
+                    <small className="text-muted d-block">
+                      Remaining
+                    </small>
+
+                    <strong className="text-danger">
+                      ₹ {formatMoney(
+                        fees?.remainingFees
+                      )}
+                    </strong>
+
+                  </div>
 
                 </div>
 
               </div>
 
 
-              <div className="row g-3">
+              {fees?.paymentPlan === 'monthly' && (
+
+                <div className="row g-3">
+
+                  <div className="col-6">
+
+                    <small className="text-muted">
+                      Monthly Amount
+                    </small>
+
+                    <div className="fw-bold mt-1">
+                      ₹ {formatMoney(
+                        getMonthlyPaymentAmount()
+                      )}
+                    </div>
+
+                  </div>
+
+                  <div className="col-6">
+
+                    <small className="text-muted">
+                      Due Amount
+                    </small>
+
+                    <div
+                      className={`fw-bold mt-1 ${
+                        dueSummary.hasDue
+                          ? 'text-danger'
+                          : 'text-success'
+                      }`}
+                    >
+                      ₹ {formatMoney(
+                        dueSummary.dueAmount
+                      )}
+                    </div>
+
+                  </div>
 
 
-                <div className="col-6">
+                  <div className="col-6">
 
-                  <small className="text-muted">
+                    <small className="text-muted">
+                      {
+                        dueSummary.hasDue
+                          ? 'Due Till'
+                          : 'Next Due Date'
+                      }
+                    </small>
 
-                    Monthly
-
-                  </small>
-
-                  <div className="fw-semibold">
-
-                    ₹
-                    {
-                      formatMoney(
-                        fees?.monthlyInstallment
-                      )
-                    }
+                    <div className="fw-bold mt-1">
+                      {
+                        dueSummary.dueDate
+                          ? formatDate(
+                              dueSummary.dueDate
+                            )
+                          : '-'
+                      }
+                    </div>
 
                   </div>
 
                 </div>
 
+              )}
 
-                <div className="col-6">
 
-                  <small className="text-muted">
+              {fees?.paymentPlan === 'full' && (
 
-                    3 Month
+                <div className="p-3 rounded-3 border">
 
+                  <small className="text-muted d-block">
+                    Full payment required
                   </small>
 
-                  <div className="fw-semibold">
+                  <h5 className="fw-bold mb-0 mt-1">
+                    ₹ {formatMoney(
+                      fees?.remainingFees
+                    )}
+                  </h5>
 
-                    ₹
-                    {
-                      formatMoney(
-                        fees?.threeMonthInstallment
-                      )
-                    }
+                </div>
+
+              )}
+
+
+              {fees?.paymentPlan === 'installment' && (
+
+                <div>
+
+                  <div className="d-flex justify-content-between align-items-center mb-2">
+
+                    <small className="text-muted">
+                      Installment Schedule
+                    </small>
+
+                    <span className="badge bg-dark">
+                      {installmentSchedule.length}
+                    </span>
+
+                  </div>
+
+                  <div className="table-responsive">
+
+                    <table className="table table-sm align-middle mb-0">
+
+                      <thead>
+
+                        <tr>
+
+                          <th>#</th>
+
+                          <th>Amount</th>
+
+                          <th>Due Date</th>
+
+                          <th>Status</th>
+
+                        </tr>
+
+                      </thead>
+
+                      <tbody>
+
+                        {installmentSchedule.length === 0 && (
+
+                          <tr>
+
+                            <td
+                              colSpan="4"
+                              className="text-center text-muted py-3"
+                            >
+                              No installment schedule available.
+                            </td>
+
+                          </tr>
+
+                        )}
+
+                        {installmentSchedule.map(
+                          (item, index) => (
+
+                            <tr
+                              key={
+                                item._id ||
+                                item.installmentNumber ||
+                                index
+                              }
+                            >
+
+                              <td>
+                                {
+                                  item.installmentNumber ||
+                                  index + 1
+                                }
+                              </td>
+
+                              <td className="fw-semibold">
+                                ₹ {formatMoney(
+                                  Math.max(
+                                    0,
+                                    Number(
+                                      item.amount || 0
+                                    ) -
+                                    Number(
+                                      item.paidAmount || 0
+                                    )
+                                  )
+                                )}
+                              </td>
+
+                              <td>
+                                {
+                                  item.dueDate
+                                    ? formatDate(
+                                        item.dueDate
+                                      )
+                                    : '-'
+                                }
+                              </td>
+
+                              <td>
+
+                                <span
+                                  className={`badge ${getInstallmentStatusClass(
+                                    item.status
+                                  )}`}
+                                >
+                                  {
+                                    item.status ||
+                                    'Pending'
+                                  }
+                                </span>
+
+                              </td>
+
+                            </tr>
+
+                          )
+                        )}
+
+                      </tbody>
+
+                    </table>
 
                   </div>
 
                 </div>
 
-
-                <div className="col-6">
-
-                  <small className="text-muted">
-
-                    6 Month
-
-                  </small>
-
-                  <div className="fw-semibold">
-
-                    ₹
-                    {
-                      formatMoney(
-                        fees?.sixMonthInstallment
-                      )
-                    }
-
-                  </div>
-
-                </div>
-
-
-                <div className="col-6">
-
-                  <small className="text-muted">
-
-                    Full Payment
-
-                  </small>
-
-                  <div className="fw-semibold">
-
-                    ₹
-                    {
-                      formatMoney(
-                        fees?.fullPaymentFee
-                      )
-                    }
-
-                  </div>
-
-                </div>
-
-
-              </div>
+              )}
 
             </div>
 
           </div>
 
         </div>
-
 
       </div>
 
@@ -1946,81 +2944,29 @@ function StudentFees() {
 
                 <div className="col-md-4">
 
-                  <label className="form-label">
-
+                  <label className="form-label fw-semibold">
                     Payment Plan
-
                   </label>
 
+                  <div className="form-control bg-light">
 
-                  <select
-
-                    className="form-select"
-
-                    value={
-                      selectedPlan
-                    }
-
-                    onChange={
-                      handlePlanChange
-                    }
-
-                    disabled={
-                      Boolean(
+                    <span
+                      className={`badge ${getPlanBadgeClass(
                         fees?.paymentPlan
-                      )
-                    }
+                      )}`}
+                    >
+                      {
+                        getPaymentPlanLabel(
+                          fees?.paymentPlan
+                        )
+                      }
+                    </span>
 
-                  >
+                  </div>
 
-                    <option value="">
-
-                      Select Payment Plan
-
-                    </option>
-
-
-                    <option value="monthly">
-
-                      Monthly Installment
-
-                    </option>
-
-
-                    <option value="three_month">
-
-                      3 Month Installment
-
-                    </option>
-
-
-                    <option value="six_month">
-
-                      6 Month Installment
-
-                    </option>
-
-
-                    <option value="full">
-
-                      Full Payment
-
-                    </option>
-
-                  </select>
-
-
-                  {
-                    fees?.paymentPlan && (
-
-                      <small className="text-muted d-block mt-1">
-
-                        Payment plan is locked after the first payment.
-
-                      </small>
-
-                    )
-                  }
+                  <small className="text-muted d-block mt-1">
+                    Payment plan is managed by the institute.
+                  </small>
 
                 </div>
 
@@ -2074,7 +3020,7 @@ function StudentFees() {
 
                   <small className="text-muted d-block mt-1">
 
-                    Remaining: ₹
+                    Total Remaining: ₹
                     {
                       formatMoney(
                         fees?.remainingFees
@@ -2082,6 +3028,77 @@ function StudentFees() {
                     }
 
                   </small>
+
+
+                  <small
+                    className={`d-block mt-1 fw-semibold ${
+                      dueSummary.hasDue
+                        ? 'text-danger'
+                        : 'text-success'
+                    }`}
+                  >
+
+                    Due Now: ₹
+                    {
+                      formatMoney(
+                        dueSummary.dueAmount
+                      )
+                    }
+
+                    {
+                      dueSummary.dueDate
+                        ? ` • ${
+                            dueSummary.hasDue
+                              ? 'Due Till'
+                              : 'Next Due'
+                          }: ${formatDate(
+                            dueSummary.dueDate
+                          )}`
+                        : ''
+                    }
+
+                  </small>
+
+
+                  {/* ==================================
+                      QUICK MONTHLY PAYMENT OPTION
+                  ================================== */}
+
+                  {
+                    selectedPlan === 'monthly' &&
+                    getMonthlyPaymentAmount() > 0 && (
+
+                      <button
+
+                        type="button"
+
+                        className="btn btn-outline-primary btn-sm mt-2"
+
+                        onClick={() =>
+                          setPaymentAmount(
+                            String(
+                              getMonthlyPaymentAmount()
+                            )
+                          )
+                        }
+
+                        disabled={
+                          paying
+                        }
+
+                      >
+
+                        Pay 1 Monthly Installment — ₹
+                        {
+                          formatMoney(
+                            getMonthlyPaymentAmount()
+                          )
+                        }
+
+                      </button>
+
+                    )
+                  }
 
 
                   {/* MINIMUM WARNING */}
@@ -2116,36 +3133,7 @@ function StudentFees() {
                   }
 
 
-                  {/* FULL PAYMENT WARNING */}
 
-                  {
-                    selectedPlan === 'full' &&
-
-                    Number(
-                      paymentAmount || 0
-                    ) > 0 &&
-
-                    Number(
-                      paymentAmount
-                    ) !==
-
-                    getRequiredPaymentAmount() && (
-
-                      <small
-                        className="text-danger d-block mt-1 fw-semibold"
-                      >
-
-                        ⚠️ Full payment amount should be ₹
-                        {
-                          formatMoney(
-                            getRequiredPaymentAmount()
-                          )
-                        }
-
-                      </small>
-
-                    )
-                  }
 
                 </div>
 
