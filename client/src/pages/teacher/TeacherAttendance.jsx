@@ -1287,6 +1287,10 @@ function TeacherAttendance() {
                       </th>
 
                       <th>
+                        Roll No.
+                      </th>
+
+                      <th>
                         Course
                       </th>
 
@@ -1351,6 +1355,18 @@ function TeacherAttendance() {
 
                             {
                               student.admissionNumber
+                            }
+
+                          </td>
+
+
+                          {/* ROLL NUMBER */}
+
+                          <td>
+
+                            {
+                              student.rollNumber ||
+                              '-'
                             }
 
                           </td>

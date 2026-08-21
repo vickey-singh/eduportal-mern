@@ -49,15 +49,6 @@ function CourseTable({
       // PAYMENT PLANS
       // ==================================
 
-      monthlyInstallment:
-        course.monthlyInstallment ?? '',
-
-      threeMonthInstallment:
-        course.threeMonthInstallment ?? '',
-
-      sixMonthInstallment:
-        course.sixMonthInstallment ?? '',
-
       fullPaymentFee:
         course.fullPaymentFee ?? '',
 
@@ -108,7 +99,7 @@ function CourseTable({
       <table
         className="table applications-table"
         style={{
-          minWidth: '1750px',
+          minWidth: '1400px',
         }}
       >
 
@@ -141,18 +132,6 @@ function CourseTable({
             </th>
 
             <th>
-              Monthly
-            </th>
-
-            <th>
-              3 Months
-            </th>
-
-            <th>
-              6 Months
-            </th>
-
-            <th>
               Full Payment
             </th>
 
@@ -180,7 +159,7 @@ function CourseTable({
             <tr>
 
               <td
-                colSpan="13"
+                colSpan="10"
                 className="text-center"
               >
 
@@ -307,63 +286,6 @@ function CourseTable({
 
                     ₹ {
                       course.registrationFee
-                    }
-
-                  </td>
-
-
-                  {/* ==================================
-                      MONTHLY
-                  ================================== */}
-
-                  <td
-                    style={{
-                      whiteSpace:
-                        'nowrap',
-                    }}
-                  >
-
-                    ₹ {
-                      course.monthlyInstallment ||
-                      0
-                    }
-
-                  </td>
-
-
-                  {/* ==================================
-                      3 MONTH
-                  ================================== */}
-
-                  <td
-                    style={{
-                      whiteSpace:
-                        'nowrap',
-                    }}
-                  >
-
-                    ₹ {
-                      course.threeMonthInstallment ||
-                      0
-                    }
-
-                  </td>
-
-
-                  {/* ==================================
-                      6 MONTH
-                  ================================== */}
-
-                  <td
-                    style={{
-                      whiteSpace:
-                        'nowrap',
-                    }}
-                  >
-
-                    ₹ {
-                      course.sixMonthInstallment ||
-                      0
                     }
 
                   </td>

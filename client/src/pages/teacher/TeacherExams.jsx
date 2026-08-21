@@ -1774,6 +1774,9 @@ function TeacherExams() {
               student.admissionNumber ||
                 '-',
 
+              student.rollNumber ||
+                '-',
+
               student.name ||
                 '-',
 
@@ -1814,6 +1817,8 @@ function TeacherExams() {
             'S.No',
 
             'Student ID',
+
+            'Roll No.',
 
             'Student Name',
 
@@ -2401,6 +2406,10 @@ function TeacherExams() {
                           Admission No.
                         </th>
 
+                        <th>
+                          Roll No.
+                        </th>
+
                         <th
                           style={{
                             minWidth: '160px',
@@ -2495,6 +2504,18 @@ function TeacherExams() {
 
                                 {
                                   student.admissionNumber
+                                }
+
+                              </td>
+
+
+                              {/* ROLL NUMBER */}
+
+                              <td>
+
+                                {
+                                  student.rollNumber ||
+                                  '-'
                                 }
 
                               </td>

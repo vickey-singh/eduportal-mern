@@ -41,7 +41,12 @@ function Course() {
 
     description: '',
 
+    // ==================================
+    // DURATION
+    // ==================================
+
     duration: '',
+
 
     // ==================================
     // BATCH TIME
@@ -60,14 +65,8 @@ function Course() {
 
 
     // ==================================
-    // PAYMENT PLANS
+    // PAYMENT
     // ==================================
-
-    monthlyInstallment: '',
-
-    threeMonthInstallment: '',
-
-    sixMonthInstallment: '',
 
     fullPaymentFee: '',
 
@@ -151,12 +150,6 @@ function Course() {
 
       registrationFee: '',
 
-
-      monthlyInstallment: '',
-
-      threeMonthInstallment: '',
-
-      sixMonthInstallment: '',
 
       fullPaymentFee: '',
 

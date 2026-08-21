@@ -609,6 +609,33 @@ const studentSchema =
       },
 
 
+      // ======================================
+      // ROLL NUMBER
+      // ======================================
+      // Teacher / Admin manually enter karega.
+      //
+      // Examples:
+      // 1
+      // 15
+      // 0015
+      // A-15
+      // CGL-025
+      //
+      // String rakha gaya hai taaki
+      // leading zero preserve rahe.
+      // ======================================
+
+      rollNumber: {
+
+        type: String,
+
+        default: '',
+
+        trim: true,
+
+      },
+
+
       admissionDate: {
 
         type: Date,

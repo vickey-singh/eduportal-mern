@@ -575,6 +575,29 @@ function StudentAttendance() {
 
             </div>
 
+            {/* ==================================
+                  ROLL NUMBER
+              ================================== */}
+              
+              <div className="col-md-6">
+              
+                <small className="text-muted">
+              
+                  Roll Number
+              
+                </small>
+              
+                <div className="fw-semibold">
+              
+                  {
+                    student?.rollNumber ||
+                    '-'
+                  }
+              
+                </div>
+              
+              </div>
+
 
             <div className="col-md-6">
 

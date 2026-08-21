@@ -1272,6 +1272,9 @@ router.get(
               admissionNumber:
                 student.admissionNumber,
 
+              rollNumber:
+                student.rollNumber || '',
+
               course:
                 student.course,
 
@@ -1552,6 +1555,9 @@ router.post(
 
               admissionNumber:
                 student.admissionNumber,
+
+              rollNumber:
+                student.rollNumber || '',
 
               obtainedMarks:
                 obtained,

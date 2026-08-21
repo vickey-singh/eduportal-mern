@@ -747,6 +747,12 @@ function TeacherReports() {
                       Student
                     </th>
 
+                    {/* ROLL NUMBER */}
+
+                    <th>
+                      Roll No.
+                    </th>
+
                     <th>
                       Father's Name
                     </th>
@@ -823,6 +829,18 @@ function TeacherReports() {
                             }
 
                           </small>
+
+                        </td>
+
+
+                        {/* ROLL NUMBER */}
+
+                        <td>
+
+                          {
+                            student.rollNumber ||
+                            '-'
+                          }
 
                         </td>
 
@@ -1093,6 +1111,30 @@ function TeacherReports() {
                           {
                             selectedReport.student
                               ?.admissionNumber
+                          }
+
+                        </div>
+
+                      </div>
+
+
+                      {/* ROLL NUMBER */}
+
+                      <div className="col-md-4">
+
+                        <small className="text-muted">
+
+                          Roll Number
+
+                        </small>
+
+
+                        <div className="fw-semibold">
+
+                          {
+                            selectedReport.student
+                              ?.rollNumber ||
+                            '-'
                           }
 
                         </div>

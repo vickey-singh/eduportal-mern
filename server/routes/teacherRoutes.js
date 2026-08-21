@@ -514,6 +514,8 @@ router.get(
 
           'admissionNumber ' +
 
+          'rollNumber ' +
+
           'course ' +
 
           'batchTime ' +
@@ -745,7 +747,7 @@ router.get(
 
       // ==================================
       // STUDENT FILTER
-      // ==================================
+      // ======================================
 
       const studentFilter = {
 
@@ -776,6 +778,8 @@ router.get(
           'name ' +
 
           'admissionNumber ' +
+
+          'rollNumber ' +
 
           'course ' +
 
@@ -858,6 +862,9 @@ router.get(
 
             admissionNumber:
               student.admissionNumber,
+
+            rollNumber:
+              student.rollNumber || '',
 
             course:
               student.course,
@@ -1197,6 +1204,9 @@ router.post(
 
               admissionNumber:
                 studentData.admissionNumber,
+
+              rollNumber:
+                studentData.rollNumber || '',
 
               course:
                 studentData.course,

@@ -16,6 +16,14 @@ function StudentCourses() {
 
 
   // ======================================
+  // ADMISSION DATE
+  // ======================================
+
+  const [admissionDate, setAdmissionDate] =
+    useState('')
+
+
+  // ======================================
   // LOADING
   // ======================================
 
@@ -101,6 +109,18 @@ function StudentCourses() {
 
             setCourse(
               response.data.course
+            )
+
+
+            // ==================================
+            // ADMISSION DATE
+            // ==================================
+
+            setAdmissionDate(
+
+              response.data.admissionDate ||
+              ''
+
             )
 
           }
@@ -454,7 +474,7 @@ function StudentCourses() {
               <div className="fw-semibold">
 
                 {
-                  course?.admissionDate ||
+                  admissionDate ||
                   '-'
                 }
 

@@ -1012,6 +1012,10 @@ router.get(
           admissionNumber:
             student.admissionNumber,
 
+          rollNumber:
+            student.rollNumber || '',
+
+
           course:
             student.course,
 

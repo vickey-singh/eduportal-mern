@@ -4,7 +4,7 @@ import { API_URL } from '../config/api'
 
 
 // ======================================
-// GET STUDENTS FOR ATTENDANCE
+// GET STUDENTS FOR TEACHER ATTENDANCE
 // ======================================
 // Course + Batch Time + Date ke basis par
 // students aur existing attendance status
@@ -18,7 +18,37 @@ export const getAttendanceStudents = async ({
 
   const response =
     await axios.get(
-      `${API_URL}/attendance/students`,
+      `${API_URL}/teacher/attendance/students`,
+      {
+        params: {
+          course,
+          batchTime,
+          date,
+        },
+      }
+    )
+
+  return response.data
+
+}
+
+
+// ======================================
+// GET STUDENTS FOR ADMIN ATTENDANCE
+// ======================================
+// Course + Batch Time + Date ke basis par
+// Admin Attendance page ke students.
+// ======================================
+
+export const getAdminAttendanceStudents = async ({
+  course,
+  batchTime,
+  date,
+}) => {
+
+  const response =
+    await axios.get(
+      `${API_URL}/admin/attendance/students`,
       {
         params: {
           course,
@@ -59,7 +89,7 @@ export const saveAttendance = async ({
 
 
 // ======================================
-// SAVE BULK ATTENDANCE
+// SAVE BULK ATTENDANCE - TEACHER
 // ======================================
 // Ek batch ke multiple students ki
 // attendance ek saath save hogi.
@@ -72,7 +102,32 @@ export const saveBulkAttendance = async ({
 
   const response =
     await axios.post(
-      `${API_URL}/attendance/bulk`,
+      `${API_URL}/teacher/attendance/bulk`,
+      {
+        date,
+        attendance,
+      }
+    )
+
+  return response.data
+
+}
+
+
+// ======================================
+// SAVE BULK ATTENDANCE - ADMIN
+// ======================================
+// Admin Attendance page ke liye.
+// ======================================
+
+export const saveAdminBulkAttendance = async ({
+  date,
+  attendance,
+}) => {
+
+  const response =
+    await axios.post(
+      `${API_URL}/admin/attendance/bulk`,
       {
         date,
         attendance,

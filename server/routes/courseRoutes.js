@@ -2,9 +2,11 @@ const express = require('express')
 
 const router = express.Router()
 
-const Course = require('../models/Course')
+const Course =
+  require('../models/Course')
 
-const Student = require('../models/Student')
+const Student =
+  require('../models/Student')
 
 
 // ======================================
@@ -30,9 +32,6 @@ router.post(
         totalFee,
         registrationFee,
 
-        monthlyInstallment,
-        threeMonthInstallment,
-        sixMonthInstallment,
         fullPaymentFee,
 
         installmentAllowed,
@@ -100,23 +99,8 @@ router.post(
 
 
           // ==================================
-          // PAYMENT PLANS
+          // FULL PAYMENT
           // ==================================
-
-          monthlyInstallment:
-            Number(
-              monthlyInstallment || 0
-            ),
-
-          threeMonthInstallment:
-            Number(
-              threeMonthInstallment || 0
-            ),
-
-          sixMonthInstallment:
-            Number(
-              sixMonthInstallment || 0
-            ),
 
           fullPaymentFee:
             Number(
@@ -343,9 +327,6 @@ router.put(
         totalFee,
         registrationFee,
 
-        monthlyInstallment,
-        threeMonthInstallment,
-        sixMonthInstallment,
         fullPaymentFee,
 
         installmentAllowed,
@@ -462,23 +443,8 @@ router.put(
 
 
             // ==================================
-            // PAYMENT PLANS
+            // FULL PAYMENT
             // ==================================
-
-            monthlyInstallment:
-              Number(
-                monthlyInstallment || 0
-              ),
-
-            threeMonthInstallment:
-              Number(
-                threeMonthInstallment || 0
-              ),
-
-            sixMonthInstallment:
-              Number(
-                sixMonthInstallment || 0
-              ),
 
             fullPaymentFee:
               Number(

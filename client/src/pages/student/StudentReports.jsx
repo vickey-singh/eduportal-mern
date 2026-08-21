@@ -1206,6 +1206,19 @@ function StudentReports() {
 
                   </small>
 
+                  <br />
+
+                  <small className="text-muted">
+
+                    Roll No: {' '}
+
+                    {
+                      student?.rollNumber ||
+                      '-'
+                    }
+
+                  </small>
+
                 </div>
 
               </div>

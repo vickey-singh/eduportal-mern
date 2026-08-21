@@ -795,6 +795,7 @@ function Students() {
       dob: '',
       aadharNumber: '',
       admissionNumber: '',
+      rollNumber: '',
       course: '',
       batchTime: '',
 
@@ -1003,6 +1004,7 @@ function Students() {
       dob: '',
       aadharNumber: '',
       admissionNumber: '',
+      rollNumber: '',
       course: '',
       batchTime: '',
 
@@ -1063,55 +1065,57 @@ function Students() {
 
 
     if (name === 'course') {
-
+    
       const selectedCourse =
         courses.find(
-
           (course) =>
             course.courseName === value
-
         )
-
-
+    
       if (selectedCourse) {
-
+    
         setFormData(
           (previous) => ({
-
+    
             ...previous,
-
+    
             course:
               value,
-
+    
             totalFees:
               selectedCourse.totalFee ?? '',
-
+    
             registrationFee:
               selectedCourse.registrationFee ?? '',
-
+    
             monthlyAmount:
               selectedCourse.minimumInstallment ??
               selectedCourse.monthlyAmount ??
               '',
-
+    
+            batchTime:
+              selectedCourse.batchTime ??
+              previous.batchTime ??
+              '',
+    
             paymentPlan:
               previous.paymentPlan || '',
-
+    
             dueDate:
               previous.dueDate || '',
-
+    
             installments:
               previous.installments || [],
-
+    
           })
         )
-
+    
         return
-
+    
       }
-
+    
     }
-
+    
 
     setFormData(
       (previous) => ({
@@ -1756,6 +1760,11 @@ function Students() {
         )
 
         data.append(
+          'rollNumber',
+          formData.rollNumber
+        )
+
+        data.append(
           'course',
           formData.course
         )
@@ -2091,6 +2100,9 @@ function Students() {
 
         admissionNumber:
           student.admissionNumber || '',
+
+        rollNumber:
+          student.rollNumber || '',
 
         course:
           student.course || '',
@@ -2481,13 +2493,22 @@ function Students() {
             .toLowerCase()
 
 
+        const rollNumber =
+          (
+            student.rollNumber || ''
+          )
+            .toLowerCase()
+
+
         const matchesSearch =
 
           !search ||
 
           name.includes(search) ||
 
-          admissionNumber.includes(search)
+          admissionNumber.includes(search) ||
+
+          rollNumber.includes(search)
 
 
         const matchesCourse =
@@ -3060,6 +3081,28 @@ function Students() {
               <small className="text-muted">
                 Optional. Course can be added later.
               </small>
+
+            </div>
+
+
+            <div className="col-md-6 mb-3">
+
+              <label className="form-label">
+                Roll Number
+              </label>
+
+              <input
+                type="text"
+                className="form-control"
+                name="rollNumber"
+                placeholder="Enter Roll Number"
+                value={
+                  formData.rollNumber
+                }
+                onChange={
+                  handleChange
+                }
+              />
 
             </div>
 
@@ -3832,7 +3875,7 @@ function Students() {
             <input
               type="text"
               className="form-control"
-              placeholder="Name / Admission No."
+              placeholder="Name / Admission No. / Roll No."
               value={
                 searchTerm
               }
@@ -4090,6 +4133,10 @@ function Students() {
               </th>
 
               <th>
+                Roll No.
+              </th>
+
+              <th>
                 Course
               </th>
 
@@ -4213,6 +4260,14 @@ function Students() {
                       <td>
                         {
                           student.admissionNumber
+                        }
+                      </td>
+
+
+                      <td>
+                        {
+                          student.rollNumber ||
+                          '-'
                         }
                       </td>
 
@@ -4719,6 +4774,13 @@ function Students() {
                   label="Admission Number"
                   value={
                     selectedStudent.admissionNumber
+                  }
+                />
+
+                <Detail
+                  label="Roll Number"
+                  value={
+                    selectedStudent.rollNumber
                   }
                 />
 

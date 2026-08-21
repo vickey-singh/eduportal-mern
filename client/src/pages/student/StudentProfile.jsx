@@ -461,6 +461,26 @@ function StudentProfile() {
 
               </div>
 
+
+              {/* ==================================
+                  ROLL NUMBER
+              ================================== */}
+
+              <div className="text-muted">
+
+                Roll No: {' '}
+
+                <strong>
+
+                  {
+                    student?.rollNumber ||
+                    '-'
+                  }
+
+                </strong>
+
+              </div>
+
             </div>
 
 
@@ -565,6 +585,29 @@ function StudentProfile() {
 
                 {
                   student?.admissionNumber ||
+                  '-'
+                }
+
+              </div>
+
+            </div>
+
+
+            {/* ROLL NUMBER */}
+
+            <div className="col-md-6">
+
+              <small className="text-muted">
+
+                Roll Number
+
+              </small>
+
+
+              <div className="fw-semibold mt-1">
+
+                {
+                  student?.rollNumber ||
                   '-'
                 }
 

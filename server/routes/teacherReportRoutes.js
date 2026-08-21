@@ -356,7 +356,7 @@ router.get(
         })
         .select(
 
-          '_id name admissionNumber course batchTime'
+          '_id name admissionNumber rollNumber course batchTime'
 
         )
 
@@ -711,7 +711,7 @@ router.get(
         })
         .select(
 
-          '_id name fatherName admissionNumber course batchTime'
+          '_id name fatherName admissionNumber rollNumber course batchTime'
 
         )
         .sort({
@@ -936,6 +936,9 @@ router.get(
               admissionNumber:
                 student.admissionNumber,
 
+              rollNumber:
+                student.rollNumber || '',
+
               course:
                 student.course,
 
@@ -1077,7 +1080,7 @@ router.get(
         )
         .select(
 
-          '_id name fatherName admissionNumber course batchTime'
+          '_id name fatherName admissionNumber rollNumber course batchTime'
 
         )
 
@@ -1398,6 +1401,9 @@ router.get(
 
           admissionNumber:
             student.admissionNumber,
+
+          rollNumber:
+            student.rollNumber || '',
 
           course:
             student.course,

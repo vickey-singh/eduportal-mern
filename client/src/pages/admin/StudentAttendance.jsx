@@ -663,6 +663,23 @@ function StudentAttendance() {
 
           </div>
 
+          <div className="col-md-3 mb-3">
+
+            <small className="text-muted">
+              Roll Number
+            </small>
+          
+            <h5 className="mb-0">
+          
+              {
+                student.rollNumber ||
+                '-'
+              }
+          
+            </h5>
+          
+          </div>
+
 
           <div className="col-md-3 mb-3">
 

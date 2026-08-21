@@ -232,6 +232,9 @@ router.get(
             admissionNumber:
               student.admissionNumber,
 
+            rollNumber:
+              student.rollNumber || '',
+
             course:
               student.course,
 
@@ -271,6 +274,227 @@ router.get(
       console.log(
 
         'Get Attendance Students Error:',
+        error
+
+      )
+
+
+      return res.status(500).json({
+
+        success: false,
+
+        message:
+          'Server Error',
+
+      })
+
+    }
+
+  }
+
+)
+
+
+// ======================================
+// GET STUDENTS FOR ADMIN ATTENDANCE
+// ======================================
+//
+// GET
+// /api/admin/attendance/students
+//
+// Admin Attendance page ke liye.
+//
+// TeacherAuth nahi lagega.
+//
+// Course select karne par course ke
+// saare students aur unke actual batchTime
+// return honge.
+//
+// ======================================
+
+router.get(
+
+  '/admin/attendance/students',
+
+  async (req, res) => {
+
+    try {
+
+      const {
+
+        course,
+        batchTime,
+        date,
+
+      } = req.query
+
+
+      // ==================================
+      // VALIDATION
+      // ==================================
+
+      if (!course) {
+
+        return res.status(400).json({
+
+          success: false,
+
+          message:
+            'Course is required',
+
+        })
+
+      }
+
+
+      // ==================================
+      // STUDENT FILTER
+      // ==================================
+
+      const studentFilter = {
+
+        course:
+          course.trim(),
+
+      }
+
+
+      // ==================================
+      // BATCH TIME FILTER
+      // ==================================
+
+      if (batchTime) {
+
+        studentFilter.batchTime =
+          batchTime.trim()
+
+      }
+
+
+      // ==================================
+      // GET STUDENTS
+      // ==================================
+
+      const students =
+        await Student.find(
+          studentFilter
+        )
+        .sort({
+
+          name: 1,
+
+        })
+
+
+      // ==================================
+      // EXISTING ATTENDANCE
+      // ==================================
+
+      let attendanceMap = {}
+
+
+      if (date) {
+
+        const attendanceQuery = {
+
+          course:
+            course.trim(),
+
+          date,
+
+        }
+
+
+        if (batchTime) {
+
+          attendanceQuery.batchTime =
+            batchTime.trim()
+
+        }
+
+
+        const attendanceRecords =
+          await Attendance.find(
+            attendanceQuery
+          )
+
+
+        attendanceRecords.forEach(
+
+          (record) => {
+
+            attendanceMap[
+              record.student.toString()
+            ] =
+              record.status
+
+          }
+
+        )
+
+      }
+
+
+      // ==================================
+      // RESPONSE
+      // ==================================
+
+      const result =
+        students.map(
+
+          (student) => ({
+
+            _id:
+              student._id,
+
+            name:
+              student.name,
+
+            admissionNumber:
+              student.admissionNumber,
+
+            rollNumber:
+              student.rollNumber || '',
+
+            course:
+              student.course,
+
+            batchTime:
+              student.batchTime || '',
+
+            contact:
+              student.contact || '',
+
+            email:
+              student.email || '',
+
+            attendanceStatus:
+
+              attendanceMap[
+                student._id.toString()
+              ] || '',
+
+          })
+
+        )
+
+
+      return res.status(200).json({
+
+        success: true,
+
+        students:
+          result,
+
+      })
+
+    }
+
+    catch (error) {
+
+      console.log(
+
+        'Get Admin Attendance Students Error:',
         error
 
       )
@@ -771,6 +995,275 @@ router.post(
 
 
 // ======================================
+// SAVE MULTIPLE ATTENDANCE FOR ADMIN
+// ======================================
+//
+// POST
+// /api/admin/attendance/bulk
+//
+// Admin Attendance page ke liye.
+//
+// TeacherAuth nahi lagega.
+//
+// ======================================
+
+router.post(
+
+  '/admin/attendance/bulk',
+
+  async (req, res) => {
+
+    try {
+
+      const {
+
+        date,
+        attendance,
+
+      } = req.body
+
+
+      // ==================================
+      // VALIDATION
+      // ==================================
+
+      if (
+
+        !date ||
+        !Array.isArray(attendance)
+
+      ) {
+
+        return res.status(400).json({
+
+          success: false,
+
+          message:
+            'Date and attendance data are required',
+
+        })
+
+      }
+
+
+      if (
+        attendance.length === 0
+      ) {
+
+        return res.status(400).json({
+
+          success: false,
+
+          message:
+            'No attendance data provided',
+
+        })
+
+      }
+
+
+      // ==================================
+      // RESULTS
+      // ==================================
+
+      const results = []
+
+
+      // ==================================
+      // PROCESS EACH STUDENT
+      // ==================================
+
+      for (
+
+        const item of attendance
+
+      ) {
+
+        const {
+
+          student,
+          status,
+
+        } = item
+
+
+        // ==================================
+        // VALIDATION
+        // ==================================
+
+        if (
+
+          !student ||
+          !status
+
+        ) {
+
+          continue
+
+        }
+
+
+        if (
+
+          ![
+            'Present',
+            'Absent',
+          ].includes(status)
+
+        ) {
+
+          continue
+
+        }
+
+
+        // ==================================
+        // GET STUDENT
+        // ==================================
+
+        const studentData =
+          await Student.findById(
+            student
+          )
+
+
+        if (!studentData) {
+
+          continue
+
+        }
+
+
+        // ==================================
+        // SAVE / UPDATE ATTENDANCE
+        // ==================================
+
+        const record =
+          await Attendance.findOneAndUpdate(
+
+            {
+
+              student,
+              date,
+
+            },
+
+            {
+
+              student,
+
+              studentName:
+                studentData.name,
+
+              admissionNumber:
+                studentData.admissionNumber,
+
+              course:
+                studentData.course,
+
+              batchTime:
+                studentData.batchTime || '',
+
+              date,
+
+              status,
+
+            },
+
+            {
+
+              returnDocument:
+                'after',
+
+              upsert:
+                true,
+
+              runValidators:
+                true,
+
+              setDefaultsOnInsert:
+                true,
+
+            }
+
+          )
+
+
+        // ==================================
+        // CREATE STUDENT NOTIFICATION
+        // ==================================
+
+        await createAttendanceNotification(
+
+          studentData._id,
+
+          studentData.name,
+
+          record.status,
+
+          record.date,
+
+          record._id
+
+        )
+
+
+        // ==================================
+        // ADD RESULT
+        // ==================================
+
+        results.push(
+          record
+        )
+
+      }
+
+
+      // ==================================
+      // RESPONSE
+      // ==================================
+
+      return res.status(200).json({
+
+        success: true,
+
+        message:
+          'Attendance Saved Successfully',
+
+        attendance:
+          results,
+
+      })
+
+    }
+
+    catch (error) {
+
+      console.log(
+
+        'Admin Bulk Attendance Error:',
+        error
+
+      )
+
+
+      return res.status(500).json({
+
+        success: false,
+
+        message:
+          'Server Error',
+
+      })
+
+    }
+
+  }
+
+)
+
+
+// ======================================
 // GET STUDENT ATTENDANCE
 // ======================================
 
@@ -879,6 +1372,9 @@ router.get(
 
           admissionNumber:
             student.admissionNumber,
+
+          rollNumber:
+            student.rollNumber || '',
 
           course:
             student.course,
@@ -1501,7 +1997,7 @@ router.delete(
       )
 
 
-      return res.status(500).json({
+      res.status(500).json({
 
         success: false,
 

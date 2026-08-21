@@ -1029,6 +1029,7 @@ router.post(
         name,
         dob,
         aadharNumber,
+        rollNumber,
         course,
         batchTime,
         contact,
@@ -1267,6 +1268,9 @@ router.post(
             aadharNumber || '',
 
           admissionNumber,
+
+          rollNumber:
+            rollNumber || '',
 
           course:
             course || '',
@@ -2174,6 +2178,15 @@ router.get(
             },
           },
 
+          {
+            rollNumber: {
+              $regex:
+                value,
+              $options:
+                'i',
+            },
+          },
+
         ]
 
       }
@@ -2298,6 +2311,7 @@ router.put(
         name,
         dob,
         aadharNumber,
+        rollNumber,
         course,
         batchTime,
         contact,
@@ -2460,6 +2474,9 @@ router.put(
 
       student.aadharNumber =
         aadharNumber || ''
+
+      student.rollNumber =
+        rollNumber || ''
 
       student.course =
         course || ''

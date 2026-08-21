@@ -203,6 +203,12 @@ function TeacherStudents() {
 
             ||
 
+            student.rollNumber
+              ?.toLowerCase()
+              .includes(value)
+
+            ||
+
             student.course
               ?.toLowerCase()
               .includes(value)
@@ -370,7 +376,7 @@ function TeacherStudents() {
 
                 className="form-control"
 
-                placeholder="Search by name, admission number, course, batch or father's name..."
+                placeholder="Search by name, admission number, roll number, course, batch or father's name..."
 
                 value={search}
 
@@ -509,6 +515,10 @@ function TeacherStudents() {
 
                     <th>
                       Admission No.
+                    </th>
+
+                    <th>
+                      Roll No.
                     </th>
 
                     <th>
@@ -664,6 +674,22 @@ function TeacherStudents() {
 
                             {
                               student.admissionNumber
+                            }
+
+                          </span>
+
+                        </td>
+
+
+                        {/* ROLL NUMBER */}
+
+                        <td>
+
+                          <span className="fw-semibold">
+
+                            {
+                              student.rollNumber ||
+                              '-'
                             }
 
                           </span>

@@ -348,6 +348,38 @@ function StudentDashboard() {
 
 
         {/* ==================================
+            ROLL NUMBER
+        ================================== */}
+
+        <div className="col-md-6 col-xl-4">
+
+          <div className="card border-0 shadow-sm h-100">
+
+            <div className="card-body p-4">
+
+              <small className="text-muted">
+
+                Roll Number
+
+              </small>
+
+              <h5 className="fw-bold mt-2 mb-0">
+
+                {
+                  student?.rollNumber ||
+                  '-'
+                }
+
+              </h5>
+
+            </div>
+
+          </div>
+
+        </div>
+
+
+        {/* ==================================
             COURSE
         ================================== */}
 
@@ -613,6 +645,28 @@ function StudentDashboard() {
 
                 {
                   student?.name ||
+                  '-'
+                }
+
+              </div>
+
+            </div>
+
+
+            {/* ROLL NUMBER */}
+
+            <div className="col-md-6">
+
+              <small className="text-muted">
+
+                Roll Number
+
+              </small>
+
+              <div className="fw-semibold">
+
+                {
+                  student?.rollNumber ||
                   '-'
                 }
 

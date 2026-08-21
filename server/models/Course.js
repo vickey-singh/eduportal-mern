@@ -57,23 +57,8 @@ const courseSchema = new mongoose.Schema(
 
 
     // ======================================
-    // PAYMENT PLANS
+    // PAYMENT
     // ======================================
-
-    monthlyInstallment: {
-      type: Number,
-      default: 0,
-    },
-
-    threeMonthInstallment: {
-      type: Number,
-      default: 0,
-    },
-
-    sixMonthInstallment: {
-      type: Number,
-      default: 0,
-    },
 
     fullPaymentFee: {
       type: Number,

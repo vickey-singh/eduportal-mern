@@ -9,8 +9,8 @@ import {
 } from 'react-router-dom'
 
 import {
-  getAttendanceStudents,
-  saveBulkAttendance,
+  getAdminAttendanceStudents,
+  saveAdminBulkAttendance,
 } from '../../services/attendanceService'
 
 import {
@@ -58,6 +58,22 @@ function Attendance() {
 
   const [selectedBatchTime, setSelectedBatchTime] =
     useState('')
+
+
+  // ======================================
+  // COURSE STUDENTS
+  // ======================================
+  //
+  // Course select karne ke baad course ke
+  // saare students temporarily load honge.
+  //
+  // In students ke actual batchTime se
+  // Attendance batch dropdown banega.
+  //
+  // ======================================
+
+  const [courseStudents, setCourseStudents] =
+    useState([])
 
 
   // ======================================
@@ -118,6 +134,14 @@ function Attendance() {
 
 
   // ======================================
+  // LOADING BATCHES
+  // ======================================
+
+  const [loadingBatches, setLoadingBatches] =
+    useState(false)
+
+
+  // ======================================
   // SAVING
   // ======================================
 
@@ -170,34 +194,16 @@ function Attendance() {
   // AVAILABLE BATCH TIMES
   // ======================================
   //
-  // Current Course model me ek course
-  // ka ek batchTime hai.
-  //
-  // Isliye selected course ka batchTime
-  // dropdown me show hoga.
+  // Course ke students ke actual
+  // batchTime se unique batch list banegi.
   //
   // ======================================
 
   const batchTimes =
     useMemo(() => {
 
-      if (!selectedCourse) {
-
-        return []
-
-      }
-
-
-      const selectedCourseData =
-        courseData.find(
-          (course) =>
-            course.courseName ===
-            selectedCourse
-        )
-
-
       if (
-        !selectedCourseData
+        !courseStudents.length
       ) {
 
         return []
@@ -205,22 +211,26 @@ function Attendance() {
       }
 
 
-      if (
-        !selectedCourseData.batchTime
-      ) {
-
-        return []
-
-      }
+      const times =
+        courseStudents
+          .map(
+            (student) =>
+              String(
+                student.batchTime || ''
+              ).trim()
+          )
+          .filter(
+            (time) =>
+              time !== ''
+          )
 
 
       return [
-        selectedCourseData.batchTime
+        ...new Set(times)
       ]
 
     }, [
-      courseData,
-      selectedCourse,
+      courseStudents,
     ])
 
 
@@ -228,7 +238,7 @@ function Attendance() {
   // COURSE CHANGE
   // ======================================
 
-  const handleCourseChange = (e) => {
+  const handleCourseChange = async (e) => {
 
     const value =
       e.target.value
@@ -239,16 +249,102 @@ function Attendance() {
     )
 
 
-    // Batch reset
+    // ==================================
+    // RESET BATCH
+    // ==================================
+
     setSelectedBatchTime('')
 
 
-    // Students reset
+    // ==================================
+    // RESET STUDENTS
+    // ==================================
+
     setStudents([])
 
 
-    // Attendance reset
+    // ==================================
+    // RESET COURSE STUDENTS
+    // ==================================
+
+    setCourseStudents([])
+
+
+    // ==================================
+    // RESET ATTENDANCE
+    // ==================================
+
     setAttendance({})
+
+
+    // ==================================
+    // NO COURSE
+    // ==================================
+
+    if (!value) {
+
+      return
+
+    }
+
+
+    try {
+
+      setLoadingBatches(true)
+
+
+      // ==================================
+      // GET ALL STUDENTS OF COURSE
+      // ==================================
+      //
+      // Batch time intentionally empty.
+      // Backend then returns all students
+      // belonging to this course.
+      //
+      // ==================================
+
+      const response =
+        await getAdminAttendanceStudents({
+
+          course:
+            value,
+
+          batchTime:
+            '',
+
+          date:
+            selectedDate,
+
+        })
+
+
+      const studentList =
+        response?.students || []
+
+
+      setCourseStudents(
+        studentList
+      )
+
+    }
+
+    catch (error) {
+
+      console.log(
+        'Load Course Students Error:',
+        error
+      )
+
+
+      setCourseStudents([])
+
+    }
+
+    finally {
+
+      setLoadingBatches(false)
+
+    }
 
   }
 
@@ -364,7 +460,7 @@ function Attendance() {
       // ==================================
 
       const response =
-        await getAttendanceStudents({
+        await getAdminAttendanceStudents({
 
           course:
             selectedCourse,
@@ -602,7 +698,7 @@ function Attendance() {
         // ==================================
 
         const response =
-          await saveBulkAttendance({
+          await saveAdminBulkAttendance({
 
             date:
               selectedDate,
@@ -810,13 +906,20 @@ function Attendance() {
                 handleBatchChange
               }
               disabled={
-                !selectedCourse
+                !selectedCourse ||
+                loadingBatches
               }
             >
 
               <option value="">
 
-                Select Batch Time
+                {loadingBatches
+
+                  ? 'Loading Batch Times...'
+
+                  : 'Select Batch Time'
+
+                }
 
               </option>
 
@@ -1081,6 +1184,10 @@ function Attendance() {
                   </th>
 
                   <th>
+                    Roll No.
+                  </th>
+
+                  <th>
                     Batch Time
                   </th>
 
@@ -1144,6 +1251,18 @@ function Attendance() {
 
                         {
                           student.admissionNumber
+                        }
+
+                      </td>
+
+
+                      {/* ROLL NUMBER */}
+
+                      <td>
+
+                        {
+                          student.rollNumber ||
+                          '-'
                         }
 
                       </td>
@@ -1336,6 +1455,25 @@ function Attendance() {
 
         )}
 
+
+      {/* ==================================
+          NO BATCH TIME
+      ================================== */}
+
+      {!loadingBatches &&
+
+        selectedCourse &&
+
+        batchTimes.length === 0 && (
+
+          <div className="alert alert-warning">
+
+            No batch time found for students
+            in this course.
+
+          </div>
+
+        )}
 
     </div>
 
