@@ -388,9 +388,7 @@ const validateAssignedClasses =
       })
 
         .select(
-
           '_id courseName courseCode duration status batchTime'
-
         )
 
         .lean()
@@ -540,13 +538,13 @@ router.post(
       // ======================================
       // VALIDATE BASIC INFORMATION
       // ======================================
+      //
+      // ONLY NAME IS REQUIRED
+      // ======================================
 
       if (
         !name ||
-        !designation ||
-        !experience ||
-        !subject ||
-        !description
+        !String(name).trim()
       ) {
 
         return res.status(400).json({
@@ -554,7 +552,7 @@ router.post(
           success: false,
 
           message:
-            'Please fill all required faculty information.',
+            'Faculty Name is required.',
 
         })
 
@@ -739,17 +737,22 @@ router.post(
           // PUBLIC INFORMATION
           // ==================================
 
-          name,
+          name:
+            String(name).trim(),
 
-          designation,
+          designation:
+            designation || '',
 
-          experience,
+          experience:
+            experience || '',
 
-          subject,
+          subject:
+            subject || '',
 
           image,
 
-          description,
+          description:
+            description || '',
 
 
           // ==================================
@@ -1134,6 +1137,30 @@ router.put(
 
 
       // ======================================
+      // NAME
+      // ======================================
+      //
+      // Name is the only required faculty field.
+      // ======================================
+
+      if (
+        name !== undefined &&
+        !String(name).trim()
+      ) {
+
+        return res.status(400).json({
+
+          success: false,
+
+          message:
+            'Faculty Name is required.',
+
+        })
+
+      }
+
+
+      // ======================================
       // ASSIGNED CLASSES
       // ======================================
 
@@ -1189,8 +1216,9 @@ router.put(
       // ======================================
 
       existingFaculty.name =
-        name ??
-        existingFaculty.name
+        name !== undefined
+          ? String(name).trim()
+          : existingFaculty.name
 
       existingFaculty.designation =
         designation ??

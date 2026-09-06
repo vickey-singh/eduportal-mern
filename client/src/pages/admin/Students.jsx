@@ -863,6 +863,16 @@ function Students() {
 
 
   // ======================================
+  // PAGINATION
+  // ======================================
+
+  const [currentPage, setCurrentPage] =
+    useState(1)
+
+  const studentsPerPage = 15
+
+
+  // ======================================
   // VIEW STUDENT
   // ======================================
 
@@ -2148,7 +2158,9 @@ function Students() {
           'Offline',
 
         admissionDate:
-          student.admissionDate || '',
+          getDateInputValue(
+            student.admissionDate
+          ),
 
         studentStatus:
           student.studentStatus ||
@@ -2571,6 +2583,77 @@ function Students() {
       }
 
     )
+
+
+  // ======================================
+  // PAGINATION DATA
+  // ======================================
+
+  const totalPages =
+    Math.ceil(
+      filteredStudents.length /
+      studentsPerPage
+    )
+
+  const startIndex =
+    (currentPage - 1) *
+    studentsPerPage
+
+  const currentStudents =
+    filteredStudents.slice(
+      startIndex,
+      startIndex + studentsPerPage
+    )
+
+
+  // ======================================
+  // RESET PAGINATION ON FILTER CHANGE
+  // ======================================
+
+  useEffect(() => {
+
+    setCurrentPage(1)
+
+  }, [
+    searchTerm,
+    courseFilter,
+    batchFilter,
+    statusFilter,
+    studentStatusFilter,
+    sessionFilter,
+  ])
+
+
+  // ======================================
+  // KEEP PAGE VALID
+  // ======================================
+
+  useEffect(() => {
+
+    if (
+      totalPages > 0 &&
+      currentPage > totalPages
+    ) {
+
+      setCurrentPage(
+        totalPages
+      )
+
+    }
+
+    if (
+      totalPages === 0 &&
+      currentPage !== 1
+    ) {
+
+      setCurrentPage(1)
+
+    }
+
+  }, [
+    totalPages,
+    currentPage,
+  ])
 
 
   // ======================================
@@ -4233,7 +4316,7 @@ function Students() {
 
             ) : (
 
-              filteredStudents.map(
+              currentStudents.map(
                 (student) => {
 
                   const actualFeeStatus =
@@ -4494,6 +4577,80 @@ function Students() {
         </table>
 
       </div>
+
+
+      {/* ====================================== */}
+      {/* PAGINATION */}
+      {/* ====================================== */}
+
+      {totalPages > 1 && (
+
+        <div
+          className="d-flex justify-content-center align-items-center gap-2 mt-3"
+        >
+
+          <button
+            type="button"
+            className="btn btn-outline-primary"
+            disabled={
+              currentPage === 1
+            }
+            onClick={() =>
+              setCurrentPage(
+                (previous) =>
+                  previous - 1
+              )
+            }
+          >
+            Previous
+          </button>
+
+
+          {Array.from(
+            { length: totalPages },
+            (_, index) =>
+              index + 1
+          ).map((page) => (
+
+            <button
+              type="button"
+              key={page}
+              className={
+                `btn ${
+                  currentPage === page
+                    ? 'btn-primary'
+                    : 'btn-outline-primary'
+                }`
+              }
+              onClick={() =>
+                setCurrentPage(page)
+              }
+            >
+              {page}
+            </button>
+
+          ))}
+
+
+          <button
+            type="button"
+            className="btn btn-outline-primary"
+            disabled={
+              currentPage === totalPages
+            }
+            onClick={() =>
+              setCurrentPage(
+                (previous) =>
+                  previous + 1
+              )
+            }
+          >
+            Next
+          </button>
+
+        </div>
+
+      )}
 
 
       {/* ====================================== */}

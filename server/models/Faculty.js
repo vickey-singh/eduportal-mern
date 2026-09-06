@@ -69,7 +69,7 @@ const facultySchema =
 
         type: String,
 
-        required: true,
+        default: '',
 
         trim: true,
 
@@ -79,7 +79,7 @@ const facultySchema =
 
         type: String,
 
-        required: true,
+        default: '',
 
         trim: true,
 
@@ -89,7 +89,7 @@ const facultySchema =
 
         type: String,
 
-        required: true,
+        default: '',
 
         trim: true,
 
@@ -107,7 +107,7 @@ const facultySchema =
 
         type: String,
 
-        required: true,
+        default: '',
 
         trim: true,
 

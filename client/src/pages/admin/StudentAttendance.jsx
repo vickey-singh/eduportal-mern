@@ -59,6 +59,22 @@ function StudentAttendance() {
 
 
   // ======================================
+  // WEEKLY DATA
+  // ======================================
+
+  const [weeklySummary, setWeeklySummary] =
+    useState(null)
+
+
+  const [weeklyAttendance, setWeeklyAttendance] =
+    useState([])
+
+
+  const [selectedWeekStart, setSelectedWeekStart] =
+    useState('')
+
+
+  // ======================================
   // MONTHLY DATA
   // ======================================
 
@@ -309,6 +325,192 @@ function StudentAttendance() {
 
 
   // ======================================
+  // GET WEEK START DATE
+  // MONDAY
+  // ======================================
+
+  const getWeekStart = (
+    date
+  ) => {
+
+    const d =
+      new Date(date)
+
+
+    const day =
+      d.getDay()
+
+
+    const diff =
+      day === 0
+        ? -6
+        : 1 - day
+
+
+    d.setDate(
+      d.getDate() + diff
+    )
+
+
+    return d
+
+  }
+
+
+  // ======================================
+  // FORMAT DATE FOR INPUT
+  // ======================================
+
+  const getInputDate = (
+    date
+  ) => {
+
+    const d =
+      new Date(date)
+
+
+    const year =
+      d.getFullYear()
+
+
+    const month =
+      String(
+        d.getMonth() + 1
+      ).padStart(
+        2,
+        '0'
+      )
+
+
+    const day =
+      String(
+        d.getDate()
+      ).padStart(
+        2,
+        '0'
+      )
+
+
+    return `${year}-${month}-${day}`
+
+  }
+
+
+  // ======================================
+  // LOAD WEEKLY ATTENDANCE
+  // ======================================
+
+  const loadWeeklyAttendance =
+    (weekStart) => {
+
+      if (!weekStart) {
+
+        setWeeklyAttendance([])
+
+        setWeeklySummary(null)
+
+        return
+
+      }
+
+
+      const start =
+        new Date(
+          `${weekStart}T00:00:00`
+        )
+
+
+      const end =
+        new Date(start)
+
+
+      end.setDate(
+        end.getDate() + 6
+      )
+
+
+      const records =
+        dailyAttendance.filter(
+          (record) => {
+
+            if (!record.date) {
+
+              return false
+
+            }
+
+
+            const recordDate =
+              new Date(
+                `${record.date}T00:00:00`
+              )
+
+
+            return (
+              recordDate >= start &&
+              recordDate <= end
+            )
+
+          }
+        )
+
+
+      const total =
+        records.length
+
+
+      const present =
+        records.filter(
+          (record) =>
+            record.status ===
+            'Present'
+        ).length
+
+
+      const absent =
+        records.filter(
+          (record) =>
+            record.status ===
+            'Absent'
+        ).length
+
+
+      const percentage =
+        total > 0
+
+          ? Number(
+              (
+                (
+                  present /
+                  total
+                ) * 100
+              ).toFixed(2)
+            )
+
+          : 0
+
+
+      setWeeklyAttendance(
+        records
+      )
+
+
+      setWeeklySummary({
+
+        total,
+
+        present,
+
+        absent,
+
+        percentage,
+
+      })
+
+    }
+
+
+  // ======================================
   // TAB CHANGE
   // ======================================
 
@@ -318,6 +520,38 @@ function StudentAttendance() {
       setActiveTab(
         tab
       )
+
+
+      if (
+        tab === 'weekly'
+      ) {
+
+        const today =
+          new Date()
+
+
+        const weekStart =
+          getWeekStart(
+            today
+          )
+
+
+        const weekStartString =
+          getInputDate(
+            weekStart
+          )
+
+
+        setSelectedWeekStart(
+          weekStartString
+        )
+
+
+        loadWeeklyAttendance(
+          weekStartString
+        )
+
+      }
 
 
       if (
@@ -341,10 +575,60 @@ function StudentAttendance() {
 
 
   // ======================================
+  // WEEK CHANGE
+  // ======================================
+
+  const handleWeekChange =
+    (e) => {
+
+      const selectedDate =
+        e.target.value
+
+
+      if (!selectedDate) {
+
+        setSelectedWeekStart('')
+
+        setWeeklyAttendance([])
+
+        setWeeklySummary(null)
+
+        return
+
+      }
+
+
+      const weekStart =
+        getWeekStart(
+          `${selectedDate}T00:00:00`
+        )
+
+
+      const weekStartString =
+        getInputDate(
+          weekStart
+        )
+
+
+      setSelectedWeekStart(
+        weekStartString
+      )
+
+
+      loadWeeklyAttendance(
+        weekStartString
+      )
+
+    }
+
+
+  // ======================================
   // DATE FORMAT
   // ======================================
 
-  const formatDate = (date) => {
+  const formatDate = (
+    date
+  ) => {
 
     if (!date) {
 
@@ -538,6 +822,48 @@ function StudentAttendance() {
 
 
   // ======================================
+  // GENERATE PDF
+  // ======================================
+
+  const generateAttendancePDF = () => {
+
+    window.print()
+
+  }
+
+
+  // ======================================
+  // WEEK RANGE
+  // ======================================
+
+  const getWeekEnd = () => {
+
+    if (!selectedWeekStart) {
+
+      return ''
+
+    }
+
+
+    const end =
+      new Date(
+        `${selectedWeekStart}T00:00:00`
+      )
+
+
+    end.setDate(
+      end.getDate() + 6
+    )
+
+
+    return getInputDate(
+      end
+    )
+
+  }
+
+
+  // ======================================
   // LOADING
   // ======================================
 
@@ -610,12 +936,16 @@ function StudentAttendance() {
       <div className="applications-header">
 
         <h2>
+
           Student Attendance
+
         </h2>
 
         <p>
-          View daily, monthly and yearly
-          attendance.
+
+          View daily, weekly, monthly
+          and yearly attendance.
+
         </p>
 
       </div>
@@ -633,7 +963,9 @@ function StudentAttendance() {
           <div className="col-md-3 mb-3">
 
             <small className="text-muted">
+
               Student Name
+
             </small>
 
             <h5 className="mb-0">
@@ -650,7 +982,9 @@ function StudentAttendance() {
           <div className="col-md-3 mb-3">
 
             <small className="text-muted">
+
               Admission Number
+
             </small>
 
             <h5 className="mb-0">
@@ -663,28 +997,33 @@ function StudentAttendance() {
 
           </div>
 
+
           <div className="col-md-3 mb-3">
 
             <small className="text-muted">
+
               Roll Number
+
             </small>
-          
+
             <h5 className="mb-0">
-          
+
               {
                 student.rollNumber ||
                 '-'
               }
-          
+
             </h5>
-          
+
           </div>
 
 
           <div className="col-md-3 mb-3">
 
             <small className="text-muted">
+
               Course
+
             </small>
 
             <h5 className="mb-0">
@@ -701,7 +1040,9 @@ function StudentAttendance() {
           <div className="col-md-3 mb-3">
 
             <small className="text-muted">
+
               Batch Time
+
             </small>
 
             <h5 className="mb-0">
@@ -748,13 +1089,17 @@ function StudentAttendance() {
           <div className="card p-3 text-center">
 
             <small className="text-muted">
+
               Total Classes
+
             </small>
 
             <h3>
+
               {
                 summary.total
               }
+
             </h3>
 
           </div>
@@ -767,13 +1112,17 @@ function StudentAttendance() {
           <div className="card p-3 text-center">
 
             <small className="text-muted">
+
               Present
+
             </small>
 
             <h3>
+
               {
                 summary.present
               }
+
             </h3>
 
           </div>
@@ -786,13 +1135,17 @@ function StudentAttendance() {
           <div className="card p-3 text-center">
 
             <small className="text-muted">
+
               Absent
+
             </small>
 
             <h3>
+
               {
                 summary.absent
               }
+
             </h3>
 
           </div>
@@ -805,13 +1158,17 @@ function StudentAttendance() {
           <div className="card p-3 text-center">
 
             <small className="text-muted">
+
               Attendance
+
             </small>
 
             <h3>
+
               {
                 summary.percentage
               }%
+
             </h3>
 
           </div>
@@ -850,6 +1207,25 @@ function StudentAttendance() {
         <button
           type="button"
           className={
+            activeTab === 'weekly'
+              ? 'btn btn-primary me-2'
+              : 'btn btn-outline-primary me-2'
+          }
+          onClick={() =>
+            handleTabChange(
+              'weekly'
+            )
+          }
+        >
+
+          Weekly
+
+        </button>
+
+
+        <button
+          type="button"
+          className={
             activeTab === 'monthly'
               ? 'btn btn-primary me-2'
               : 'btn btn-outline-primary me-2'
@@ -870,8 +1246,8 @@ function StudentAttendance() {
           type="button"
           className={
             activeTab === 'yearly'
-              ? 'btn btn-primary'
-              : 'btn btn-outline-primary'
+              ? 'btn btn-primary me-2'
+              : 'btn btn-outline-primary me-2'
           }
           onClick={() =>
             handleTabChange(
@@ -881,6 +1257,19 @@ function StudentAttendance() {
         >
 
           Yearly
+
+        </button>
+
+
+        <button
+          type="button"
+          className="btn btn-success"
+          onClick={
+            generateAttendancePDF
+          }
+        >
+
+          📄 PDF
 
         </button>
 
@@ -895,11 +1284,28 @@ function StudentAttendance() {
 
         <div className="card p-4">
 
-          <h5 className="mb-3">
+          <div className="d-flex justify-content-between align-items-center mb-3">
 
-            Daily Attendance
+            <h5 className="mb-0">
 
-          </h5>
+              Daily Attendance
+
+            </h5>
+
+
+            <button
+              type="button"
+              className="btn btn-success btn-sm"
+              onClick={
+                generateAttendancePDF
+              }
+            >
+
+              📄 Generate PDF
+
+            </button>
+
+          </div>
 
 
           {dailyAttendance.length === 0 ? (
@@ -1019,12 +1425,347 @@ function StudentAttendance() {
 
 
       {/* ==================================
+          WEEKLY
+      ================================== */}
+
+      {activeTab === 'weekly' && (
+
+        <div className="card p-4">
+
+          <div className="d-flex justify-content-between align-items-center mb-4">
+
+            <h5 className="mb-0">
+
+              Weekly Attendance
+
+            </h5>
+
+
+            <button
+              type="button"
+              className="btn btn-success btn-sm"
+              onClick={
+                generateAttendancePDF
+              }
+            >
+
+              📄 Generate PDF
+
+            </button>
+
+          </div>
+
+
+          {/* WEEK SELECTOR */}
+
+          <div className="row mb-4">
+
+            <div className="col-md-4">
+
+              <label className="form-label">
+
+                Week Starting
+
+              </label>
+
+
+              <input
+                type="date"
+                className="form-control"
+                value={
+                  selectedWeekStart
+                }
+                onChange={
+                  handleWeekChange
+                }
+              />
+
+
+              {selectedWeekStart && (
+
+                <small className="text-muted">
+
+                  Week:
+
+                  {' '}
+
+                  {
+                    formatDate(
+                      selectedWeekStart
+                    )
+                  }
+
+                  {' '}to{' '}
+
+                  {
+                    formatDate(
+                      getWeekEnd()
+                    )
+                  }
+
+                </small>
+
+              )}
+
+            </div>
+
+          </div>
+
+
+          {/* WEEK SUMMARY */}
+
+          {weeklySummary && (
+
+            <div className="row mb-4">
+
+
+              <div className="col-md-3 mb-3">
+
+                <div className="card p-3 text-center">
+
+                  <small className="text-muted">
+
+                    Total Classes
+
+                  </small>
+
+                  <h4>
+
+                    {
+                      weeklySummary.total
+                    }
+
+                  </h4>
+
+                </div>
+
+              </div>
+
+
+              <div className="col-md-3 mb-3">
+
+                <div className="card p-3 text-center">
+
+                  <small className="text-muted">
+
+                    Present
+
+                  </small>
+
+                  <h4>
+
+                    {
+                      weeklySummary.present
+                    }
+
+                  </h4>
+
+                </div>
+
+              </div>
+
+
+              <div className="col-md-3 mb-3">
+
+                <div className="card p-3 text-center">
+
+                  <small className="text-muted">
+
+                    Absent
+
+                  </small>
+
+                  <h4>
+
+                    {
+                      weeklySummary.absent
+                    }
+
+                  </h4>
+
+                </div>
+
+              </div>
+
+
+              <div className="col-md-3 mb-3">
+
+                <div className="card p-3 text-center">
+
+                  <small className="text-muted">
+
+                    Attendance
+
+                  </small>
+
+                  <h4>
+
+                    {
+                      weeklySummary.percentage
+                    }%
+
+                  </h4>
+
+                </div>
+
+              </div>
+
+
+            </div>
+
+          )}
+
+
+          {/* WEEKLY RECORDS */}
+
+          {weeklyAttendance.length === 0 ? (
+
+            <div className="alert alert-info">
+
+              No attendance records found
+              for this week.
+
+            </div>
+
+          ) : (
+
+            <div className="table-responsive">
+
+              <table className="table applications-table">
+
+                <thead>
+
+                  <tr>
+
+                    <th>
+                      Date
+                    </th>
+
+                    <th>
+                      Course
+                    </th>
+
+                    <th>
+                      Batch Time
+                    </th>
+
+                    <th>
+                      Status
+                    </th>
+
+                  </tr>
+
+                </thead>
+
+
+                <tbody>
+
+                  {weeklyAttendance.map(
+                    (record) => (
+
+                      <tr
+                        key={
+                          record._id
+                        }
+                      >
+
+                        <td>
+
+                          {
+                            formatDate(
+                              record.date
+                            )
+                          }
+
+                        </td>
+
+                        <td>
+
+                          {
+                            record.course
+                          }
+
+                        </td>
+
+                        <td>
+
+                          {
+                            record.batchTime ||
+                            '-'
+                          }
+
+                        </td>
+
+                        <td>
+
+                          <span
+                            className={
+                              record.status ===
+                              'Present'
+
+                                ? 'badge bg-success'
+
+                                : 'badge bg-danger'
+                            }
+                          >
+
+                            {
+                              record.status
+                            }
+
+                          </span>
+
+                        </td>
+
+                      </tr>
+
+                    )
+                  )}
+
+                </tbody>
+
+              </table>
+
+            </div>
+
+          )}
+
+        </div>
+
+      )}
+
+
+      {/* ==================================
           MONTHLY
       ================================== */}
 
       {activeTab === 'monthly' && (
 
         <div className="card p-4">
+
+
+          <div className="d-flex justify-content-between align-items-center mb-4">
+
+            <h5 className="mb-0">
+
+              Monthly Attendance
+
+            </h5>
+
+
+            <button
+              type="button"
+              className="btn btn-success btn-sm"
+              onClick={
+                generateAttendancePDF
+              }
+            >
+
+              📄 Generate PDF
+
+            </button>
+
+          </div>
 
 
           <div className="row mb-4">
@@ -1035,7 +1776,9 @@ function StudentAttendance() {
             <div className="col-md-4">
 
               <label className="form-label">
+
                 Month
+
               </label>
 
               <select
@@ -1084,7 +1827,9 @@ function StudentAttendance() {
             <div className="col-md-4">
 
               <label className="form-label">
+
                 Year
+
               </label>
 
               <select
@@ -1151,13 +1896,17 @@ function StudentAttendance() {
                 <div className="card p-3 text-center">
 
                   <small>
+
                     Total
+
                   </small>
 
                   <h4>
+
                     {
                       monthlySummary.total
                     }
+
                   </h4>
 
                 </div>
@@ -1170,13 +1919,17 @@ function StudentAttendance() {
                 <div className="card p-3 text-center">
 
                   <small>
+
                     Present
+
                   </small>
 
                   <h4>
+
                     {
                       monthlySummary.present
                     }
+
                   </h4>
 
                 </div>
@@ -1189,13 +1942,17 @@ function StudentAttendance() {
                 <div className="card p-3 text-center">
 
                   <small>
+
                     Absent
+
                   </small>
 
                   <h4>
+
                     {
                       monthlySummary.absent
                     }
+
                   </h4>
 
                 </div>
@@ -1208,13 +1965,17 @@ function StudentAttendance() {
                 <div className="card p-3 text-center">
 
                   <small>
+
                     Attendance
+
                   </small>
 
                   <h4>
+
                     {
                       monthlySummary.percentage
                     }%
+
                   </h4>
 
                 </div>
@@ -1233,7 +1994,8 @@ function StudentAttendance() {
 
             <div className="alert alert-info">
 
-              No attendance records found for this month.
+              No attendance records found
+              for this month.
 
             </div>
 
@@ -1329,6 +2091,30 @@ function StudentAttendance() {
         <div className="card p-4">
 
 
+          <div className="d-flex justify-content-between align-items-center mb-4">
+
+            <h5 className="mb-0">
+
+              Yearly Attendance
+
+            </h5>
+
+
+            <button
+              type="button"
+              className="btn btn-success btn-sm"
+              onClick={
+                generateAttendancePDF
+              }
+            >
+
+              📄 Generate PDF
+
+            </button>
+
+          </div>
+
+
           {/* YEAR */}
 
           <div className="row mb-4">
@@ -1336,7 +2122,9 @@ function StudentAttendance() {
             <div className="col-md-4">
 
               <label className="form-label">
+
                 Year
+
               </label>
 
               <select
@@ -1402,13 +2190,17 @@ function StudentAttendance() {
                 <div className="card p-3 text-center">
 
                   <small>
+
                     Total
+
                   </small>
 
                   <h4>
+
                     {
                       yearlySummary.total
                     }
+
                   </h4>
 
                 </div>
@@ -1421,13 +2213,17 @@ function StudentAttendance() {
                 <div className="card p-3 text-center">
 
                   <small>
+
                     Present
+
                   </small>
 
                   <h4>
+
                     {
                       yearlySummary.present
                     }
+
                   </h4>
 
                 </div>
@@ -1440,13 +2236,17 @@ function StudentAttendance() {
                 <div className="card p-3 text-center">
 
                   <small>
+
                     Absent
+
                   </small>
 
                   <h4>
+
                     {
                       yearlySummary.absent
                     }
+
                   </h4>
 
                 </div>
@@ -1459,13 +2259,17 @@ function StudentAttendance() {
                 <div className="card p-3 text-center">
 
                   <small>
+
                     Attendance
+
                   </small>
 
                   <h4>
+
                     {
                       yearlySummary.percentage
                     }%
+
                   </h4>
 
                 </div>
@@ -1481,6 +2285,7 @@ function StudentAttendance() {
           {/* MONTH-WISE SUMMARY */}
 
           {monthlySummary &&
+
             Object.keys(
               monthlySummary
             ).length > 0 && (
@@ -1621,7 +2426,8 @@ function StudentAttendance() {
 
             <div className="alert alert-info mt-4">
 
-              No attendance records found for this year.
+              No attendance records found
+              for this year.
 
             </div>
 

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import React, { useState, useEffect } from 'react'
 
 import { Link } from 'react-router-dom'
 
@@ -15,6 +15,381 @@ import '../../assets/styles/admin.css'
 // ======================================
 // FACULTY
 // ======================================
+
+const FacultyTable = React.memo(({
+  facultyData,
+  getImageUrl,
+  openSalary,
+  toggleWebsiteVisibility,
+  visibilityUpdatingId,
+  setViewFaculty,
+  editFaculty,
+  setResetFaculty,
+  setResetPassword,
+  deleteFaculty,
+}) => (
+
+      <div className="table-responsive mt-5">
+
+        <table className="table applications-table">
+
+          <thead>
+
+            <tr>
+
+              <th>Image</th>
+
+              <th>Name</th>
+
+              <th>Subject</th>
+
+              <th>Experience</th>
+
+              <th>Designation</th>
+
+              <th>Teacher ID</th>
+
+              <th>Employee ID</th>
+
+              <th>Salary</th>
+
+              <th>Website</th>
+
+              <th>Action</th>
+
+            </tr>
+
+          </thead>
+
+
+          <tbody>
+
+            {facultyData.length === 0 ? (
+
+              <tr>
+
+                <td
+                  colSpan="10"
+                  className="text-center"
+                >
+
+                  No faculty found.
+
+                </td>
+
+              </tr>
+
+            ) : (
+
+              facultyData.map(
+
+                (item) => (
+
+                  <tr
+                    key={
+                      item._id
+                    }
+                  >
+
+                    <td>
+
+                      <img
+
+                        src={
+                          getImageUrl(
+                            item.image
+                          )
+                        }
+
+                        alt={
+                          item.name
+                        }
+
+                        width="60"
+
+                        height="60"
+
+                        style={{
+
+                          objectFit:
+                            'cover',
+
+                          borderRadius:
+                            '8px',
+
+                        }}
+
+                        onError={(e) => {
+                          if (
+                            e.currentTarget.src.endsWith('/logo.png')
+                          ) {
+                            return
+                          }
+
+                          e.currentTarget.src = '/logo.png'
+                        }}
+
+                      />
+
+                    </td>
+
+
+                    <td>
+                      {
+                        item.name
+                      }
+                    </td>
+
+
+                    <td>
+                      {
+                        item.subject
+                      }
+                    </td>
+
+
+                    <td>
+                      {
+                        item.experience
+                      }
+                    </td>
+
+
+                    <td>
+                      {
+                        item.designation
+                      }
+                    </td>
+
+
+                    <td>
+
+                      {item.isTeacher === true
+
+                        ? (
+
+                          item.teacherId ||
+                          'Generating...'
+
+                        )
+
+                        : (
+
+                          <span className="text-muted">
+
+                            Not Enabled
+
+                          </span>
+
+                        )
+
+                      }
+
+                    </td>
+
+
+                    <td>
+
+                      {
+                        item.employeeId ||
+                        'Generating...'
+                      }
+
+                    </td>
+
+
+                    {/* ==================================
+                        SALARY
+                    ================================== */}
+
+                    <td>
+
+                      <button
+
+                        type="button"
+
+                        className="table-btn approve-btn"
+
+                        onClick={() =>
+                          openSalary(
+                            item
+                          )
+                        }
+
+                      >
+
+                        <i className="fas fa-money-bill-wave me-1"></i>
+
+                        Salary
+
+                      </button>
+
+                    </td>
+
+
+                    <td>
+
+                      <button
+
+                        type="button"
+
+                        className={
+
+                          `table-btn ${
+                            item.isWebsiteVisible
+                              ? 'approve-btn'
+                              : 'reject-btn'
+                          }`
+
+                        }
+
+                        onClick={() =>
+                          toggleWebsiteVisibility(
+                            item
+                          )
+                        }
+
+                        disabled={
+
+                          visibilityUpdatingId ===
+                          item._id
+
+                        }
+
+                      >
+
+                        {visibilityUpdatingId ===
+                        item._id
+
+                          ? 'Please Wait...'
+
+                          : item.isWebsiteVisible
+
+                            ? 'Visible'
+
+                            : 'Hidden'
+
+                        }
+
+                      </button>
+
+                    </td>
+
+
+                    <td>
+
+                      <div className="d-flex gap-2 flex-wrap">
+
+
+                        {/* VIEW */}
+
+                        <button
+
+                          type="button"
+
+                          className="table-btn approve-btn"
+
+                          onClick={() =>
+                            setViewFaculty(
+                              item
+                            )
+                          }
+
+                        >
+
+                          View
+
+                        </button>
+
+
+                        {/* EDIT */}
+
+                        <button
+
+                          type="button"
+
+                          className="table-btn approve-btn"
+
+                          onClick={() =>
+                            editFaculty(
+                              item
+                            )
+                          }
+
+                        >
+
+                          Edit
+
+                        </button>
+
+
+                        {/* RESET PASSWORD */}
+
+                        {item.isTeacher === true && (
+
+                          <button
+
+                            type="button"
+
+                            className="table-btn approve-btn"
+
+                            onClick={() => {
+
+                              setResetFaculty(
+                                item
+                              )
+
+                              setResetPassword('')
+
+                            }}
+
+                          >
+
+                            Reset Password
+
+                          </button>
+
+                        )}
+
+
+                        {/* DELETE */}
+
+                        <button
+
+                          type="button"
+
+                          className="table-btn reject-btn"
+
+                          onClick={() =>
+                            deleteFaculty(
+                              item._id
+                            )
+                          }
+
+                        >
+
+                          Delete
+
+                        </button>
+
+                      </div>
+
+                    </td>
+
+                  </tr>
+
+                )
+
+              )
+
+            )}
+
+          </tbody>
+
+        </table>
+
+      </div>
+))
 
 function Faculty() {
 
@@ -2424,7 +2799,7 @@ function Faculty() {
                   handleChange
                 }
 
-                required
+                
 
               />
 
@@ -2458,7 +2833,7 @@ function Faculty() {
                   handleChange
                 }
 
-                required
+                
 
               />
 
@@ -2492,7 +2867,7 @@ function Faculty() {
                   handleChange
                 }
 
-                required
+                
 
               />
 
@@ -2565,7 +2940,7 @@ function Faculty() {
                   handleChange
                 }
 
-                required
+                
 
               ></textarea>
 
@@ -3443,364 +3818,18 @@ function Faculty() {
           FACULTY TABLE
       ====================================== */}
 
-      <div className="table-responsive mt-5">
-
-        <table className="table applications-table">
-
-          <thead>
-
-            <tr>
-
-              <th>Image</th>
-
-              <th>Name</th>
-
-              <th>Subject</th>
-
-              <th>Experience</th>
-
-              <th>Designation</th>
-
-              <th>Teacher ID</th>
-
-              <th>Employee ID</th>
-
-              <th>Salary</th>
-
-              <th>Website</th>
-
-              <th>Action</th>
-
-            </tr>
-
-          </thead>
-
-
-          <tbody>
-
-            {facultyData.length === 0 ? (
-
-              <tr>
-
-                <td
-                  colSpan="10"
-                  className="text-center"
-                >
-
-                  No faculty found.
-
-                </td>
-
-              </tr>
-
-            ) : (
-
-              facultyData.map(
-
-                (item) => (
-
-                  <tr
-                    key={
-                      item._id
-                    }
-                  >
-
-                    <td>
-
-                      <img
-
-                        src={
-                          getImageUrl(
-                            item.image
-                          )
-                        }
-
-                        alt={
-                          item.name
-                        }
-
-                        width="60"
-
-                        height="60"
-
-                        style={{
-
-                          objectFit:
-                            'cover',
-
-                          borderRadius:
-                            '8px',
-
-                        }}
-
-                        onError={(e) => {
-
-                          e.currentTarget.src =
-                            '/logo.png'
-
-                        }}
-
-                      />
-
-                    </td>
-
-
-                    <td>
-                      {
-                        item.name
-                      }
-                    </td>
-
-
-                    <td>
-                      {
-                        item.subject
-                      }
-                    </td>
-
-
-                    <td>
-                      {
-                        item.experience
-                      }
-                    </td>
-
-
-                    <td>
-                      {
-                        item.designation
-                      }
-                    </td>
-
-
-                    <td>
-
-                      {item.isTeacher === true
-
-                        ? (
-
-                          item.teacherId ||
-                          'Generating...'
-
-                        )
-
-                        : (
-
-                          <span className="text-muted">
-
-                            Not Enabled
-
-                          </span>
-
-                        )
-
-                      }
-
-                    </td>
-
-
-                    <td>
-
-                      {
-                        item.employeeId ||
-                        'Generating...'
-                      }
-
-                    </td>
-
-
-                    {/* ==================================
-                        SALARY
-                    ================================== */}
-
-                    <td>
-
-                      <button
-
-                        type="button"
-
-                        className="table-btn approve-btn"
-
-                        onClick={() =>
-                          openSalary(
-                            item
-                          )
-                        }
-
-                      >
-
-                        <i className="fas fa-money-bill-wave me-1"></i>
-
-                        Salary
-
-                      </button>
-
-                    </td>
-
-
-                    <td>
-
-                      <button
-
-                        type="button"
-
-                        className={
-
-                          `table-btn ${
-                            item.isWebsiteVisible
-                              ? 'approve-btn'
-                              : 'reject-btn'
-                          }`
-
-                        }
-
-                        onClick={() =>
-                          toggleWebsiteVisibility(
-                            item
-                          )
-                        }
-
-                        disabled={
-
-                          visibilityUpdatingId ===
-                          item._id
-
-                        }
-
-                      >
-
-                        {visibilityUpdatingId ===
-                        item._id
-
-                          ? 'Please Wait...'
-
-                          : item.isWebsiteVisible
-
-                            ? 'Visible'
-
-                            : 'Hidden'
-
-                        }
-
-                      </button>
-
-                    </td>
-
-
-                    <td>
-
-                      <div className="d-flex gap-2 flex-wrap">
-
-
-                        {/* VIEW */}
-
-                        <button
-
-                          type="button"
-
-                          className="table-btn approve-btn"
-
-                          onClick={() =>
-                            setViewFaculty(
-                              item
-                            )
-                          }
-
-                        >
-
-                          View
-
-                        </button>
-
-
-                        {/* EDIT */}
-
-                        <button
-
-                          type="button"
-
-                          className="table-btn approve-btn"
-
-                          onClick={() =>
-                            editFaculty(
-                              item
-                            )
-                          }
-
-                        >
-
-                          Edit
-
-                        </button>
-
-
-                        {/* RESET PASSWORD */}
-
-                        {item.isTeacher === true && (
-
-                          <button
-
-                            type="button"
-
-                            className="table-btn approve-btn"
-
-                            onClick={() => {
-
-                              setResetFaculty(
-                                item
-                              )
-
-                              setResetPassword('')
-
-                            }}
-
-                          >
-
-                            Reset Password
-
-                          </button>
-
-                        )}
-
-
-                        {/* DELETE */}
-
-                        <button
-
-                          type="button"
-
-                          className="table-btn reject-btn"
-
-                          onClick={() =>
-                            deleteFaculty(
-                              item._id
-                            )
-                          }
-
-                        >
-
-                          Delete
-
-                        </button>
-
-                      </div>
-
-                    </td>
-
-                  </tr>
-
-                )
-
-              )
-
-            )}
-
-          </tbody>
-
-        </table>
-
-      </div>
-
+      <FacultyTable
+        facultyData={facultyData}
+        getImageUrl={getImageUrl}
+        openSalary={openSalary}
+        toggleWebsiteVisibility={toggleWebsiteVisibility}
+        visibilityUpdatingId={visibilityUpdatingId}
+        setViewFaculty={setViewFaculty}
+        editFaculty={editFaculty}
+        setResetFaculty={setResetFaculty}
+        setResetPassword={setResetPassword}
+        deleteFaculty={deleteFaculty}
+      />
 
       {/* ======================================
           VIEW FACULTY MODAL
