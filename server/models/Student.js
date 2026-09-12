@@ -635,6 +635,17 @@ const studentSchema =
 
       },
 
+      // ======================================
+      // ZKTECO BIOMETRIC USER ID
+      // ======================================
+      
+      biometricUserId: {
+        type: String,
+        trim: true,
+        unique: true,
+        sparse: true,
+      },
+
 
       admissionDate: {
 

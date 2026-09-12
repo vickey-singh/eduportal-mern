@@ -796,6 +796,7 @@ function Students() {
       aadharNumber: '',
       admissionNumber: '',
       rollNumber: '',
+      biometricUserId: '',
       course: '',
       batchTime: '',
 
@@ -920,6 +921,13 @@ function Students() {
 
   useEffect(() => {
 
+    // The initial effect already loads students.
+    // Skip the duplicate request for the default
+    // session on first mount.
+    if (sessionFilter === 'All') {
+      return
+    }
+
     fetchStudents()
 
   }, [
@@ -1015,6 +1023,7 @@ function Students() {
       aadharNumber: '',
       admissionNumber: '',
       rollNumber: '',
+      biometricUserId: '',
       course: '',
       batchTime: '',
 
@@ -1775,6 +1784,11 @@ function Students() {
         )
 
         data.append(
+          'biometricUserId',
+          formData.biometricUserId
+        )
+
+        data.append(
           'course',
           formData.course
         )
@@ -2113,6 +2127,9 @@ function Students() {
 
         rollNumber:
           student.rollNumber || '',
+
+        biometricUserId:
+          student.biometricUserId || '',
 
         course:
           student.course || '',
@@ -3187,6 +3204,25 @@ function Students() {
                 }
               />
 
+            </div>
+
+            <div className="col-md-6 mb-3">
+              <label className="form-label">
+                Biometric User ID
+              </label>
+            
+              <input
+                type="text"
+                className="form-control"
+                name="biometricUserId"
+                placeholder="e.g. 1001"
+                value={formData.biometricUserId}
+                onChange={handleChange}
+              />
+            
+              <small className="text-muted">
+                Enter the User ID assigned on the ZKTeco device.
+              </small>
             </div>
 
 
@@ -4938,6 +4974,14 @@ function Students() {
                   label="Roll Number"
                   value={
                     selectedStudent.rollNumber
+                  }
+                />
+
+                <Detail
+                  label="Biometric User ID"
+                  value={
+                    selectedStudent.biometricUserId ||
+                    'Not Assigned'
                   }
                 />
 

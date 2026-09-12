@@ -1030,6 +1030,7 @@ router.post(
         dob,
         aadharNumber,
         rollNumber,
+        biometricUserId,
         course,
         batchTime,
         contact,
@@ -1120,6 +1121,36 @@ router.post(
             'Valid admission date is required.',
 
         })
+
+      }
+
+      // ======================================
+      // BIOMETRIC USER ID DUPLICATE CHECK
+      // ======================================
+
+      const cleanBiometricUserId =
+        String(biometricUserId || '').trim()
+
+      if (cleanBiometricUserId) {
+
+        const existingBiometricStudent =
+          await Student.findOne({
+            biometricUserId:
+              cleanBiometricUserId,
+          })
+
+        if (existingBiometricStudent) {
+
+          return res.status(400).json({
+
+            success: false,
+
+            message:
+              `Biometric User ID ${cleanBiometricUserId} is already assigned to another student.`,
+
+          })
+
+        }
 
       }
 
@@ -1271,6 +1302,9 @@ router.post(
 
           rollNumber:
             rollNumber || '',
+
+          biometricUserId:
+            cleanBiometricUserId || undefined,
 
           course:
             course || '',
@@ -2231,42 +2265,58 @@ router.get(
 
       }
 
+      // ======================================
+      // FAST STUDENT LIST
+      // ======================================
+      // IMPORTANT:
+      // Do NOT save every student while loading
+      // the Admin Student page.
+      //
+      // Previously this route was doing:
+      //   Student.find()
+      //   -> refresh each student
+      //   -> await student.save()
+      //   -> next student
+      //
+      // That caused N database writes on every
+      // Student page load and made the page slow.
+      //
+      // Now we use lean() and only prepare the
+      // response in memory.
+      // ======================================
+
       const students =
         await Student.find(query)
           .sort({
             admissionDate: -1,
             createdAt: -1,
           })
+          .lean()
 
-      const result = []
+      const result =
+        students.map(
+          (student) => {
 
-      for (
-        const student of students
-      ) {
-
-        refreshMasterFeeState(
-          student
-        )
-
-        if (
-          !student.session &&
-          student.admissionDate
-        ) {
-
-          student.session =
-            calculateAcademicSession(
-              student.admissionDate
+            refreshMasterFeeState(
+              student
             )
 
-        }
+            if (
+              !student.session &&
+              student.admissionDate
+            ) {
 
-        await student.save()
+              student.session =
+                calculateAcademicSession(
+                  student.admissionDate
+                )
 
-        result.push(
-          student.toObject()
+            }
+
+            return student
+
+          }
         )
-
-      }
 
       return res.status(200).json(
         result
@@ -2312,6 +2362,7 @@ router.put(
         dob,
         aadharNumber,
         rollNumber,
+        biometricUserId,
         course,
         batchTime,
         contact,
@@ -2354,6 +2405,41 @@ router.put(
 
         })
 
+      }
+
+      // ======================================
+      // BIOMETRIC USER ID DUPLICATE CHECK
+      // ======================================
+      
+      const cleanBiometricUserId =
+        String(biometricUserId || '').trim()
+      
+      if (cleanBiometricUserId) {
+      
+        const existingBiometricStudent =
+          await Student.findOne({
+            biometricUserId:
+              cleanBiometricUserId,
+      
+            _id: {
+              $ne: student._id,
+            },
+      
+          })
+      
+        if (existingBiometricStudent) {
+      
+          return res.status(400).json({
+      
+            success: false,
+      
+            message:
+              `Biometric User ID ${cleanBiometricUserId} is already assigned to another student.`,
+      
+          })
+      
+        }
+      
       }
 
       const totalFee =
@@ -2477,6 +2563,9 @@ router.put(
 
       student.rollNumber =
         rollNumber || ''
+
+      student.biometricUserId =
+        cleanBiometricUserId || undefined
 
       student.course =
         course || ''
@@ -2758,6 +2847,8 @@ router.put(
         })
 
       }
+
+      
 
       const paymentAmount =
         Number(amount)

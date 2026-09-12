@@ -18,6 +18,9 @@ const paymentRoutes =
 const testMailRoutes =
   require('./routes/testMailRoutes')
 
+const zktecoRoutes =
+  require('./routes/zktecoRoutes')
+
 const courseRoutes =
   require('./routes/courseRoutes')
 
@@ -185,6 +188,12 @@ app.use(
 // ======================================
 // ROUTES
 // ======================================
+
+
+app.use(
+  '/iclock',
+  zktecoRoutes
+)
 
 app.use(
   '/api',
@@ -422,6 +431,7 @@ const PORT =
 
 app.listen(
   PORT,
+  '0.0.0.0',
   () => {
 
     console.log(

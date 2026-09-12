@@ -690,7 +690,20 @@ function PaymentForm({
     // MINIMUM PAYMENT
     // ==================================
 
+    // ==================================
+    // MINIMUM PAYMENT
+    // ==================================
+    // Full + Monthly:
+    //   Minimum payment rule remains active.
+    //
+    // Custom Installment:
+    //   Partial payment is allowed.
+    //   Example: installment ₹3500
+    //   Admin can pay ₹500 / ₹1000 / ₹2500 etc.
+    // ==================================
+
     if (
+      selectedPlan !== 'installment' &&
       minimumAmount > 0 &&
       amount < minimumAmount
     ) {
@@ -955,7 +968,9 @@ function PaymentForm({
 
             <small className="text-muted">
 
-              Minimum payment:
+              {selectedPlan === 'installment'
+                ? 'Suggested installment balance:'
+                : 'Minimum payment:'}
               {' '}
               ₹{
                 minimumAmount.toLocaleString(
@@ -976,7 +991,9 @@ function PaymentForm({
                 }
               >
 
-                Use Minimum
+                {selectedPlan === 'installment'
+                  ? 'Use Suggested'
+                  : 'Use Minimum'}
 
               </button>
 
@@ -1160,7 +1177,9 @@ function PaymentForm({
           <div className="col-md-4">
 
             <strong>
-              Minimum:
+              {selectedPlan === 'installment'
+                ? 'Suggested:'
+                : 'Minimum:'}
             </strong>
 
             <br />
