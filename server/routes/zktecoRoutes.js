@@ -20,7 +20,8 @@ router.get('/cdata', (req, res) => {
 
   console.log('Query:', req.query)
 
-  const serialNumber = req.query.SN || ''
+  const serialNumber =
+    req.query.SN || ''
 
   res.type('text/plain')
 
@@ -63,10 +64,13 @@ router.post(
     console.log('Query:', req.query)
     console.log('Body:', req.body)
 
-    const table = req.query.table || ''
+    const table =
+      req.query.table || ''
 
-
-    console.log('Table:', table)
+    console.log(
+      'Table:',
+      table
+    )
 
 
     // ======================================
@@ -91,7 +95,9 @@ router.post(
 
         if (!req.body) {
 
-          console.log('ATTLOG body is empty')
+          console.log(
+            'ATTLOG body is empty'
+          )
 
           return res
             .type('text/plain')
@@ -107,7 +113,10 @@ router.post(
         const attendanceRecords =
           req.body
             .split(/\r?\n/)
-            .map(line => line.trim())
+            .map(
+              line =>
+                line.trim()
+            )
             .filter(Boolean)
 
 
@@ -115,12 +124,18 @@ router.post(
         // PROCESS EACH RECORD
         // ======================================
 
-        for (const record of attendanceRecords) {
+        for (
+          const record
+          of attendanceRecords
+        ) {
 
           try {
 
             console.log('')
-            console.log('Processing ATTLOG:')
+            console.log(
+              'Processing ATTLOG:'
+            )
+
             console.log(record)
 
 
@@ -128,7 +143,8 @@ router.post(
             // SPLIT TAB-SEPARATED DATA
             // ======================================
 
-            const fields = record.split(/\t+/)
+            const fields =
+              record.split(/\t+/)
 
 
             const biometricUserId =
@@ -206,7 +222,10 @@ router.post(
 
 
             console.log('')
-            console.log('STUDENT FOUND')
+            console.log(
+              'STUDENT FOUND'
+            )
+
             console.log(
               'Name:',
               student.name
@@ -224,18 +243,35 @@ router.post(
 
 
             // ======================================
-            // GET INDIA DATE
+            // GET ATTENDANCE DATE
+            // ======================================
+            //
+            // IMPORTANT:
+            //
+            // ZKTeco already sends its local
+            // attendance date and time.
+            //
+            // Example:
+            //
+            // 2026-09-12 20:45:46
+            //
+            // We only need the date portion:
+            //
+            // 2026-09-12
+            //
+            // Do NOT use:
+            //
+            // new Date(timestamp)
+            //
+            // because JavaScript timezone conversion
+            // can shift the attendance date.
+            //
             // ======================================
 
             const attendanceDate =
-              new Date(timestamp)
-                .toLocaleDateString(
-                  'en-CA',
-                  {
-                    timeZone:
-                      'Asia/Kolkata'
-                  }
-                )
+              timestamp
+                .trim()
+                .split(' ')[0]
 
 
             console.log(
@@ -245,13 +281,39 @@ router.post(
 
 
             // ======================================
+            // VALIDATE ATTENDANCE DATE
+            // ======================================
+
+            if (
+              !/^\d{4}-\d{2}-\d{2}$/
+                .test(attendanceDate)
+            ) {
+
+              console.log(
+                'Invalid attendance date. Skipping.'
+              )
+
+              console.log(
+                'Timestamp received:',
+                timestamp
+              )
+
+              continue
+
+            }
+
+
+            // ======================================
             // CHECK EXISTING ATTENDANCE
             // ======================================
 
             const existingAttendance =
               await Attendance.findOne({
-                student: student._id,
-                date: attendanceDate
+                student:
+                  student._id,
+
+                date:
+                  attendanceDate
               })
 
 
@@ -293,13 +355,16 @@ router.post(
                   student.name,
 
                 admissionNumber:
-                  student.admissionNumber || '',
+                  student.admissionNumber ||
+                  '',
 
                 course:
-                  student.course || '',
+                  student.course ||
+                  '',
 
                 batchTime:
-                  student.batchTime || '',
+                  student.batchTime ||
+                  '',
 
                 date:
                   attendanceDate,
@@ -391,7 +456,9 @@ router.post(
     if (table === 'OPERLOG') {
 
       console.log('')
-      console.log('******** OPERATION LOG ********')
+      console.log(
+        '******** OPERATION LOG ********'
+      )
 
       console.log(
         req.body
@@ -423,25 +490,39 @@ router.post(
 // GET /iclock/getrequest
 // ======================================
 
-router.get('/getrequest', (req, res) => {
+router.get(
+  '/getrequest',
+  (req, res) => {
 
-  console.log('')
-  console.log('======================================')
-  console.log('ZKTECO GETREQUEST')
-  console.log('======================================')
+    console.log('')
+    console.log(
+      '======================================'
+    )
 
-  console.log('Query:', req.query)
+    console.log(
+      'ZKTECO GETREQUEST'
+    )
+
+    console.log(
+      '======================================'
+    )
+
+    console.log(
+      'Query:',
+      req.query
+    )
 
 
-  // ======================================
-  // NO COMMAND CURRENTLY
-  // ======================================
+    // ======================================
+    // NO COMMAND CURRENTLY
+    // ======================================
 
-  res.type('text/plain')
+    res.type('text/plain')
 
-  res.send('OK')
+    res.send('OK')
 
-})
+  }
+)
 
 
 // ======================================
@@ -449,23 +530,40 @@ router.get('/getrequest', (req, res) => {
 // POST /iclock/devicecmd
 // ======================================
 
-router.post('/devicecmd', (req, res) => {
+router.post(
+  '/devicecmd',
+  (req, res) => {
 
-  console.log('')
-  console.log('======================================')
-  console.log('ZKTECO DEVICE COMMAND')
-  console.log('======================================')
+    console.log('')
+    console.log(
+      '======================================'
+    )
 
-  console.log('Query:', req.query)
+    console.log(
+      'ZKTECO DEVICE COMMAND'
+    )
 
-  console.log('Body:', req.body)
+    console.log(
+      '======================================'
+    )
+
+    console.log(
+      'Query:',
+      req.query
+    )
+
+    console.log(
+      'Body:',
+      req.body
+    )
 
 
-  res.type('text/plain')
+    res.type('text/plain')
 
-  res.send('OK')
+    res.send('OK')
 
-})
+  }
+)
 
 
 module.exports = router
