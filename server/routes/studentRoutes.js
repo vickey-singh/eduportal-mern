@@ -564,7 +564,6 @@ const validateCustomSchedule = (
       message:
         'Installment schedule is required.',
     }
-
   }
 
   const total =
@@ -579,6 +578,12 @@ const validateCustomSchedule = (
       total - paid
     )
 
+  // IMPORTANT:
+  // Existing schedules keep the ORIGINAL installment amount
+  // in `amount` and store already-paid money in `paidAmount`.
+  // Therefore an existing partially-paid schedule must be
+  // checked against BOTH total fee and remaining fee.
+
   const scheduleTotal =
     schedule.reduce(
       (sum, item) =>
@@ -587,40 +592,49 @@ const validateCustomSchedule = (
       0
     )
 
-  if (
-    Math.abs(
-      scheduleTotal - remaining
-    ) > 0.01
-  ) {
+  const schedulePaidTotal =
+    schedule.reduce(
+      (sum, item) =>
+        sum +
+        Number(item.paidAmount || 0),
+      0
+    )
 
-    return {
+  const scheduleRemaining =
+    schedule.reduce(
+      (sum, item) =>
+        sum +
+        Math.max(
+          0,
+          Number(item.amount || 0) -
+          Number(item.paidAmount || 0)
+        ),
+      0
+    )
 
-      valid: false,
-
-      message:
-        `Installment total ₹${scheduleTotal} must equal remaining fee ₹${remaining}.`,
-
-    }
-
-  }
+  const hasPaidAmount =
+    schedule.some(
+      item =>
+        Number(item.paidAmount || 0) > 0
+    )
 
   for (
     const item of schedule
   ) {
 
-    if (
-      Number(item.amount || 0) <= 0
-    ) {
+    const amount =
+      Number(item.amount || 0)
+
+    const itemPaid =
+      Number(item.paidAmount || 0)
+
+    if (amount <= 0) {
 
       return {
-
         valid: false,
-
         message:
           'Every installment amount must be greater than zero.',
-
       }
-
     }
 
     if (
@@ -628,22 +642,99 @@ const validateCustomSchedule = (
     ) {
 
       return {
-
         valid: false,
-
         message:
           'Every installment must have a valid due date.',
-
       }
-
     }
 
+    if (itemPaid < 0) {
+
+      return {
+        valid: false,
+        message:
+          'Paid installment amount cannot be negative.',
+      }
+    }
+
+    if (itemPaid > amount + 0.01) {
+
+      return {
+        valid: false,
+        message:
+          `Paid amount ₹${itemPaid} cannot be greater than installment amount ₹${amount}.`,
+      }
+    }
+  }
+
+  if (hasPaidAmount) {
+
+    // Existing/partially-paid schedule:
+    // gross installment total must equal total course fee.
+    if (
+      Math.abs(
+        scheduleTotal - total
+      ) > 0.01
+    ) {
+
+      return {
+        valid: false,
+        message:
+          `Installment total ₹${scheduleTotal} must equal total fee ₹${total}.`,
+      }
+    }
+
+    // Paid amount stored inside installments must match
+    // the student's master paidFees value.
+    if (
+      Math.abs(
+        schedulePaidTotal - paid
+      ) > 0.01
+    ) {
+
+      return {
+        valid: false,
+        message:
+          `Installment paid total ₹${schedulePaidTotal} must equal paid fee ₹${paid}.`,
+      }
+    }
+
+    // Remaining installment balances must match the
+    // student's master remainingFees value.
+    if (
+      Math.abs(
+        scheduleRemaining - remaining
+      ) > 0.01
+    ) {
+
+      return {
+        valid: false,
+        message:
+          `Installment remaining ₹${scheduleRemaining} must equal remaining fee ₹${remaining}.`,
+      }
+    }
+  }
+  else {
+
+    // New custom schedule with no previous installment payment:
+    // its gross total represents the current remaining fee.
+    if (
+      Math.abs(
+        scheduleTotal - remaining
+      ) > 0.01
+    ) {
+
+      return {
+        valid: false,
+        message:
+          `Installment total ₹${scheduleTotal} must equal remaining fee ₹${remaining}.`,
+      }
+    }
   }
 
   return {
     valid: true,
   }
-
 }
 
 
@@ -1074,41 +1165,32 @@ router.post(
 
       }
 
-      if (
-        !contact ||
-        !String(contact).trim()
-      ) {
+      // ======================================
+      // OPTIONAL FIELDS
+      // ======================================
+      //
+      // Student can now be added with ONLY
+      // the name. Missing contact and admission
+      // date are safely filled with defaults.
+      //
+      // Admission date defaults to today so the
+      // student still receives the correct
+      // academic session and admission number.
+      // ======================================
 
-        return res.status(400).json({
+      const cleanContact =
+        String(contact || '').trim()
 
-          success: false,
-
-          message:
-            'Student mobile number is required.',
-
-        })
-
-      }
-
-      if (!admissionDate) {
-
-        return res.status(400).json({
-
-          success: false,
-
-          message:
-            'Admission date is required.',
-
-        })
-
-      }
+      const effectiveAdmissionDate =
+        admissionDate ||
+        new Date()
 
       const admissionNumber =
         await generateAdmissionNumber()
 
       const session =
         calculateAcademicSession(
-          admissionDate
+          effectiveAdmissionDate
         )
 
       if (!session) {
@@ -1118,7 +1200,7 @@ router.post(
           success: false,
 
           message:
-            'Valid admission date is required.',
+            'Unable to determine academic session.',
 
         })
 
@@ -1313,7 +1395,7 @@ router.post(
             batchTime || '',
 
           contact:
-            String(contact).trim(),
+            cleanContact,
 
           email:
             email
@@ -1322,7 +1404,8 @@ router.post(
                   .toLowerCase()
               : '',
 
-          admissionDate,
+          admissionDate:
+            effectiveAdmissionDate,
 
           session,
 
@@ -1448,7 +1531,7 @@ router.post(
             '',
 
           paymentDate:
-            toDate(admissionDate),
+            toDate(effectiveAdmissionDate),
 
         })
 
@@ -1488,7 +1571,7 @@ router.post(
             '',
 
           paymentDate:
-            toDate(admissionDate),
+            toDate(effectiveAdmissionDate),
 
         })
 
@@ -2507,6 +2590,34 @@ router.put(
               )
             : installments
 
+        // Existing monthly students created by older
+        // versions may not have monthlyAmount stored
+        // separately. Recover it from the first
+        // existing installment before rebuilding.
+        let effectiveMonthlyAmount =
+          Number(monthlyAmount || 0)
+
+        if (
+          finalPlan === 'monthly' &&
+          effectiveMonthlyAmount <= 0 &&
+          Array.isArray(
+            student.installmentSchedule
+          )
+        ) {
+
+          const firstExistingInstallment =
+            student.installmentSchedule.find(
+              (item) =>
+                Number(item?.amount || 0) > 0
+            )
+
+          effectiveMonthlyAmount =
+            Number(
+              firstExistingInstallment?.amount || 0
+            )
+
+        }
+
         const result =
           buildScheduleForPlan({
 
@@ -2521,13 +2632,14 @@ router.put(
 
             admissionDate:
               admissionDate ||
-              student.admissionDate,
+              student.admissionDate ||
+              new Date(),
 
             dueDate:
               dueDate,
 
             monthlyAmount:
-              monthlyAmount,
+              effectiveMonthlyAmount,
 
             installments:
               parsedInstallments,

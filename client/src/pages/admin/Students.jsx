@@ -1661,59 +1661,53 @@ function Students() {
           // CUSTOM INSTALLMENT VALIDATION
           // ==================================
           //
-          // IMPORTANT:
-          // Already paid installment amount
-          // must NOT be counted again.
+          // Existing paid schedules store:
+          // amount     = ORIGINAL / GROSS installment
+          // paidAmount = amount already paid
           //
-          // Example:
+          // Therefore:
           //
-          // Total Fee      = ₹12,000
-          // Paid           = ₹3,000
-          // Remaining      = ₹9,000
+          // Gross schedule total  = Total Course Fee
+          // Schedule paid total   = Paid Course Fee
+          // Schedule balance     = Remaining Course Fee
           //
-          // Existing:
-          // ₹1,000 Paid
-          // ₹1,000 Paid
-          // ₹1,000 Paid
-          //
-          // New Pending:
-          // ₹3,000
-          // ₹3,000
-          // ₹3,000
-          //
-          // Valid schedule total for remaining
-          // fee = ₹9,000.
+          // For a NEW custom schedule where
+          // no installment has paidAmount > 0,
+          // the schedule is created for the
+          // remaining fee only.
           // ==================================
 
-          const scheduleTotal =
+          const scheduleGrossTotal =
             schedule.reduce(
-              (sum, item) => {
-
-                const amount =
-                  Number(
-                    item.amount || 0
-                  )
-
-                const paidAmount =
-                  Number(
-                    item.paidAmount || 0
-                  )
-
-                const balance =
-                  Math.max(
-                    0,
-                    amount - paidAmount
-                  )
-
-                return (
-                  sum +
-                  balance
-                )
-
-              },
+              (sum, item) =>
+                sum +
+                Number(
+                  item.amount || 0
+                ),
               0
             )
 
+          const schedulePaidTotal =
+            schedule.reduce(
+              (sum, item) =>
+                sum +
+                Number(
+                  item.paidAmount || 0
+                ),
+              0
+            )
+
+          const scheduleBalanceTotal =
+            schedule.reduce(
+              (sum, item) =>
+                sum +
+                Math.max(
+                  0,
+                  Number(item.amount || 0) -
+                  Number(item.paidAmount || 0)
+                ),
+              0
+            )
 
           const remainingCourseFee =
             Math.max(
@@ -1722,16 +1716,70 @@ function Students() {
               paidFees
             )
 
+          const hasPaidInstallment =
+            schedule.some(
+              (item) =>
+                Number(
+                  item.paidAmount || 0
+                ) > 0
+            )
 
-          if (
+          if (hasPaidInstallment) {
+
+            if (
+              Math.abs(
+                scheduleGrossTotal -
+                totalFees
+              ) > 0.01
+            ) {
+
+              alert(
+                `Installment gross total ₹${scheduleGrossTotal} must equal total course fee ₹${totalFees}.`
+              )
+
+              return
+
+            }
+
+            if (
+              Math.abs(
+                schedulePaidTotal -
+                paidFees
+              ) > 0.01
+            ) {
+
+              alert(
+                `Installment paid total ₹${schedulePaidTotal} must equal paid course fee ₹${paidFees}.`
+              )
+
+              return
+
+            }
+
+            if (
+              Math.abs(
+                scheduleBalanceTotal -
+                remainingCourseFee
+              ) > 0.01
+            ) {
+
+              alert(
+                `Installment balance ₹${scheduleBalanceTotal} must equal remaining fee ₹${remainingCourseFee}.`
+              )
+
+              return
+
+            }
+
+          } else if (
             Math.abs(
-              scheduleTotal -
+              scheduleGrossTotal -
               remainingCourseFee
             ) > 0.01
           ) {
 
             alert(
-              `Installment total ₹${scheduleTotal} must equal remaining fee ₹${remainingCourseFee}.`
+              `Installment total ₹${scheduleGrossTotal} must equal remaining fee ₹${remainingCourseFee}.`
             )
 
             return
@@ -1743,13 +1791,16 @@ function Students() {
             schedule.some(
               (item) =>
                 Number(item.amount || 0) <= 0 ||
-                !item.dueDate
+                !item.dueDate ||
+                Number(item.paidAmount || 0) < 0 ||
+                Number(item.paidAmount || 0) >
+                  Number(item.amount || 0)
             )
 
           if (invalid) {
 
             alert(
-              'Every installment needs a valid amount and due date.'
+              'Every installment needs a valid amount, due date and valid paid amount.'
             )
 
             return
@@ -2198,7 +2249,18 @@ function Students() {
         monthlyAmount:
           student.monthlyAmount ||
           student.monthlyInstallment ||
-          '',
+          (
+            Array.isArray(
+              student.installmentSchedule
+            )
+              ? (
+                  student.installmentSchedule.find(
+                    (item) =>
+                      Number(item?.amount || 0) > 0
+                  )?.amount || ''
+                )
+              : ''
+          ),
 
         paymentPlan:
           student.paymentPlan || '',
@@ -2783,7 +2845,6 @@ function Students() {
                 onChange={
                   handleChange
                 }
-                required
               />
 
             </div>
@@ -3294,7 +3355,6 @@ function Students() {
                 onChange={
                   handleChange
                 }
-                required
               />
 
             </div>
@@ -3757,41 +3817,100 @@ function Students() {
               </div>
 
 
-              <div className="alert alert-info mb-0">
+              {(() => {
 
-                <strong>
-                  Schedule Total:
-                </strong>
-
-                {' ₹'}
-
-                {
+                const scheduleGrossTotal =
                   (
                     formData.installments ||
                     []
                   ).reduce(
                     (sum, item) =>
                       sum +
-                      Number(
-                        item.amount || 0
+                      Number(item.amount || 0),
+                    0
+                  )
+
+                const schedulePaidTotal =
+                  (
+                    formData.installments ||
+                    []
+                  ).reduce(
+                    (sum, item) =>
+                      sum +
+                      Number(item.paidAmount || 0),
+                    0
+                  )
+
+                const scheduleBalanceTotal =
+                  (
+                    formData.installments ||
+                    []
+                  ).reduce(
+                    (sum, item) =>
+                      sum +
+                      Math.max(
+                        0,
+                        Number(item.amount || 0) -
+                        Number(item.paidAmount || 0)
                       ),
                     0
                   )
-                }
 
-                {' | '}
+                return (
 
-                <strong>
-                  Remaining Fee:
-                </strong>
+                  <div className="alert alert-info mb-0">
 
-                {' ₹'}
+                    <strong>
+                      Schedule Total:
+                    </strong>
 
-                {
-                  remainingFees
-                }
+                    {' ₹'}
+                    {
+                      scheduleGrossTotal
+                    }
 
-              </div>
+                    {editId && (
+                      <>
+                        {' | '}
+
+                        <strong>
+                          Paid:
+                        </strong>
+
+                        {' ₹'}
+                        {
+                          schedulePaidTotal
+                        }
+
+                        {' | '}
+
+                        <strong>
+                          Balance:
+                        </strong>
+
+                        {' ₹'}
+                        {
+                          scheduleBalanceTotal
+                        }
+                      </>
+                    )}
+
+                    {' | '}
+
+                    <strong>
+                      Remaining Fee:
+                    </strong>
+
+                    {' ₹'}
+                    {
+                      remainingFees
+                    }
+
+                  </div>
+
+                )
+
+              })()}
 
             </div>
 
