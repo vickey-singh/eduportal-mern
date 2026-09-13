@@ -2909,7 +2909,6 @@ function Students() {
                 onChange={
                   handleChange
                 }
-                required
               />
 
             </div>
