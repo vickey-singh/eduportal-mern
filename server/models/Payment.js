@@ -52,13 +52,16 @@ const paymentSchema =
 
       // ======================================
       // PHONE
+      // OPTIONAL
       // ======================================
 
       phone: {
 
         type: String,
 
-        required: true,
+        required: false,
+
+        default: '',
 
         trim: true,
 
