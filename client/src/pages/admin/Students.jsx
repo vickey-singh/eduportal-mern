@@ -2513,6 +2513,175 @@ function Students() {
 
 
   // ======================================
+  // ADJUST MONTHLY FEE
+  // ======================================
+
+  const adjustMonthlyFee =
+    async (student, installment) => {
+
+      if (!student?._id || !installment?._id) {
+        return
+      }
+
+      const originalAmount =
+        Number(
+          installment.originalAmount ||
+          installment.amount ||
+          0
+        )
+
+      const currentAmount =
+        Number(
+          installment.amount || 0
+        )
+
+      const paidAmount =
+        Number(
+          installment.paidAmount || 0
+        )
+
+      const defaultAmount =
+        Math.max(
+          currentAmount,
+          paidAmount
+        )
+
+      const enteredAmount =
+        window.prompt(
+          `Monthly Fee Adjustment\n\nOriginal Fee: ₹${originalAmount.toLocaleString('en-IN')}\nAlready Paid: ₹${paidAmount.toLocaleString('en-IN')}\n\nEnter final payable amount for this month:`,
+          String(defaultAmount)
+        )
+
+      if (enteredAmount === null) {
+        return
+      }
+
+      const adjustedAmount =
+        Number(enteredAmount)
+
+      if (
+        !Number.isFinite(adjustedAmount) ||
+        adjustedAmount < 0
+      ) {
+        alert('Please enter a valid amount (0 or greater).')
+        return
+      }
+
+      if (
+        adjustedAmount < paidAmount
+      ) {
+        alert(
+          `Adjusted amount cannot be less than already paid amount ₹${paidAmount}.`
+        )
+        return
+      }
+
+      const reason =
+        window.prompt(
+          'Enter adjustment reason:',
+          adjustedAmount === 0
+            ? 'Full month absent'
+            : adjustedAmount < originalAmount
+              ? 'Half month absent'
+              : 'Monthly fee adjustment'
+        )
+
+      if (!reason || !reason.trim()) {
+        alert('Adjustment reason is required.')
+        return
+      }
+
+      const confirmed =
+        window.confirm(
+          `Confirm monthly fee adjustment?\n\nOriginal: ₹${originalAmount.toLocaleString('en-IN')}\nFinal Payable: ₹${adjustedAmount.toLocaleString('en-IN')}\nAdjustment: ₹${Math.max(originalAmount - adjustedAmount, 0).toLocaleString('en-IN')}\nReason: ${reason.trim()}`
+        )
+
+      if (!confirmed) {
+        return
+      }
+
+      try {
+
+        const token =
+          localStorage.getItem('adminToken') ||
+          localStorage.getItem('token') ||
+          localStorage.getItem('authToken') ||
+          localStorage.getItem('accessToken') ||
+          ''
+
+        const response =
+          await fetch(
+             `${API_BASE_URL}/api/students/${student._id}/installment/${installment._id}/adjust`,
+            {
+              method: 'PUT',
+              headers: {
+                'Content-Type': 'application/json',
+                ...(token
+                  ? {
+                      Authorization: `Bearer ${token}`,
+                    }
+                  : {}),
+              },
+              credentials: 'include',
+              body: JSON.stringify({
+                adjustedAmount,
+                reason: reason.trim(),
+              }),
+            }
+          )
+
+        const data =
+          await response.json()
+
+        if (!response.ok || !data?.success) {
+          throw new Error(
+            data?.message ||
+            'Monthly fee adjustment failed.'
+          )
+        }
+
+        const updatedStudent =
+          data.student
+
+        setStudentData(
+          (previous) =>
+            previous.map(
+              (item) =>
+                item._id === student._id
+                  ? updatedStudent
+                  : item
+            )
+        )
+
+        setSelectedStudent(
+          updatedStudent
+        )
+
+        alert(
+          data.message ||
+          'Monthly fee adjusted successfully.'
+        )
+
+      }
+
+      catch (error) {
+
+        console.log(
+          'Monthly Fee Adjustment Error:',
+          error
+        )
+
+        alert(
+          error.message ||
+          'Monthly fee adjustment failed.'
+        )
+
+      }
+
+    }
+
+
+  // ======================================
   // AVAILABLE COURSES
   // ======================================
 
@@ -5540,6 +5709,12 @@ function Students() {
                                   Status
                                 </th>
 
+                                {selectedStudent.paymentPlan === 'monthly' && (
+                                  <th>
+                                    Action
+                                  </th>
+                                )}
+
                               </tr>
 
                             </thead>
@@ -5568,6 +5743,7 @@ function Students() {
                                     )
 
                                   const itemDue =
+                                    item?.status !== 'Waived' &&
                                     balance > 0 &&
                                     (
                                       item?.status === 'Due' ||
@@ -5667,6 +5843,31 @@ function Students() {
                                         </span>
 
                                       </td>
+
+                                      {selectedStudent.paymentPlan === 'monthly' && (
+                                        <td>
+
+                                          {item.status === 'Waived' ? (
+                                            <span className="text-muted small">
+                                              Waived
+                                            </span>
+                                          ) : (
+                                            <button
+                                              type="button"
+                                              className="btn btn-sm btn-outline-primary"
+                                              onClick={() =>
+                                                adjustMonthlyFee(
+                                                  selectedStudent,
+                                                  item
+                                                )
+                                              }
+                                            >
+                                              Adjust
+                                            </button>
+                                          )}
+
+                                        </td>
+                                      )}
 
                                     </tr>
 

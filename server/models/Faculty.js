@@ -257,6 +257,31 @@ const facultySchema =
 
 
       // ======================================
+      // BIOMETRIC ATTENDANCE
+      // ======================================
+
+      // K40 / ZKTeco User ID
+      //
+      // Example:
+      // Faculty Rahul -> 2001
+      //
+      // This ID is used to identify the
+      // faculty member from biometric machine.
+
+      biometricUserId: {
+
+        type: String,
+
+        trim: true,
+
+        unique: true,
+
+        sparse: true,
+
+      },
+
+
+      // ======================================
       // TEACHER ACCOUNT
       // ======================================
 
@@ -399,6 +424,7 @@ const facultySchema =
           // ================================
 
           // Amount deducted from salary
+          //
           // Example:
           // Monthly Salary = 20000
           // Deduction      = 2000

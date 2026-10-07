@@ -51,6 +51,8 @@ const FacultyTable = React.memo(({
 
               <th>Employee ID</th>
 
+              <th>Biometric ID</th>
+
               <th>Salary</th>
 
               <th>Website</th>
@@ -69,7 +71,7 @@ const FacultyTable = React.memo(({
               <tr>
 
                 <td
-                  colSpan="10"
+                  colSpan="11"
                   className="text-center"
                 >
 
@@ -193,6 +195,19 @@ const FacultyTable = React.memo(({
                       {
                         item.employeeId ||
                         'Generating...'
+                      }
+
+                    </td>
+
+
+                    <td>
+
+                      {
+                        item.biometricUserId ||
+
+                        <span className="text-muted">
+                          Not Set
+                        </span>
                       }
 
                     </td>
@@ -426,6 +441,9 @@ function Faculty() {
       institution: '',
       joiningDate: '',
 
+      // BIOMETRIC ATTENDANCE
+      biometricUserId: '',
+
       // TEACHER ACCOUNT
       createTeacherAccount: false,
       teacherPassword: '',
@@ -626,6 +644,9 @@ function Faculty() {
         qualification: '',
         institution: '',
         joiningDate: '',
+
+        // BIOMETRIC ATTENDANCE
+        biometricUserId: '',
 
         createTeacherAccount: false,
         teacherPassword: '',
@@ -978,6 +999,16 @@ function Faculty() {
 
 
         // ==================================
+        // BIOMETRIC ATTENDANCE
+        // ==================================
+
+        facultyFormData.append(
+          'biometricUserId',
+          formData.biometricUserId.trim()
+        )
+
+
+        // ==================================
         // TEACHER ACCOUNT
         // ==================================
 
@@ -1284,6 +1315,10 @@ function Faculty() {
         joiningDate:
           item.joiningDate || '',
 
+        // BIOMETRIC ATTENDANCE
+        biometricUserId:
+          item.biometricUserId || '',
+
         createTeacherAccount:
           item.isTeacher === true,
 
@@ -1533,6 +1568,13 @@ function Faculty() {
         data.append(
           'joiningDate',
           item.joiningDate || ''
+        )
+
+
+        // BIOMETRIC ATTENDANCE
+        data.append(
+          'biometricUserId',
+          item.biometricUserId || ''
         )
 
 
@@ -3383,6 +3425,44 @@ function Faculty() {
 
 
             {/* ==================================
+                BIOMETRIC ATTENDANCE
+            ================================== */}
+
+            <div className="col-md-6 mb-3">
+
+              <label className="form-label">
+
+                Biometric User ID
+
+              </label>
+
+              <input
+
+                type="text"
+
+                className="form-control"
+
+                name="biometricUserId"
+
+                value={formData.biometricUserId}
+
+                onChange={handleChange}
+
+                placeholder="Example: 2001"
+
+              />
+
+              <small className="text-muted">
+
+                Enter the same User ID assigned to this faculty
+                member in the ZKTeco K40 Pro.
+
+              </small>
+
+            </div>
+
+
+            {/* ==================================
                 TEACHER ACCOUNT
             ================================== */}
 
@@ -4228,6 +4308,20 @@ function Faculty() {
 
                         {
                           viewFaculty.employeeId ||
+                          '-'
+                        }
+
+                      </div>
+
+
+                      <div className="col-md-6 mb-2">
+
+                        <strong>
+                          Biometric User ID:
+                        </strong>{' '}
+
+                        {
+                          viewFaculty.biometricUserId ||
                           '-'
                         }
 

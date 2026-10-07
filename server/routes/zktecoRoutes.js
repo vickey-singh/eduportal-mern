@@ -2,67 +2,92 @@ const express = require('express')
 
 const router = express.Router()
 
-const Student = require('../models/Student')
-const Attendance = require('../models/Attendance')
+const Student =
+  require('../models/Student')
+
+const Attendance =
+  require('../models/Attendance')
+
+const Faculty =
+  require('../models/Faculty')
+
+const FacultyAttendance =
+  require('../models/FacultyAttendance')
 
 
-// ======================================
-// ZKTECO ADMS HANDSHAKE
+// ======================================================
 // GET /iclock/cdata
-// ======================================
+// ZKTECO DEVICE HANDSHAKE
+// ======================================================
 
 router.get('/cdata', (req, res) => {
 
   console.log('')
   console.log('======================================')
-  console.log('ZKTECO ADMS HANDSHAKE')
+  console.log('ZKTECO GET /cdata')
   console.log('======================================')
-
-  console.log('Query:', req.query)
 
   const serialNumber =
     req.query.SN || ''
 
+  console.log(
+    'Serial Number:',
+    serialNumber
+  )
+
   res.type('text/plain')
 
   res.send(
+
     'GET OPTION FROM: ' +
-    serialNumber +
-    '\n' +
+      serialNumber +
+      '\n' +
+
     'STAMP=9999\n' +
+
     'ATTLOGSTAMP=9999\n' +
+
     'OPERLOGStamp=9999\n' +
+
     'ErrorDelay=30\n' +
+
     'Delay=10\n' +
+
     'TransTimes=00:00;23:59\n' +
+
     'TransInterval=1\n' +
+
     'TransFlag=TransData AttLog\tOpLog\tEnrollUser\tChgUser\tEnrollFP\tChgFP\tFPImag\n' +
+
     'TimeZone=5.5\n' +
+
     'Realtime=1\n' +
+
     'Encrypt=None\n' +
+
     'OK'
+
   )
 
 })
 
 
-// ======================================
-// ZKTECO ADMS DATA
+// ======================================================
 // POST /iclock/cdata
-// ======================================
+// ZKTECO ATTENDANCE DATA
+// ======================================================
 
 router.post(
   '/cdata',
-  express.text({ type: '*/*' }),
+  express.text({
+    type: '*/*'
+  }),
   async (req, res) => {
 
     console.log('')
     console.log('======================================')
-    console.log('ZKTECO ADMS DATA RECEIVED')
+    console.log('ZKTECO POST /cdata')
     console.log('======================================')
-
-    console.log('Query:', req.query)
-    console.log('Body:', req.body)
 
     const table =
       req.query.table || ''
@@ -73,30 +98,18 @@ router.post(
     )
 
 
-    // ======================================
-    // ATTENDANCE LOG
-    // ======================================
+    // ==================================================
+    // ATTLOG
+    // ==================================================
 
     if (table === 'ATTLOG') {
 
-      console.log('')
-      console.log('******** ATTENDANCE LOG ********')
-      console.log('Attendance Data:')
-      console.log(req.body)
-      console.log('********************************')
-      console.log('')
-
-
       try {
-
-        // ======================================
-        // CHECK BODY
-        // ======================================
 
         if (!req.body) {
 
           console.log(
-            'ATTLOG body is empty'
+            'ATTLOG BODY EMPTY'
           )
 
           return res
@@ -106,23 +119,26 @@ router.post(
         }
 
 
-        // ======================================
-        // SPLIT MULTIPLE ATTENDANCE RECORDS
-        // ======================================
+        // ==================================================
+        // SPLIT ATTENDANCE RECORDS
+        // ==================================================
 
         const attendanceRecords =
           req.body
             .split(/\r?\n/)
-            .map(
-              line =>
-                line.trim()
-            )
+            .map(line => line.trim())
             .filter(Boolean)
 
 
-        // ======================================
+        console.log(
+          'Attendance Records:',
+          attendanceRecords.length
+        )
+
+
+        // ==================================================
         // PROCESS EACH RECORD
-        // ======================================
+        // ==================================================
 
         for (
           const record
@@ -133,15 +149,18 @@ router.post(
 
             console.log('')
             console.log(
-              'Processing ATTLOG:'
+              '--------------------------------------'
             )
 
-            console.log(record)
+            console.log(
+              'RAW RECORD:',
+              record
+            )
 
 
-            // ======================================
-            // SPLIT TAB-SEPARATED DATA
-            // ======================================
+            // ==================================================
+            // SPLIT DEVICE DATA
+            // ==================================================
 
             const fields =
               record.split(/\t+/)
@@ -149,6 +168,7 @@ router.post(
 
             const biometricUserId =
               (fields[0] || '').trim()
+
 
             const timestamp =
               (fields[1] || '').trim()
@@ -165,17 +185,14 @@ router.post(
             )
 
 
-            // ======================================
-            // VALIDATE REQUIRED DATA
-            // ======================================
+            // ==================================================
+            // VALIDATE BIOMETRIC USER ID
+            // ==================================================
 
-            if (
-              !biometricUserId ||
-              !timestamp
-            ) {
+            if (!biometricUserId) {
 
               console.log(
-                'Invalid ATTLOG record. Skipping.'
+                'BIOMETRIC USER ID MISSING'
               )
 
               continue
@@ -183,26 +200,66 @@ router.post(
             }
 
 
-            // ======================================
+            // ==================================================
+            // VALIDATE TIMESTAMP
+            // ==================================================
+
+            if (!timestamp) {
+
+              console.log(
+                'TIMESTAMP MISSING'
+              )
+
+              continue
+
+            }
+
+
+            // ==================================================
             // FIND STUDENT
-            // ======================================
+            // ==================================================
 
             const student =
               await Student.findOne({
+
                 biometricUserId:
                   biometricUserId
+
               })
 
 
-            // ======================================
-            // STUDENT NOT FOUND
-            // ======================================
+            // ==================================================
+            // FIND FACULTY IF NOT STUDENT
+            // ==================================================
+
+            let faculty = null
+
 
             if (!student) {
 
+              faculty =
+                await Faculty.findOne({
+
+                  biometricUserId:
+                    biometricUserId
+
+                })
+
+            }
+
+
+            // ==================================================
+            // USER NOT FOUND
+            // ==================================================
+
+            if (
+              !student &&
+              !faculty
+            ) {
+
               console.log('')
               console.log(
-                'STUDENT NOT FOUND'
+                'STUDENT / FACULTY NOT FOUND'
               )
 
               console.log(
@@ -211,7 +268,7 @@ router.post(
               )
 
               console.log(
-                'Please check biometricUserId in Student.'
+                'Please check biometricUserId'
               )
 
               console.log('')
@@ -221,57 +278,86 @@ router.post(
             }
 
 
-            console.log('')
-            console.log(
-              'STUDENT FOUND'
-            )
+            // ==================================================
+            // STUDENT FOUND
+            // ==================================================
 
-            console.log(
-              'Name:',
-              student.name
-            )
+            if (student) {
 
-            console.log(
-              'Admission Number:',
-              student.admissionNumber
-            )
+              console.log('')
+              console.log(
+                'STUDENT FOUND'
+              )
 
-            console.log(
-              'Course:',
-              student.course
-            )
+              console.log(
+                'Name:',
+                student.name
+              )
+
+              console.log(
+                'Admission Number:',
+                student.admissionNumber
+              )
+
+              console.log(
+                'Course:',
+                student.course
+              )
+
+            }
 
 
-            // ======================================
+            // ==================================================
+            // FACULTY FOUND
+            // ==================================================
+
+            if (faculty) {
+
+              console.log('')
+              console.log(
+                'FACULTY FOUND'
+              )
+
+              console.log(
+                'Name:',
+                faculty.name
+              )
+
+              console.log(
+                'Employee ID:',
+                faculty.employeeId || ''
+              )
+
+            }
+
+
+            // ==================================================
             // GET ATTENDANCE DATE
-            // ======================================
-            //
-            // IMPORTANT:
-            //
-            // ZKTeco already sends its local
-            // attendance date and time.
-            //
-            // Example:
-            //
-            // 2026-09-12 20:45:46
-            //
-            // We only need the date portion:
-            //
-            // 2026-09-12
-            //
-            // Do NOT use:
-            //
-            // new Date(timestamp)
-            //
-            // because JavaScript timezone conversion
-            // can shift the attendance date.
-            //
-            // ======================================
+            // ==================================================
 
             const attendanceDate =
               timestamp
                 .trim()
                 .split(' ')[0]
+
+
+            // ==================================================
+            // VALIDATE ATTENDANCE DATE
+            // ==================================================
+
+            if (
+              !/^\d{4}-\d{2}-\d{2}$/
+                .test(attendanceDate)
+            ) {
+
+              console.log(
+                'INVALID ATTENDANCE DATE:',
+                attendanceDate
+              )
+
+              continue
+
+            }
 
 
             console.log(
@@ -280,42 +366,140 @@ router.post(
             )
 
 
-            // ======================================
-            // VALIDATE ATTENDANCE DATE
-            // ======================================
+            // ==================================================
+            // FACULTY ATTENDANCE
+            // ==================================================
 
-            if (
-              !/^\d{4}-\d{2}-\d{2}$/
-                .test(attendanceDate)
-            ) {
+            if (faculty) {
+
+              // ----------------------------------------------
+              // CHECK DUPLICATE FACULTY ATTENDANCE
+              // ----------------------------------------------
+
+              const existingFacultyAttendance =
+                await FacultyAttendance.findOne({
+
+                  facultyId:
+                    faculty._id,
+
+                  date:
+                    attendanceDate
+
+                })
+
+
+              if (
+                existingFacultyAttendance
+              ) {
+
+                console.log('')
+                console.log(
+                  'FACULTY ATTENDANCE ALREADY EXISTS'
+                )
+
+                console.log(
+                  'Faculty:',
+                  faculty.name
+                )
+
+                console.log(
+                  'Date:',
+                  attendanceDate
+                )
+
+                console.log('')
+
+                continue
+
+              }
+
+
+              // ----------------------------------------------
+              // CREATE FACULTY ATTENDANCE
+              // ----------------------------------------------
+
+              const facultyAttendance =
+                await FacultyAttendance.create({
+
+                  facultyId:
+                    faculty._id,
+
+                  facultyName:
+                    faculty.name || '',
+
+                  date:
+                    attendanceDate,
+
+                  status:
+                    'Present'
+
+                })
+
+
+              // ----------------------------------------------
+              // SUCCESS LOG
+              // ----------------------------------------------
+
+              console.log('')
 
               console.log(
-                'Invalid attendance date. Skipping.'
+                '======================================'
               )
 
               console.log(
-                'Timestamp received:',
-                timestamp
+                'FACULTY ATTENDANCE SAVED SUCCESSFULLY'
               )
+
+              console.log(
+                'Faculty:',
+                faculty.name
+              )
+
+              console.log(
+                'Biometric ID:',
+                biometricUserId
+              )
+
+              console.log(
+                'Date:',
+                attendanceDate
+              )
+
+              console.log(
+                'Attendance ID:',
+                facultyAttendance._id
+              )
+
+              console.log(
+                '======================================'
+              )
+
+              console.log('')
 
               continue
 
             }
 
 
-            // ======================================
-            // CHECK EXISTING ATTENDANCE
-            // ======================================
+            // ==================================================
+            // STUDENT ATTENDANCE
+            // ==================================================
 
             const existingAttendance =
               await Attendance.findOne({
+
                 student:
                   student._id,
 
                 date:
                   attendanceDate
+
               })
 
+
+            // ==================================================
+            // DUPLICATE STUDENT ATTENDANCE
+            // ==================================================
 
             if (existingAttendance) {
 
@@ -341,9 +525,9 @@ router.post(
             }
 
 
-            // ======================================
-            // CREATE ATTENDANCE
-            // ======================================
+            // ==================================================
+            // CREATE STUDENT ATTENDANCE
+            // ==================================================
 
             const attendance =
               await Attendance.create({
@@ -370,22 +554,23 @@ router.post(
                   attendanceDate,
 
                 status:
-                  'Present',
+                  'Present'
 
               })
 
 
-            // ======================================
-            // SUCCESS LOG
-            // ======================================
+            // ==================================================
+            // STUDENT SUCCESS LOG
+            // ==================================================
 
             console.log('')
+
             console.log(
               '======================================'
             )
 
             console.log(
-              'ATTENDANCE SAVED SUCCESSFULLY'
+              'STUDENT ATTENDANCE SAVED SUCCESSFULLY'
             )
 
             console.log(
@@ -414,12 +599,13 @@ router.post(
 
             console.log('')
 
-          }
-          catch (recordError) {
+
+          } catch (recordError) {
 
             console.error('')
+
             console.error(
-              'ERROR PROCESSING ATTLOG RECORD'
+              'ATTENDANCE RECORD PROCESSING ERROR'
             )
 
             console.error(
@@ -432,8 +618,8 @@ router.post(
 
         }
 
-      }
-      catch (error) {
+
+      } catch (error) {
 
         console.error('')
         console.error(
@@ -449,46 +635,41 @@ router.post(
     }
 
 
-    // ======================================
-    // OPERATION LOG
-    // ======================================
+    // ==================================================
+    // OPERLOG
+    // ==================================================
 
-    if (table === 'OPERLOG') {
+    if (
+      table === 'OPERLOG'
+    ) {
 
       console.log('')
       console.log(
-        '******** OPERATION LOG ********'
+        'ZKTECO OPERLOG RECEIVED'
       )
 
       console.log(
         req.body
       )
 
-      console.log(
-        '*******************************'
-      )
-
-      console.log('')
-
     }
 
 
-    // ======================================
-    // ZKTECO RESPONSE
-    // ======================================
+    // ==================================================
+    // DEVICE RESPONSE
+    // ==================================================
 
-    res.type('text/plain')
-
-    res.send('OK')
+    res
+      .type('text/plain')
+      .send('OK')
 
   }
 )
 
 
-// ======================================
-// ZKTECO ADMS GET REQUEST
+// ======================================================
 // GET /iclock/getrequest
-// ======================================
+// ======================================================
 
 router.get(
   '/getrequest',
@@ -496,39 +677,20 @@ router.get(
 
     console.log('')
     console.log(
-      '======================================'
+      'ZKTECO GET /getrequest'
     )
 
-    console.log(
-      'ZKTECO GETREQUEST'
-    )
-
-    console.log(
-      '======================================'
-    )
-
-    console.log(
-      'Query:',
-      req.query
-    )
-
-
-    // ======================================
-    // NO COMMAND CURRENTLY
-    // ======================================
-
-    res.type('text/plain')
-
-    res.send('OK')
+    res
+      .type('text/plain')
+      .send('OK')
 
   }
 )
 
 
-// ======================================
-// ZKTECO DEVICE COMMAND
+// ======================================================
 // POST /iclock/devicecmd
-// ======================================
+// ======================================================
 
 router.post(
   '/devicecmd',
@@ -536,34 +698,23 @@ router.post(
 
     console.log('')
     console.log(
-      '======================================'
+      'ZKTECO POST /devicecmd'
     )
 
     console.log(
-      'ZKTECO DEVICE COMMAND'
-    )
-
-    console.log(
-      '======================================'
-    )
-
-    console.log(
-      'Query:',
-      req.query
-    )
-
-    console.log(
-      'Body:',
       req.body
     )
 
-
-    res.type('text/plain')
-
-    res.send('OK')
+    res
+      .type('text/plain')
+      .send('OK')
 
   }
 )
 
+
+// ======================================================
+// EXPORT
+// ======================================================
 
 module.exports = router

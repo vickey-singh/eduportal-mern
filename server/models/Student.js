@@ -1,6 +1,7 @@
 const mongoose = require('mongoose')
 
 
+
 // ======================================
 // PAYMENT SCHEMA
 // ======================================
@@ -94,6 +95,7 @@ const paymentSchema = new mongoose.Schema(
 )
 
 
+
 // ======================================
 // INSTALLMENT SCHEMA
 // ======================================
@@ -106,16 +108,95 @@ const installmentSchema = new mongoose.Schema(
       min: 1,
     },
 
+    // ======================================
+    // CURRENT PAYABLE AMOUNT
+    // ======================================
+
     amount: {
       type: Number,
       required: true,
       min: 0,
     },
 
+    // ======================================
+    // ORIGINAL AMOUNT
+    // ======================================
+
+    // Original monthly/installment amount
+    // before any admin adjustment.
+
+    originalAmount: {
+      type: Number,
+      default: 0,
+      min: 0,
+    },
+
+    // ======================================
+    // ADJUSTMENT AMOUNT
+    // ======================================
+
+    // Example:
+    // Original = 1000
+    // Adjusted payable = 500
+    // Adjustment = 500
+
+    adjustmentAmount: {
+      type: Number,
+      default: 0,
+      min: 0,
+    },
+
+    // ======================================
+    // ADJUSTMENT TYPE
+    // ======================================
+
+    adjustmentType: {
+      type: String,
+      enum: [
+        'None',
+        'PartialWaiver',
+        'FullWaiver',
+      ],
+      default: 'None',
+    },
+
+    // ======================================
+    // ADJUSTMENT REASON
+    // ======================================
+
+    adjustmentReason: {
+      type: String,
+      default: '',
+      trim: true,
+    },
+
+    // ======================================
+    // ADMIN AUDIT
+    // ======================================
+
+    adjustedBy: {
+      type: String,
+      default: '',
+      trim: true,
+    },
+
+    adjustedAt: {
+      type: Date,
+      default: null,
+    },
+
+    // ======================================
+    // DUE DATE
+    // ======================================
+
     dueDate: {
       type: Date,
       default: null,
     },
+
+    // ======================================
+    // PAYMENT
+    // ======================================
 
     paidAmount: {
       type: Number,
@@ -123,12 +204,17 @@ const installmentSchema = new mongoose.Schema(
       min: 0,
     },
 
+    // ======================================
+    // STATUS
+    // ======================================
+
     status: {
       type: String,
       enum: [
         'Pending',
         'Due',
         'Paid',
+        'Waived',
       ],
       default: 'Pending',
     },
@@ -144,13 +230,16 @@ const installmentSchema = new mongoose.Schema(
 )
 
 
+
 // ======================================
 // STUDENT SCHEMA
 // ======================================
 
 const studentSchema = new mongoose.Schema(
   {
+    // ======================================
     // PERSONAL INFORMATION
+    // ======================================
 
     name: {
       type: String,
@@ -182,7 +271,10 @@ const studentSchema = new mongoose.Schema(
     },
 
 
+
+    // ======================================
     // PARENT INFORMATION
+    // ======================================
 
     fatherName: {
       type: String,
@@ -221,7 +313,10 @@ const studentSchema = new mongoose.Schema(
     },
 
 
+
+    // ======================================
     // CONTACT INFORMATION
+    // ======================================
 
     contact: {
       type: String,
@@ -244,7 +339,10 @@ const studentSchema = new mongoose.Schema(
     },
 
 
+
+    // ======================================
     // ADDRESS INFORMATION
+    // ======================================
 
     permanentAddress: {
       type: String,
@@ -283,7 +381,10 @@ const studentSchema = new mongoose.Schema(
     },
 
 
+
+    // ======================================
     // EDUCATION INFORMATION
+    // ======================================
 
     schoolCollegeName: {
       type: String,
@@ -292,7 +393,10 @@ const studentSchema = new mongoose.Schema(
     },
 
 
+
+    // ======================================
     // ADMISSION INFORMATION
+    // ======================================
 
     admissionNumber: {
       type: String,
@@ -308,7 +412,10 @@ const studentSchema = new mongoose.Schema(
     },
 
 
+
+    // ======================================
     // ZKTECO BIOMETRIC USER ID
+    // ======================================
 
     biometricUserId: {
       type: String,
@@ -316,6 +423,7 @@ const studentSchema = new mongoose.Schema(
       unique: true,
       sparse: true,
     },
+
 
 
     admissionDate: {
@@ -330,8 +438,11 @@ const studentSchema = new mongoose.Schema(
     },
 
 
+
+    // ======================================
     // COURSE
     // IMPORTANT: AS IT WAS BEFORE
+    // ======================================
 
     course: {
       type: String,
@@ -352,7 +463,10 @@ const studentSchema = new mongoose.Schema(
     },
 
 
+
+    // ======================================
     // STUDENT IMAGE
+    // ======================================
 
     image: {
       type: String,
@@ -360,7 +474,10 @@ const studentSchema = new mongoose.Schema(
     },
 
 
+
+    // ======================================
     // LOGIN PASSWORD
+    // ======================================
 
     password: {
       type: String,
@@ -368,7 +485,10 @@ const studentSchema = new mongoose.Schema(
     },
 
 
+
+    // ======================================
     // REGISTRATION FEE
+    // ======================================
 
     registrationFee: {
       type: Number,
@@ -392,7 +512,10 @@ const studentSchema = new mongoose.Schema(
     },
 
 
+
+    // ======================================
     // COURSE FEE
+    // ======================================
 
     totalFees: {
       type: Number,
@@ -423,7 +546,10 @@ const studentSchema = new mongoose.Schema(
     },
 
 
+
+    // ======================================
     // PAYMENT PLAN
+    // ======================================
 
     paymentPlan: {
       type: String,
@@ -435,6 +561,11 @@ const studentSchema = new mongoose.Schema(
       ],
       default: '',
     },
+
+    // IMPORTANT:
+    // Regular monthly fee remains unchanged.
+    // Temporary monthly adjustments are stored
+    // inside installmentSchedule.
 
     monthlyAmount: {
       type: Number,
@@ -452,7 +583,10 @@ const studentSchema = new mongoose.Schema(
     },
 
 
+
+    // ======================================
     // INSTALLMENTS
+    // ======================================
 
     installmentCount: {
       type: Number,
@@ -468,7 +602,10 @@ const studentSchema = new mongoose.Schema(
     },
 
 
+
+    // ======================================
     // DUE DATE
+    // ======================================
 
     dueDate: {
       type: Date,
@@ -476,7 +613,10 @@ const studentSchema = new mongoose.Schema(
     },
 
 
+
+    // ======================================
     // PAYMENT HISTORY
+    // ======================================
 
     paymentHistory: {
       type: [
@@ -486,7 +626,10 @@ const studentSchema = new mongoose.Schema(
     },
 
 
+
+    // ======================================
     // SCHOLARSHIP
+    // ======================================
 
     scholarship: {
       type: Number,
@@ -495,7 +638,10 @@ const studentSchema = new mongoose.Schema(
     },
 
 
+
+    // ======================================
     // DISCOUNT
+    // ======================================
 
     discount: {
       type: Number,
@@ -504,7 +650,10 @@ const studentSchema = new mongoose.Schema(
     },
 
 
+
+    // ======================================
     // COUPON
+    // ======================================
 
     couponCode: {
       type: String,
@@ -513,7 +662,10 @@ const studentSchema = new mongoose.Schema(
     },
 
 
+
+    // ======================================
     // APPLICATION REFERENCE
+    // ======================================
 
     applicationId: {
       type: mongoose.Schema.Types.ObjectId,
@@ -522,7 +674,10 @@ const studentSchema = new mongoose.Schema(
     },
 
 
+
+    // ======================================
     // STUDENT STATUS
+    // ======================================
 
     studentStatus: {
       type: String,
@@ -535,7 +690,10 @@ const studentSchema = new mongoose.Schema(
     },
 
 
+
+    // ======================================
     // OLD STATUS SUPPORT
+    // ======================================
 
     status: {
       type: String,
@@ -553,6 +711,7 @@ const studentSchema = new mongoose.Schema(
 )
 
 
+
 // ======================================
 // PRE VALIDATE
 // ======================================
@@ -561,7 +720,9 @@ studentSchema.pre(
   'validate',
   function () {
 
+    // ======================================
     // TOTAL / PAID / REMAINING
+    // ======================================
 
     const total =
       Number(this.totalFees || 0)
@@ -576,7 +737,10 @@ studentSchema.pre(
       )
 
 
+
+    // ======================================
     // REGISTRATION FEE STATUS
+    // ======================================
 
     const registration =
       Number(
@@ -600,7 +764,10 @@ studentSchema.pre(
     }
 
 
+
+    // ======================================
     // INSTALLMENT COUNT
+    // ======================================
 
     if (
       Array.isArray(
@@ -612,7 +779,10 @@ studentSchema.pre(
     }
 
 
+
+    // ======================================
     // COURSE FEE FULLY PAID
+    // ======================================
 
     if (
       this.remainingFees <= 0
@@ -622,6 +792,7 @@ studentSchema.pre(
     }
   }
 )
+
 
 
 // ======================================

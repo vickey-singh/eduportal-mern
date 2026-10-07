@@ -35,6 +35,9 @@ const createNotification =
 const studentAuth =
   require('../middleware/studentAuth')
 
+const adminAuth =
+  require('../middleware/adminAuth')
+
 
 // ======================================
 // FEE ENGINE HELPERS
@@ -211,6 +214,11 @@ const refreshInstallmentStatuses = (
     toDate(new Date())
 
   schedule.forEach((item) => {
+
+    // Waived is a final concession state, not a payment.
+    if (item.status === 'Waived') {
+      return
+    }
 
     const amount =
       Number(item.amount || 0)
@@ -415,6 +423,24 @@ const createMonthlySchedule = ({
 
       amount,
 
+      originalAmount:
+        amount,
+
+      adjustmentAmount:
+        0,
+
+      adjustmentType:
+        'None',
+
+      adjustmentReason:
+        '',
+
+      adjustedBy:
+        '',
+
+      adjustedAt:
+        null,
+
       dueDate:
         new Date(dueDate),
 
@@ -479,6 +505,24 @@ const createFullSchedule = ({
     amount:
       remaining,
 
+    originalAmount:
+      remaining,
+
+    adjustmentAmount:
+      0,
+
+    adjustmentType:
+      'None',
+
+    adjustmentReason:
+      '',
+
+    adjustedBy:
+      '',
+
+    adjustedAt:
+      null,
+
     dueDate:
       toDate(
         dueDate ||
@@ -507,38 +551,110 @@ const normalizeCustomSchedule = (
   schedule
 ) => {
 
-  if (
-    !Array.isArray(schedule)
-  ) {
-
+  if (!Array.isArray(schedule)) {
     return []
-
   }
 
   return schedule.map(
-    (item, index) => ({
+    (item, index) => {
 
-      installmentNumber:
-        index + 1,
+      const amount =
+        Number(item?.amount || 0)
 
-      amount:
-        Number(item.amount || 0),
+      const paidAmount =
+        Math.max(
+          0,
+          Number(item?.paidAmount || 0)
+        )
 
-      dueDate:
-        toDate(item.dueDate),
+      const originalAmount =
+        Number(
+          item?.originalAmount ||
+          amount
+        )
 
-      paidAmount:
-        Number(item.paidAmount || 0),
+      let status =
+        item?.status || 'Pending'
 
-      status:
-        'Pending',
+      if (amount === 0) {
+        status = 'Waived'
+      }
+      else if (paidAmount >= amount) {
+        status = 'Paid'
+      }
+      else {
+        status = 'Pending'
+      }
 
-      paidDate:
-        item.paidDate
-          ? toDate(item.paidDate)
-          : null,
+      const adjustmentType =
+        ['None', 'PartialWaiver', 'FullWaiver']
+          .includes(item?.adjustmentType)
+          ? item.adjustmentType
+          : (
+              amount === 0
+                ? 'FullWaiver'
+                : (
+                    originalAmount > amount
+                      ? 'PartialWaiver'
+                      : 'None'
+                  )
+            )
 
-    })
+      return {
+
+        installmentNumber:
+          Number(
+            item?.installmentNumber ||
+            index + 1
+          ),
+
+        amount,
+
+        originalAmount:
+          originalAmount > 0
+            ? originalAmount
+            : amount,
+
+        adjustmentAmount:
+          Math.max(
+            0,
+            Number(
+              item?.adjustmentAmount || 0
+            )
+          ),
+
+        adjustmentType,
+
+        adjustmentReason:
+          String(
+            item?.adjustmentReason || ''
+          ).trim(),
+
+        adjustedBy:
+          String(
+            item?.adjustedBy || ''
+          ).trim(),
+
+        adjustedAt:
+          item?.adjustedAt
+            ? toDate(item.adjustedAt)
+            : null,
+
+        dueDate:
+          toDate(item?.dueDate),
+
+        paidAmount,
+
+        status,
+
+        paidDate:
+          item?.paidDate
+            ? toDate(item.paidDate)
+            : null,
+
+      }
+
+    }
   )
 
 }
@@ -558,7 +674,6 @@ const validateCustomSchedule = (
     !Array.isArray(schedule) ||
     schedule.length === 0
   ) {
-
     return {
       valid: false,
       message:
@@ -578,69 +693,48 @@ const validateCustomSchedule = (
       total - paid
     )
 
-  // IMPORTANT:
-  // Existing schedules keep the ORIGINAL installment amount
-  // in `amount` and store already-paid money in `paidAmount`.
-  // Therefore an existing partially-paid schedule must be
-  // checked against BOTH total fee and remaining fee.
-
-  const scheduleTotal =
-    schedule.reduce(
-      (sum, item) =>
-        sum +
-        Number(item.amount || 0),
-      0
-    )
-
-  const schedulePaidTotal =
-    schedule.reduce(
-      (sum, item) =>
-        sum +
-        Number(item.paidAmount || 0),
-      0
-    )
-
-  const scheduleRemaining =
-    schedule.reduce(
-      (sum, item) =>
-        sum +
-        Math.max(
-          0,
-          Number(item.amount || 0) -
-          Number(item.paidAmount || 0)
-        ),
-      0
-    )
-
   const hasPaidAmount =
     schedule.some(
       item =>
-        Number(item.paidAmount || 0) > 0
+        Number(item?.paidAmount || 0) > 0
     )
 
-  for (
-    const item of schedule
-  ) {
+  let payableTotal = 0
+  let paidTotal = 0
+
+  for (const item of schedule) {
 
     const amount =
-      Number(item.amount || 0)
+      Number(item?.amount || 0)
 
     const itemPaid =
-      Number(item.paidAmount || 0)
+      Number(item?.paidAmount || 0)
 
-    if (amount <= 0) {
+    const originalAmount =
+      Number(
+        item?.originalAmount ||
+        amount
+      )
 
+    const isWaived =
+      item?.status === 'Waived' ||
+      (
+        amount === 0 &&
+        item?.adjustmentType === 'FullWaiver'
+      )
+
+    if (
+      amount < 0 ||
+      (amount === 0 && !isWaived)
+    ) {
       return {
         valid: false,
         message:
-          'Every installment amount must be greater than zero.',
+          'Installment amount must be greater than zero unless the installment is waived.',
       }
     }
 
-    if (
-      !toDate(item.dueDate)
-    ) {
-
+    if (!toDate(item?.dueDate)) {
       return {
         valid: false,
         message:
@@ -649,7 +743,6 @@ const validateCustomSchedule = (
     }
 
     if (itemPaid < 0) {
-
       return {
         valid: false,
         message:
@@ -658,76 +751,97 @@ const validateCustomSchedule = (
     }
 
     if (itemPaid > amount + 0.01) {
-
       return {
         valid: false,
         message:
           `Paid amount ₹${itemPaid} cannot be greater than installment amount ₹${amount}.`,
       }
     }
+
+    if (
+      originalAmount < amount - 0.01
+    ) {
+      return {
+        valid: false,
+        message:
+          'Original installment amount cannot be less than the current payable amount.',
+      }
+    }
+
+    if (isWaived) {
+      if (itemPaid > 0) {
+        return {
+          valid: false,
+          message:
+            'A waived installment cannot contain a paid amount.',
+        }
+      }
+      continue
+    }
+
+    payableTotal += amount
+    paidTotal += itemPaid
   }
 
   if (hasPaidAmount) {
 
-    // Existing/partially-paid schedule:
-    // gross installment total must equal total course fee.
     if (
       Math.abs(
-        scheduleTotal - total
+        paidTotal - paid
       ) > 0.01
     ) {
-
       return {
         valid: false,
         message:
-          `Installment total ₹${scheduleTotal} must equal total fee ₹${total}.`,
+          `Installment paid total ₹${paidTotal} must equal paid fee ₹${paid}.`,
       }
     }
 
-    // Paid amount stored inside installments must match
-    // the student's master paidFees value.
     if (
-      Math.abs(
-        schedulePaidTotal - paid
-      ) > 0.01
+      payableTotal - paidTotal >
+      remaining + 0.01
     ) {
-
       return {
         valid: false,
         message:
-          `Installment paid total ₹${schedulePaidTotal} must equal paid fee ₹${paid}.`,
+          `Installment remaining ₹${payableTotal - paidTotal} cannot be greater than remaining fee ₹${remaining}.`,
       }
     }
 
-    // Remaining installment balances must match the
-    // student's master remainingFees value.
-    if (
-      Math.abs(
-        scheduleRemaining - remaining
-      ) > 0.01
-    ) {
-
-      return {
-        valid: false,
-        message:
-          `Installment remaining ₹${scheduleRemaining} must equal remaining fee ₹${remaining}.`,
-      }
-    }
   }
   else {
 
-    // New custom schedule with no previous installment payment:
-    // its gross total represents the current remaining fee.
-    if (
-      Math.abs(
-        scheduleTotal - remaining
-      ) > 0.01
-    ) {
+    const hasWaiver =
+      schedule.some(
+        item =>
+          item?.status === 'Waived' ||
+          item?.adjustmentType === 'PartialWaiver' ||
+          item?.adjustmentType === 'FullWaiver' ||
+          Number(item?.originalAmount || 0) >
+            Number(item?.amount || 0)
+      )
 
+    if (
+      payableTotal >
+      remaining + 0.01
+    ) {
       return {
         valid: false,
         message:
-          `Installment total ₹${scheduleTotal} must equal remaining fee ₹${remaining}.`,
+          `Installment payable total ₹${payableTotal} cannot be greater than remaining fee ₹${remaining}.`,
+      }
+    }
+
+    if (
+      !hasWaiver &&
+      Math.abs(
+        payableTotal - remaining
+      ) > 0.01
+    ) {
+      return {
+        valid: false,
+        message:
+          `Installment total ₹${payableTotal} must equal remaining fee ₹${remaining}.`,
       }
     }
   }
@@ -737,6 +851,161 @@ const validateCustomSchedule = (
   }
 }
 
+
+// ======================================
+// PRESERVE EXISTING MONTHLY ADJUSTMENTS
+// ======================================
+//
+// Editing a student must not silently erase a previously
+// approved month-specific fee adjustment/waiver.
+//
+
+const preserveExistingInstallmentAdjustments = (
+  oldSchedule,
+  newSchedule
+) => {
+
+  if (
+    !Array.isArray(oldSchedule) ||
+    !Array.isArray(newSchedule)
+  ) {
+    return newSchedule
+  }
+
+  const oldMap =
+    new Map(
+      oldSchedule.map(
+        (item, index) => [
+          Number(
+            item?.installmentNumber ||
+            index + 1
+          ),
+          item,
+        ]
+      )
+    )
+
+  return newSchedule.map(
+    (item, index) => {
+
+      const number =
+        Number(
+          item?.installmentNumber ||
+          index + 1
+        )
+
+      const oldItem =
+        oldMap.get(number)
+
+      if (!oldItem) {
+        return item
+      }
+
+      const oldOriginal =
+        Number(
+          oldItem?.originalAmount ||
+          oldItem?.amount ||
+          0
+        )
+
+      const oldAmount =
+        Number(
+          oldItem?.amount || 0
+        )
+
+      const wasAdjusted =
+        oldItem?.status === 'Waived' ||
+        oldItem?.adjustmentType === 'PartialWaiver' ||
+        oldItem?.adjustmentType === 'FullWaiver' ||
+        oldOriginal > oldAmount
+
+      if (!wasAdjusted) {
+        return item
+      }
+
+      const newOriginal =
+        Number(
+          item?.originalAmount ||
+          item?.amount ||
+          0
+        )
+
+      // If the normal fee itself changed, do not copy the old
+      // temporary adjustment onto the new fee.
+      if (
+        Math.abs(
+          newOriginal - oldOriginal
+        ) > 0.01
+      ) {
+        return item
+      }
+
+      const next = {
+        ...item,
+
+        amount:
+          oldAmount,
+
+        originalAmount:
+          oldOriginal,
+
+        adjustmentAmount:
+          Number(
+            oldItem?.adjustmentAmount || 0
+          ),
+
+        adjustmentType:
+          oldItem?.adjustmentType || 'None',
+
+        adjustmentReason:
+          String(
+            oldItem?.adjustmentReason || ''
+          ),
+
+        adjustedBy:
+          String(
+            oldItem?.adjustedBy || ''
+          ),
+
+        adjustedAt:
+          oldItem?.adjustedAt
+            ? toDate(oldItem.adjustedAt)
+            : null,
+
+        paidAmount:
+          Number(
+            oldItem?.paidAmount || 0
+          ),
+
+        paidDate:
+          oldItem?.paidDate
+            ? toDate(oldItem.paidDate)
+            : null,
+      }
+
+      if (
+        oldItem?.status === 'Waived' ||
+        oldAmount === 0
+      ) {
+        next.amount = 0
+        next.paidAmount = 0
+        next.status = 'Waived'
+        next.paidDate = null
+      }
+      else if (
+        next.paidAmount >= next.amount
+      ) {
+        next.paidAmount = next.amount
+        next.status = 'Paid'
+      }
+      else {
+        next.status = 'Pending'
+      }
+
+      return next
+    }
+  )
+}
 
 // ======================================
 // BUILD PLAN SCHEDULE
@@ -903,7 +1172,8 @@ const allocatePayment = (
     schedule
       .filter(
         item =>
-          item.status !== 'Paid'
+          item.status !== 'Paid' &&
+          item.status !== 'Waived'
       )
       .sort(
         (a, b) =>
@@ -2662,6 +2932,16 @@ router.put(
         newSchedule =
           result.schedule
 
+        if (
+          finalPlan === 'monthly'
+        ) {
+          newSchedule =
+            preserveExistingInstallmentAdjustments(
+              student.installmentSchedule,
+              newSchedule
+            )
+        }
+
       }
 
       student.name =
@@ -2916,6 +3196,406 @@ router.delete(
         success: false,
 
         message:
+          'Server Error',
+
+      })
+
+    }
+
+  }
+)
+
+// ======================================
+// ADMIN ADJUST MONTHLY FEE
+// ======================================
+//
+// PUT
+// /students/:id/installment/:installmentId/adjust
+//
+// ONLY ADMIN
+//
+// Example:
+//
+// Original Monthly Fee = ₹1000
+//
+// Half Month Absent:
+// Adjusted Fee = ₹500
+//
+// Full Month Absent:
+// Adjusted Fee = ₹0
+//
+// ======================================
+
+router.put(
+  '/students/:id/installment/:installmentId/adjust',
+
+  adminAuth,
+
+  async (req, res) => {
+
+    try {
+
+      const {
+        id,
+        installmentId,
+      } = req.params
+
+
+      const {
+        adjustedAmount,
+        reason,
+      } = req.body
+
+
+      // ==================================
+      // VALIDATE ADJUSTED AMOUNT
+      // ==================================
+
+      const newAmount =
+        Number(adjustedAmount)
+
+
+      if (
+        Number.isNaN(newAmount) ||
+        newAmount < 0
+      ) {
+
+        return res.status(400).json({
+
+          success: false,
+
+          message:
+            'Adjusted amount must be 0 or greater.',
+
+        })
+
+      }
+
+
+      // ==================================
+      // REASON REQUIRED
+      // ==================================
+
+      const adjustmentReason =
+        String(reason || '').trim()
+
+
+      if (!adjustmentReason) {
+
+        return res.status(400).json({
+
+          success: false,
+
+          message:
+            'Adjustment reason is required.',
+
+        })
+
+      }
+
+
+      // ==================================
+      // FIND STUDENT
+      // ==================================
+
+      const student =
+        await Student.findById(id)
+
+
+      if (!student) {
+
+        return res.status(404).json({
+
+          success: false,
+
+          message:
+            'Student not found.',
+
+        })
+
+      }
+
+
+      // ==================================
+      // FIND INSTALLMENT
+      // ==================================
+
+      const installment =
+        student.installmentSchedule.id(
+          installmentId
+        )
+
+
+      if (!installment) {
+
+        return res.status(404).json({
+
+          success: false,
+
+          message:
+            'Installment not found.',
+
+        })
+
+      }
+
+
+      // ==================================
+      // ORIGINAL MONTHLY FEE
+      // ==================================
+
+      const currentAmount =
+        Number(
+          installment.amount || 0
+        )
+
+
+      const existingOriginalAmount =
+        Number(
+          installment.originalAmount || 0
+        )
+
+
+      const originalAmount =
+        existingOriginalAmount > 0
+          ? existingOriginalAmount
+          : currentAmount
+
+
+      // ==================================
+      // ALREADY PAID AMOUNT
+      // ==================================
+
+      const paidAmount =
+        Number(
+          installment.paidAmount || 0
+        )
+
+
+      // ==================================
+      // CANNOT REDUCE BELOW PAID AMOUNT
+      // ==================================
+
+      if (
+        newAmount < paidAmount
+      ) {
+
+        return res.status(400).json({
+
+          success: false,
+
+          message:
+            `Adjusted amount cannot be less than already paid amount ₹${paidAmount}.`,
+
+        })
+
+      }
+
+
+      // ==================================
+      // CALCULATE WAIVER
+      // ==================================
+
+      const adjustmentAmount =
+        Math.max(
+          originalAmount - newAmount,
+          0
+        )
+
+
+      // ==================================
+      // ADJUSTMENT TYPE
+      // ==================================
+
+      let adjustmentType =
+        'None'
+
+
+      if (
+        newAmount === 0
+      ) {
+
+        adjustmentType =
+          'FullWaiver'
+
+      }
+
+      else if (
+        newAmount < originalAmount
+      ) {
+
+        adjustmentType =
+          'PartialWaiver'
+
+      }
+
+
+      // ==================================
+      // ADMIN NAME
+      // ==================================
+
+      let adjustedBy =
+        'Admin'
+
+
+      if (req.admin) {
+
+        adjustedBy =
+          req.admin.name ||
+          req.admin.email ||
+          req.admin.username ||
+          'Admin'
+
+      }
+
+      else if (req.user) {
+
+        adjustedBy =
+          req.user.name ||
+          req.user.email ||
+          req.user.username ||
+          'Admin'
+
+      }
+
+
+      // ==================================
+      // SAVE ADJUSTMENT INFORMATION
+      // ==================================
+
+      installment.amount =
+        newAmount
+
+      installment.originalAmount =
+        originalAmount
+
+      installment.adjustmentAmount =
+        adjustmentAmount
+
+      installment.adjustmentType =
+        adjustmentType
+
+      installment.adjustmentReason =
+        adjustmentReason
+
+      installment.adjustedBy =
+        adjustedBy
+
+      installment.adjustedAt =
+        new Date()
+
+
+      // ==================================
+      // FULL WAIVER
+      // ==================================
+
+      if (
+        newAmount === 0
+      ) {
+
+        installment.status =
+          'Waived'
+
+        installment.paidAmount =
+          0
+
+        installment.paidDate =
+          null
+
+      }
+
+
+      // ==================================
+      // FULLY PAID
+      // ==================================
+
+      else if (
+        paidAmount >= newAmount
+      ) {
+
+        installment.paidAmount =
+          newAmount
+
+        installment.status =
+          'Paid'
+
+        if (
+          !installment.paidDate
+        ) {
+
+          installment.paidDate =
+            new Date()
+
+        }
+
+      }
+
+
+      // ==================================
+      // PENDING
+      // ==================================
+
+      else {
+
+        installment.status =
+          'Pending'
+
+        installment.paidDate =
+          null
+
+      }
+
+
+      // ==================================
+      // REFRESH MASTER FEE STATE
+      // ==================================
+      //
+      // A waiver is a concession, not a payment.
+      // Therefore paidFees and remainingFees are NOT changed here.
+      // ==================================
+
+      refreshMasterFeeState(
+        student
+      )
+
+      await student.save()
+
+
+      // ==================================
+      // RESPONSE
+      // ==================================
+
+      return res.status(200).json({
+
+        success: true,
+
+        message:
+          newAmount === 0
+            ? 'Monthly fee waived successfully.'
+            : 'Monthly fee adjusted successfully.',
+
+        student,
+
+        installment,
+
+      })
+
+    }
+
+    catch (error) {
+
+      console.log(
+        'Adjust Monthly Fee Error:',
+        error
+      )
+
+
+      return res.status(500).json({
+
+        success: false,
+
+        message:
+          error.message ||
           'Server Error',
 
       })

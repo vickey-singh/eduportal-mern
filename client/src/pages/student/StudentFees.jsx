@@ -861,27 +861,6 @@ function StudentFees() {
 
       }
 
-      const configuredMonthlyAmount =
-        Number(
-          fees?.monthlyAmount ||
-          fees?.monthlyInstallment ||
-          0
-        )
-
-      if (
-        configuredMonthlyAmount > 0
-      ) {
-
-        return Math.min(
-
-          configuredMonthlyAmount,
-
-          remaining
-
-        )
-
-      }
-
       const schedule =
         Array.isArray(
           fees?.installmentSchedule
@@ -889,6 +868,15 @@ function StudentFees() {
           ? fees.installmentSchedule
           : []
 
+      // IMPORTANT:
+      // Use the actual current installment amount first.
+      // This keeps Admin monthly adjustments in sync
+      // with the Student Portal.
+      //
+      // Example:
+      // Regular monthly fee = ₹1000
+      // Half absence adjustment = ₹500
+      // Student should pay/show ₹500 for that month.
       const firstUnpaid =
         schedule
           .map(
@@ -921,39 +909,62 @@ function StudentFees() {
           .filter(
             item =>
               item.balance > 0 &&
-              item.status !== 'Paid'
+              item.status !== 'Paid' &&
+              item.status !== 'Waived'
           )
           .sort(
             (a, b) => {
 
-              const numberA =
-                Number(
-                  a.installmentNumber ||
-                  999999
-                )
+              const dateA =
+                a?.dueDate
+                  ? new Date(a.dueDate).getTime()
+                  : Infinity
 
-              const numberB =
-                Number(
-                  b.installmentNumber ||
-                  999999
-                )
+              const dateB =
+                b?.dueDate
+                  ? new Date(b.dueDate).getTime()
+                  : Infinity
 
-              return numberA - numberB
+              return dateA - dateB
 
             }
           )[0]
 
+      if (
+        firstUnpaid &&
+        Number(firstUnpaid.balance) > 0
+      ) {
+
+        return Math.min(
+
+          Number(
+            firstUnpaid.balance
+          ),
+
+          remaining
+
+        )
+
+      }
+
+      // Fallback for older students without a schedule.
+      const configuredMonthlyAmount =
+        Number(
+          fees?.monthlyAmount ||
+          fees?.monthlyInstallment ||
+          0
+        )
+
       return Math.min(
 
-        Number(
-          firstUnpaid?.balance || 0
-        ),
+        configuredMonthlyAmount,
 
         remaining
 
       )
 
     }
+
 
 
   // ======================================
@@ -1173,6 +1184,10 @@ function StudentFees() {
         case 'Pending':
 
           return 'bg-secondary'
+
+        case 'Waived':
+
+          return 'bg-warning text-dark'
 
         default:
 
@@ -2713,6 +2728,65 @@ function StudentFees() {
                         getMonthlyPaymentAmount()
                       )}
                     </div>
+
+                    {(() => {
+
+                      const currentMonthlyItem =
+                        installmentSchedule
+                          .map(
+                            item => {
+
+                              const amount =
+                                Number(
+                                  item?.amount || 0
+                                )
+
+                              const paidAmount =
+                                Number(
+                                  item?.paidAmount || 0
+                                )
+
+                              return {
+                                ...item,
+                                balance:
+                                  Math.max(
+                                    0,
+                                    amount - paidAmount
+                                  ),
+                              }
+
+                            }
+                          )
+                          .filter(
+                            item =>
+                              item.balance > 0 &&
+                              item.status !== 'Paid' &&
+                              item.status !== 'Waived'
+                          )
+                          .sort(
+                            (a, b) =>
+                              new Date(a.dueDate || 0) -
+                              new Date(b.dueDate || 0)
+                          )[0]
+
+                      const hasAdjustment =
+                        currentMonthlyItem?.adjustmentType &&
+                        currentMonthlyItem.adjustmentType !== 'None'
+
+                      if (!hasAdjustment) {
+                        return null
+                      }
+
+                      return (
+                        <small className="text-warning d-block mt-1 fw-semibold">
+                          ⚠️ Adjusted for this month
+                          {currentMonthlyItem?.adjustmentReason
+                            ? ` • ${currentMonthlyItem.adjustmentReason}`
+                            : ''}
+                        </small>
+                      )
+
+                    })()}
 
                   </div>
 
