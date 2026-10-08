@@ -4,81 +4,100 @@ import axios from 'axios'
 
 import { API_URL } from '../../config/api'
 
-
 function FacultyAttendance() {
 
   // ======================================
+
   // SELECTED DATE
+
   // ======================================
 
   const [selectedDate, setSelectedDate] =
+
     useState(
+
       new Date()
+
         .toISOString()
+
         .split('T')[0]
+
     )
 
-
   // ======================================
+
   // FACULTY
+
   // ======================================
 
   const [faculty, setFaculty] =
+
     useState([])
 
-
   // ======================================
+
   // ATTENDANCE
+
   // ======================================
 
   const [attendance, setAttendance] =
+
     useState({})
 
-
   // ======================================
+
   // LOADING
+
   // ======================================
 
   const [loading, setLoading] =
+
     useState(true)
 
   const [saving, setSaving] =
+
     useState(false)
 
-
   // ======================================
+
   // MESSAGE
+
   // ======================================
 
   const [message, setMessage] =
+
     useState('')
 
   const [error, setError] =
+
     useState('')
 
-
   // ======================================
+
   // VIEW MODAL
+
   // ======================================
 
   const [selectedFaculty, setSelectedFaculty] =
-    useState(null)
 
+    useState(null)
 
   const [viewType, setViewType] =
+
     useState('daily')
 
-
   const [viewData, setViewData] =
+
     useState(null)
 
-
   const [viewLoading, setViewLoading] =
+
     useState(false)
 
-
   // ======================================
+
   // GET ADMIN TOKEN
+
   // ======================================
 
   const getToken = () => {
@@ -87,9 +106,10 @@ function FacultyAttendance() {
 
   }
 
-
   // ======================================
+
   // AUTH HEADERS
+
   // ======================================
 
   const getHeaders = () => {
@@ -99,6 +119,7 @@ function FacultyAttendance() {
       headers: {
 
         Authorization:
+
           `Bearer ${getToken()}`,
 
       },
@@ -107,12 +128,14 @@ function FacultyAttendance() {
 
   }
 
-
   // ======================================
+
   // FETCH ATTENDANCE
+
   // ======================================
 
   const fetchAttendance =
+
     async () => {
 
       try {
@@ -123,8 +146,8 @@ function FacultyAttendance() {
 
         setMessage('')
 
-
         const response =
+
           await axios.get(
 
             `${API_URL}/faculty-attendance`,
@@ -136,6 +159,7 @@ function FacultyAttendance() {
               params: {
 
                 date:
+
                   selectedDate,
 
               },
@@ -144,43 +168,50 @@ function FacultyAttendance() {
 
           )
 
-
         if (
+
           response.data.success
+
         ) {
 
           const facultyList =
+
             response.data.faculty || []
 
-
           setFaculty(
+
             facultyList
+
           )
 
-
           // ==============================
+
           // BUILD ATTENDANCE OBJECT
+
           // ==============================
 
           const attendanceData = {}
-
 
           facultyList.forEach(
 
             (member) => {
 
               attendanceData[
+
                 member.facultyId
+
               ] =
+
                 member.status || ''
 
             }
 
           )
 
-
           setAttendance(
+
             attendanceData
+
           )
 
         }
@@ -190,6 +221,7 @@ function FacultyAttendance() {
           setError(
 
             response.data.message ||
+
             'Unable to load faculty attendance.'
 
           )
@@ -207,7 +239,6 @@ function FacultyAttendance() {
           error
 
         )
-
 
         setError(
 
@@ -227,9 +258,10 @@ function FacultyAttendance() {
 
     }
 
-
   // ======================================
+
   // LOAD WHEN DATE CHANGES
+
   // ======================================
 
   useEffect(() => {
@@ -238,15 +270,20 @@ function FacultyAttendance() {
 
   }, [selectedDate])
 
-
   // ======================================
+
   // MARK ATTENDANCE
+
   // ======================================
 
   const markAttendance =
+
     (
+
       facultyId,
+
       status
+
     ) => {
 
       setAttendance(
@@ -256,12 +293,12 @@ function FacultyAttendance() {
           ...previous,
 
           [facultyId]:
+
             status,
 
         })
 
       )
-
 
       setMessage('')
 
@@ -269,12 +306,14 @@ function FacultyAttendance() {
 
     }
 
-
   // ======================================
+
   // SAVE ALL ATTENDANCE
+
   // ======================================
 
   const saveAttendance =
+
     async () => {
 
       try {
@@ -285,38 +324,46 @@ function FacultyAttendance() {
 
         setMessage('')
 
-
         const records =
+
           faculty.map(
 
             (member) => ({
 
               facultyId:
+
                 member.facultyId,
 
               status:
+
                 attendance[
+
                   member.facultyId
+
                 ],
 
             })
 
           )
+
           .filter(
 
             (item) =>
 
               item.status ===
+
                 'Present' ||
 
               item.status ===
+
                 'Absent'
 
           )
 
-
         if (
+
           records.length === 0
+
         ) {
 
           setError(
@@ -329,8 +376,8 @@ function FacultyAttendance() {
 
         }
 
-
         const response =
+
           await axios.post(
 
             `${API_URL}/faculty-attendance/bulk`,
@@ -338,9 +385,11 @@ function FacultyAttendance() {
             {
 
               date:
+
                 selectedDate,
 
               attendance:
+
                 records,
 
             },
@@ -349,9 +398,10 @@ function FacultyAttendance() {
 
           )
 
-
         if (
+
           response.data.success
+
         ) {
 
           setMessage(
@@ -359,7 +409,6 @@ function FacultyAttendance() {
             'Faculty attendance saved successfully.'
 
           )
-
 
           // Reload current date
 
@@ -372,6 +421,7 @@ function FacultyAttendance() {
           setError(
 
             response.data.message ||
+
             'Unable to save attendance.'
 
           )
@@ -389,7 +439,6 @@ function FacultyAttendance() {
           error
 
         )
-
 
         setError(
 
@@ -409,16 +458,20 @@ function FacultyAttendance() {
 
     }
 
-
   // ======================================
+
   // VIEW FACULTY ATTENDANCE
+
   // ======================================
 
   const openView =
+
     async (member) => {
 
       setSelectedFaculty(
+
         member
+
       )
 
       setViewType('daily')
@@ -435,15 +488,20 @@ function FacultyAttendance() {
 
     }
 
-
   // ======================================
+
   // FETCH VIEW DATA
+
   // ======================================
 
   const fetchViewData =
+
     async (
+
       facultyId,
+
       type
+
     ) => {
 
       try {
@@ -452,19 +510,22 @@ function FacultyAttendance() {
 
         setError('')
 
-
         let response
 
-
         // ==================================
+
         // DAILY
+
         // ==================================
 
         if (
+
           type === 'daily'
+
         ) {
 
           response =
+
             await axios.get(
 
               `${API_URL}/faculty-attendance/${facultyId}/daily`,
@@ -475,20 +536,24 @@ function FacultyAttendance() {
 
         }
 
-
         // ==================================
+
         // MONTHLY
+
         // ==================================
 
         if (
+
           type === 'monthly'
+
         ) {
 
           const now =
+
             new Date()
 
-
           response =
+
             await axios.get(
 
               `${API_URL}/faculty-attendance/${facultyId}/monthly`,
@@ -500,9 +565,11 @@ function FacultyAttendance() {
                 params: {
 
                   year:
+
                     now.getFullYear(),
 
                   month:
+
                     now.getMonth() + 1,
 
                 },
@@ -513,20 +580,24 @@ function FacultyAttendance() {
 
         }
 
-
         // ==================================
+
         // YEARLY
+
         // ==================================
 
         if (
+
           type === 'yearly'
+
         ) {
 
           const now =
+
             new Date()
 
-
           response =
+
             await axios.get(
 
               `${API_URL}/faculty-attendance/${facultyId}/yearly`,
@@ -538,6 +609,7 @@ function FacultyAttendance() {
                 params: {
 
                   year:
+
                     now.getFullYear(),
 
                 },
@@ -548,13 +620,16 @@ function FacultyAttendance() {
 
         }
 
-
         if (
+
           response?.data?.success
+
         ) {
 
           setViewData(
+
             response.data
+
           )
 
         }
@@ -566,6 +641,7 @@ function FacultyAttendance() {
           setError(
 
             response?.data?.message ||
+
             'Unable to load attendance records.'
 
           )
@@ -583,7 +659,6 @@ function FacultyAttendance() {
           error
 
         )
-
 
         setViewData(null)
 
@@ -605,21 +680,24 @@ function FacultyAttendance() {
 
     }
 
-
   // ======================================
+
   // CHANGE VIEW TYPE
+
   // ======================================
 
   const changeViewType =
+
     async (type) => {
 
       setViewType(type)
 
       setViewData(null)
 
-
       if (
+
         selectedFaculty
+
       ) {
 
         await fetchViewData(
@@ -634,12 +712,14 @@ function FacultyAttendance() {
 
     }
 
-
   // ======================================
+
   // CLOSE VIEW
+
   // ======================================
 
   const closeView =
+
     () => {
 
       setSelectedFaculty(null)
@@ -650,12 +730,228 @@ function FacultyAttendance() {
 
     }
 
-
   // ======================================
+  // PRINT ATTENDANCE
+  // ======================================
+
+  const printAttendance = () => {
+    const printArea = document.getElementById(
+      'faculty-attendance-print-area'
+    )
+
+    if (!printArea) return
+
+    const modalBody = printArea.querySelector('.modal-body')
+
+    if (!modalBody) return
+
+    const printWindow = window.open(
+      '',
+      '_blank',
+      'width=1000,height=800'
+    )
+
+    if (!printWindow) {
+      setError('Please allow pop-ups to print attendance.')
+      return
+    }
+
+    const logo = document.querySelector(
+      'img[alt*="logo" i], img[src*="logo" i]'
+    )
+
+    const logoHtml = logo?.src
+      ? `<img src="${logo.src}" class="institute-logo" alt="Institute Logo" />`
+      : ''
+
+    const reportTitle =
+      viewType === 'daily'
+        ? 'Daily Faculty Attendance Report'
+        : viewType === 'monthly'
+          ? 'Monthly Faculty Attendance Report'
+          : 'Yearly Faculty Attendance Report'
+
+    printWindow.document.write(`
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <title>${reportTitle}</title>
+          <style>
+            * { box-sizing: border-box; }
+
+            body {
+              margin: 0;
+              padding: 24px;
+              font-family: Arial, Helvetica, sans-serif;
+              color: #1f2937;
+              background: #fff;
+            }
+
+            .report {
+              max-width: 900px;
+              margin: 0 auto;
+            }
+
+            .branding {
+              text-align: center;
+              padding-bottom: 14px;
+              border-bottom: 2px solid #1f4e79;
+              margin-bottom: 18px;
+            }
+
+            .institute-logo {
+              width: 64px;
+              height: 64px;
+              object-fit: contain;
+              margin-bottom: 6px;
+            }
+
+            .institute-name {
+              margin: 0;
+              font-size: 24px;
+              font-weight: 700;
+              color: #163a5f;
+            }
+
+            .institute-subtitle {
+              margin: 4px 0 0;
+              font-size: 12px;
+              color: #6b7280;
+            }
+
+            .report-title {
+              margin: 14px 0 4px;
+              font-size: 18px;
+              font-weight: 700;
+              color: #111827;
+            }
+
+            .faculty-info {
+              margin: 0;
+              font-size: 13px;
+              color: #4b5563;
+            }
+
+            .modal-body {
+              width: 100%;
+            }
+
+            .btn-group,
+            button {
+              display: none !important;
+            }
+
+            .row {
+              display: flex;
+              flex-wrap: wrap;
+              gap: 10px;
+              margin-bottom: 14px;
+            }
+
+            .col-md-3 {
+              flex: 1 1 20%;
+              min-width: 130px;
+            }
+
+            .card {
+              border: 1px solid #d9dee5;
+              border-radius: 6px;
+              background: #fff;
+            }
+
+            .card-body {
+              padding: 10px;
+            }
+
+            table {
+              width: 100%;
+              border-collapse: collapse;
+              margin-top: 10px;
+              font-size: 12px;
+            }
+
+            th {
+              background: #eef3f8 !important;
+              color: #1f2937;
+              font-weight: 700;
+            }
+
+            th, td {
+              border: 1px solid #cfd6de;
+              padding: 7px 8px;
+              text-align: left;
+            }
+
+            .badge {
+              display: inline-block;
+              padding: 3px 7px;
+              border: 1px solid #9ca3af;
+              border-radius: 4px;
+              font-size: 11px;
+            }
+
+            .report-footer {
+              margin-top: 20px;
+              padding-top: 8px;
+              border-top: 1px solid #d9dee5;
+              text-align: center;
+              font-size: 10px;
+              color: #6b7280;
+            }
+
+            @page {
+              size: A4;
+              margin: 12mm;
+            }
+
+            @media print {
+              body {
+                padding: 0;
+              }
+            }
+          </style>
+        </head>
+        <body>
+          <div class="report">
+            <div class="branding">
+              ${logoHtml}
+              <h1 class="institute-name">Prerna Institute Of Excellence</h1>
+              <p class="institute-subtitle">Faculty Attendance Management</p>
+              <h2 class="report-title">${reportTitle}</h2>
+              <p class="faculty-info">
+                Faculty: ${selectedFaculty?.name || '-'}
+                &nbsp; | &nbsp;
+                Designation: ${selectedFaculty?.designation || '-'}
+                &nbsp; | &nbsp;
+                Subject: ${selectedFaculty?.subject || '-'}
+              </p>
+            </div>
+
+            ${modalBody.innerHTML}
+
+            <div class="report-footer">
+              Generated from EduPortal Admin Panel
+            </div>
+          </div>
+        </body>
+      </html>
+    `)
+
+    printWindow.document.close()
+    printWindow.focus()
+
+    setTimeout(() => {
+      printWindow.print()
+      printWindow.close()
+    }, 400)
+  }
+
   // FORMAT DATE
+
   // ======================================
 
   const formatDate =
+
     (date) => {
 
       if (!date) {
@@ -664,57 +960,62 @@ function FacultyAttendance() {
 
       }
 
-
       const parts =
+
         date.split('-')
 
-
       if (
+
         parts.length !== 3
+
       ) {
 
         return date
 
       }
 
-
       return `${parts[2]}-${parts[1]}-${parts[0]}`
 
     }
 
-
   // ======================================
+
   // STATUS BADGE
+
   // ======================================
 
   const getStatusBadge =
+
     (status) => {
 
       if (
+
         status === 'Present'
+
       ) {
 
         return 'badge bg-success'
 
       }
 
-
       if (
+
         status === 'Absent'
+
       ) {
 
         return 'badge bg-danger'
 
       }
 
-
       return 'badge bg-secondary'
 
     }
 
-
   // ======================================
+
   // LOADING
+
   // ======================================
 
   if (loading) {
@@ -724,8 +1025,11 @@ function FacultyAttendance() {
       <div className="text-center py-5">
 
         <div
+
           className="spinner-border"
+
           role="status"
+
         >
 
           <span className="visually-hidden">
@@ -735,7 +1039,6 @@ function FacultyAttendance() {
           </span>
 
         </div>
-
 
         <p className="text-muted mt-3">
 
@@ -749,18 +1052,20 @@ function FacultyAttendance() {
 
   }
 
-
   // ======================================
+
   // PAGE
+
   // ======================================
 
   return (
 
     <div>
 
-
       {/* ==================================
+
           HEADER
+
       ================================== */}
 
       <div className="d-flex justify-content-between align-items-center mb-4">
@@ -773,7 +1078,6 @@ function FacultyAttendance() {
 
           </h2>
 
-
           <p className="text-muted mb-0">
 
             Mark and manage faculty attendance.
@@ -781,7 +1085,6 @@ function FacultyAttendance() {
           </p>
 
         </div>
-
 
         <button
 
@@ -801,9 +1104,10 @@ function FacultyAttendance() {
 
       </div>
 
-
       {/* ==================================
+
           ALERTS
+
       ================================== */}
 
       {message && (
@@ -816,7 +1120,6 @@ function FacultyAttendance() {
 
       )}
 
-
       {error && (
 
         <div className="alert alert-danger">
@@ -827,9 +1130,10 @@ function FacultyAttendance() {
 
       )}
 
-
       {/* ==================================
+
           DATE + SAVE
+
       ================================== */}
 
       <div className="card border-0 shadow-sm mb-4">
@@ -837,7 +1141,6 @@ function FacultyAttendance() {
         <div className="card-body p-4">
 
           <div className="row align-items-end g-3">
-
 
             <div className="col-md-4">
 
@@ -847,7 +1150,6 @@ function FacultyAttendance() {
 
               </label>
 
-
               <input
 
                 type="date"
@@ -855,21 +1157,28 @@ function FacultyAttendance() {
                 className="form-control"
 
                 value={
+
                   selectedDate
+
                 }
 
                 onChange={(
+
                   event
+
                 ) =>
+
                   setSelectedDate(
+
                     event.target.value
+
                   )
+
                 }
 
               />
 
             </div>
-
 
             <div className="col-md-8 text-md-end">
 
@@ -887,7 +1196,6 @@ function FacultyAttendance() {
 
               </small>
 
-
               <button
 
                 type="button"
@@ -895,12 +1203,17 @@ function FacultyAttendance() {
                 className="btn btn-primary"
 
                 onClick={
+
                   saveAttendance
+
                 }
 
                 disabled={
+
                   saving ||
+
                   faculty.length === 0
+
                 }
 
               >
@@ -910,7 +1223,9 @@ function FacultyAttendance() {
                   <>
 
                     <span
+
                       className="spinner-border spinner-border-sm me-2"
+
                     />
 
                     Saving...
@@ -939,37 +1254,39 @@ function FacultyAttendance() {
 
       </div>
 
-
       {/* ==================================
+
           FACULTY TABLE
+
       ================================== */}
 
       <div className="card border-0 shadow-sm">
 
         <div className="card-body p-4">
 
-
           {faculty.length === 0 ? (
 
             <div className="text-center py-5">
 
               <div
+
                 style={{
+
                   fontSize: '48px',
+
                 }}
+
               >
 
                 👨‍🏫
 
               </div>
 
-
               <h5 className="fw-bold mt-3">
 
                 No Active Faculty
 
               </h5>
-
 
               <p className="text-muted mb-0">
 
@@ -990,33 +1307,44 @@ function FacultyAttendance() {
                   <tr>
 
                     <th>
+
                       #
+
                     </th>
 
                     <th>
+
                       Faculty
+
                     </th>
 
                     <th>
+
                       Designation
+
                     </th>
 
                     <th>
+
                       Subject
+
                     </th>
 
                     <th>
+
                       Attendance
+
                     </th>
 
                     <th>
+
                       View
+
                     </th>
 
                   </tr>
 
                 </thead>
-
 
                 <tbody>
 
@@ -1025,30 +1353,36 @@ function FacultyAttendance() {
                     (member, index) => (
 
                       <tr
+
                         key={
+
                           member.facultyId
+
                         }
+
                       >
 
                         <td>
 
                           {
+
                             index + 1
+
                           }
 
                         </td>
-
 
                         <td>
 
                           <div className="fw-semibold">
 
                             {
+
                               member.name
+
                             }
 
                           </div>
-
 
                           {member.employeeId && (
 
@@ -1066,29 +1400,29 @@ function FacultyAttendance() {
 
                         </td>
 
-
                         <td>
 
                           {
+
                             member.designation
+
                           }
 
                         </td>
-
 
                         <td>
 
                           {
+
                             member.subject
+
                           }
 
                         </td>
-
 
                         <td>
 
                           <div className="d-flex gap-2 flex-wrap">
-
 
                             <button
 
@@ -1097,7 +1431,9 @@ function FacultyAttendance() {
                               className={
 
                                 attendance[
+
                                   member.facultyId
+
                                 ] === 'Present'
 
                                   ? 'btn btn-success btn-sm'
@@ -1126,7 +1462,6 @@ function FacultyAttendance() {
 
                             </button>
 
-
                             <button
 
                               type="button"
@@ -1134,7 +1469,9 @@ function FacultyAttendance() {
                               className={
 
                                 attendance[
+
                                   member.facultyId
+
                                 ] === 'Absent'
 
                                   ? 'btn btn-danger btn-sm'
@@ -1167,7 +1504,6 @@ function FacultyAttendance() {
 
                         </td>
 
-
                         <td>
 
                           <button
@@ -1177,7 +1513,9 @@ function FacultyAttendance() {
                             className="btn btn-outline-primary btn-sm"
 
                             onClick={() =>
+
                               openView(member)
+
                             }
 
                           >
@@ -1208,9 +1546,10 @@ function FacultyAttendance() {
 
       </div>
 
-
       {/* ==================================
+
           VIEW MODAL
+
       ================================== */}
 
       {selectedFaculty && (
@@ -1224,6 +1563,7 @@ function FacultyAttendance() {
           style={{
 
             backgroundColor:
+
               'rgba(0, 0, 0, 0.5)',
 
           }}
@@ -1232,8 +1572,7 @@ function FacultyAttendance() {
 
           <div className="modal-dialog modal-lg modal-dialog-scrollable">
 
-            <div className="modal-content">
-
+            <div className="modal-content" id="faculty-attendance-print-area">
 
               {/* HEADER */}
 
@@ -1244,28 +1583,32 @@ function FacultyAttendance() {
                   <h5 className="modal-title fw-bold">
 
                     {
+
                       selectedFaculty.name
+
                     }
 
                   </h5>
 
-
                   <small className="text-muted">
 
                     {
+
                       selectedFaculty.designation
+
                     }
 
                     {' • '}
 
                     {
+
                       selectedFaculty.subject
+
                     }
 
                   </small>
 
                 </div>
-
 
                 <button
 
@@ -1274,18 +1617,18 @@ function FacultyAttendance() {
                   className="btn-close"
 
                   onClick={
+
                     closeView
+
                   }
 
                 />
 
               </div>
 
-
               {/* BODY */}
 
               <div className="modal-body">
-
 
                 {/* TABS */}
 
@@ -1306,9 +1649,13 @@ function FacultyAttendance() {
                     }
 
                     onClick={() =>
+
                       changeViewType(
+
                         'daily'
+
                       )
+
                     }
 
                   >
@@ -1316,7 +1663,6 @@ function FacultyAttendance() {
                     Daily
 
                   </button>
-
 
                   <button
 
@@ -1333,9 +1679,13 @@ function FacultyAttendance() {
                     }
 
                     onClick={() =>
+
                       changeViewType(
+
                         'monthly'
+
                       )
+
                     }
 
                   >
@@ -1343,7 +1693,6 @@ function FacultyAttendance() {
                     Monthly
 
                   </button>
-
 
                   <button
 
@@ -1360,9 +1709,13 @@ function FacultyAttendance() {
                     }
 
                     onClick={() =>
+
                       changeViewType(
+
                         'yearly'
+
                       )
+
                     }
 
                   >
@@ -1373,7 +1726,6 @@ function FacultyAttendance() {
 
                 </div>
 
-
                 {/* VIEW LOADING */}
 
                 {viewLoading ? (
@@ -1381,8 +1733,11 @@ function FacultyAttendance() {
                   <div className="text-center py-4">
 
                     <div
+
                       className="spinner-border"
+
                       role="status"
+
                     >
 
                       <span className="visually-hidden">
@@ -1400,7 +1755,9 @@ function FacultyAttendance() {
                   <>
 
                     {/* ==================================
+
                         DAILY
+
                     ================================== */}
 
                     {viewType === 'daily' && (
@@ -1412,7 +1769,6 @@ function FacultyAttendance() {
                           Attendance Records
 
                         </h6>
-
 
                         {viewData?.records?.length === 0 ? (
 
@@ -1433,21 +1789,26 @@ function FacultyAttendance() {
                                 <tr>
 
                                   <th>
+
                                     #
+
                                   </th>
 
                                   <th>
+
                                     Date
+
                                   </th>
 
                                   <th>
+
                                     Status
+
                                   </th>
 
                                 </tr>
 
                               </thead>
-
 
                               <tbody>
 
@@ -1456,43 +1817,59 @@ function FacultyAttendance() {
                                   (record, index) => (
 
                                     <tr
+
                                       key={
+
                                         record._id
+
                                       }
+
                                     >
 
                                       <td>
 
                                         {
+
                                           index + 1
+
                                         }
 
                                       </td>
-
 
                                       <td>
 
                                         {
+
                                           formatDate(
+
                                             record.date
+
                                           )
+
                                         }
 
                                       </td>
 
-
                                       <td>
 
                                         <span
+
                                           className={
+
                                             getStatusBadge(
+
                                               record.status
+
                                             )
+
                                           }
+
                                         >
 
                                           {
+
                                             record.status
+
                                           }
 
                                         </span>
@@ -1517,9 +1894,10 @@ function FacultyAttendance() {
 
                     )}
 
-
                     {/* ==================================
+
                         MONTHLY
+
                     ================================== */}
 
                     {viewType === 'monthly' && (
@@ -1527,7 +1905,6 @@ function FacultyAttendance() {
                       <>
 
                         <div className="row g-3 mb-4">
-
 
                           <div className="col-md-3">
 
@@ -1541,11 +1918,12 @@ function FacultyAttendance() {
 
                                 </small>
 
-
                                 <h4 className="fw-bold text-success mb-0 mt-2">
 
                                   {
+
                                     viewData?.summary?.present || 0
+
                                   }
 
                                 </h4>
@@ -1555,7 +1933,6 @@ function FacultyAttendance() {
                             </div>
 
                           </div>
-
 
                           <div className="col-md-3">
 
@@ -1569,11 +1946,12 @@ function FacultyAttendance() {
 
                                 </small>
 
-
                                 <h4 className="fw-bold text-danger mb-0 mt-2">
 
                                   {
+
                                     viewData?.summary?.absent || 0
+
                                   }
 
                                 </h4>
@@ -1583,7 +1961,6 @@ function FacultyAttendance() {
                             </div>
 
                           </div>
-
 
                           <div className="col-md-3">
 
@@ -1597,11 +1974,12 @@ function FacultyAttendance() {
 
                                 </small>
 
-
                                 <h4 className="fw-bold mb-0 mt-2">
 
                                   {
+
                                     viewData?.summary?.total || 0
+
                                   }
 
                                 </h4>
@@ -1611,7 +1989,6 @@ function FacultyAttendance() {
                             </div>
 
                           </div>
-
 
                           <div className="col-md-3">
 
@@ -1625,11 +2002,12 @@ function FacultyAttendance() {
 
                                 </small>
 
-
                                 <h4 className="fw-bold mb-0 mt-2">
 
                                   {
+
                                     viewData?.summary?.percentage || 0
+
                                   }%
 
                                 </h4>
@@ -1642,7 +2020,6 @@ function FacultyAttendance() {
 
                         </div>
 
-
                         <div className="table-responsive">
 
                           <table className="table table-bordered align-middle">
@@ -1652,21 +2029,26 @@ function FacultyAttendance() {
                               <tr>
 
                                 <th>
+
                                   #
+
                                 </th>
 
                                 <th>
+
                                   Date
+
                                 </th>
 
                                 <th>
+
                                   Status
+
                                 </th>
 
                               </tr>
 
                             </thead>
-
 
                             <tbody>
 
@@ -1675,43 +2057,59 @@ function FacultyAttendance() {
                                 (record, index) => (
 
                                   <tr
+
                                     key={
+
                                       record._id
+
                                     }
+
                                   >
 
                                     <td>
 
                                       {
+
                                         index + 1
+
                                       }
 
                                     </td>
-
 
                                     <td>
 
                                       {
+
                                         formatDate(
+
                                           record.date
+
                                         )
+
                                       }
 
                                     </td>
 
-
                                     <td>
 
                                       <span
+
                                         className={
+
                                           getStatusBadge(
+
                                             record.status
+
                                           )
+
                                         }
+
                                       >
 
                                         {
+
                                           record.status
+
                                         }
 
                                       </span>
@@ -1734,9 +2132,10 @@ function FacultyAttendance() {
 
                     )}
 
-
                     {/* ==================================
+
                         YEARLY
+
                     ================================== */}
 
                     {viewType === 'yearly' && (
@@ -1744,7 +2143,6 @@ function FacultyAttendance() {
                       <>
 
                         <div className="row g-3 mb-4">
-
 
                           <div className="col-md-3">
 
@@ -1758,11 +2156,12 @@ function FacultyAttendance() {
 
                                 </small>
 
-
                                 <h4 className="fw-bold text-success mb-0 mt-2">
 
                                   {
+
                                     viewData?.summary?.present || 0
+
                                   }
 
                                 </h4>
@@ -1772,7 +2171,6 @@ function FacultyAttendance() {
                             </div>
 
                           </div>
-
 
                           <div className="col-md-3">
 
@@ -1786,11 +2184,12 @@ function FacultyAttendance() {
 
                                 </small>
 
-
                                 <h4 className="fw-bold text-danger mb-0 mt-2">
 
                                   {
+
                                     viewData?.summary?.absent || 0
+
                                   }
 
                                 </h4>
@@ -1800,7 +2199,6 @@ function FacultyAttendance() {
                             </div>
 
                           </div>
-
 
                           <div className="col-md-3">
 
@@ -1814,11 +2212,12 @@ function FacultyAttendance() {
 
                                 </small>
 
-
                                 <h4 className="fw-bold mb-0 mt-2">
 
                                   {
+
                                     viewData?.summary?.total || 0
+
                                   }
 
                                 </h4>
@@ -1828,7 +2227,6 @@ function FacultyAttendance() {
                             </div>
 
                           </div>
-
 
                           <div className="col-md-3">
 
@@ -1842,11 +2240,12 @@ function FacultyAttendance() {
 
                                 </small>
 
-
                                 <h4 className="fw-bold mb-0 mt-2">
 
                                   {
+
                                     viewData?.summary?.percentage || 0
+
                                   }%
 
                                 </h4>
@@ -1859,7 +2258,6 @@ function FacultyAttendance() {
 
                         </div>
 
-
                         <div className="table-responsive">
 
                           <table className="table table-bordered align-middle">
@@ -1869,21 +2267,26 @@ function FacultyAttendance() {
                               <tr>
 
                                 <th>
+
                                   #
+
                                 </th>
 
                                 <th>
+
                                   Date
+
                                 </th>
 
                                 <th>
+
                                   Status
+
                                 </th>
 
                               </tr>
 
                             </thead>
-
 
                             <tbody>
 
@@ -1892,43 +2295,59 @@ function FacultyAttendance() {
                                 (record, index) => (
 
                                   <tr
+
                                     key={
+
                                       record._id
+
                                     }
+
                                   >
 
                                     <td>
 
                                       {
+
                                         index + 1
+
                                       }
 
                                     </td>
-
 
                                     <td>
 
                                       {
+
                                         formatDate(
+
                                           record.date
+
                                         )
+
                                       }
 
                                     </td>
 
-
                                     <td>
 
                                       <span
+
                                         className={
+
                                           getStatusBadge(
+
                                             record.status
+
                                           )
+
                                         }
+
                                       >
 
                                         {
+
                                           record.status
+
                                         }
 
                                       </span>
@@ -1957,10 +2376,18 @@ function FacultyAttendance() {
 
               </div>
 
-
               {/* FOOTER */}
 
               <div className="modal-footer">
+
+                <button
+                  type="button"
+                  className="btn btn-primary"
+                  onClick={printAttendance}
+                >
+                  <i className="fas fa-file-pdf me-2" />
+                  Create PDF
+                </button>
 
                 <button
 
@@ -1969,7 +2396,9 @@ function FacultyAttendance() {
                   className="btn btn-secondary"
 
                   onClick={
+
                     closeView
+
                   }
 
                 >
@@ -1993,6 +2422,5 @@ function FacultyAttendance() {
   )
 
 }
-
 
 export default FacultyAttendance

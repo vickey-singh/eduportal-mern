@@ -161,11 +161,8 @@ router.get(
       // ==================================
 
       const studentFilter = {
-
-        course:
-
-          course.trim(),
-
+        course: course.trim(),
+        studentStatus: 'Active',
       }
 
       if (batchTime) {
@@ -421,11 +418,8 @@ router.get(
       // ==================================
 
       const studentFilter = {
-
-        course:
-
-          course.trim(),
-
+        course: course.trim(),
+        studentStatus: 'Active',
       }
 
       // ==================================
@@ -2345,20 +2339,31 @@ router.post(
         process.env.ATTENDANCE_CRON_SECRET
 
       if (!cronSecret) {
+
         return res.status(500).json({
+
           success: false,
+
           message: 'ATTENDANCE_CRON_SECRET is not configured.',
+
         })
+
       }
 
       const requestSecret =
+
         req.headers['x-attendance-cron-secret']
 
       if (!requestSecret || requestSecret !== cronSecret) {
+
         return res.status(401).json({
+
           success: false,
+
           message: 'Unauthorized',
+
         })
+
       }
 
       const requestedDate =
@@ -2392,7 +2397,7 @@ router.post(
       const students =
 
         await Student.find({
-
+          studentStatus: 'Active',
           biometricUserId: {
 
             $exists: true,
@@ -2602,4 +2607,3 @@ router.post(
 module.exports =
 
   router
-  
