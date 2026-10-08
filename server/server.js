@@ -158,15 +158,44 @@ connectDB()
 
 
 // ======================================
-// MIDDLEWARE
+// CORS
 // ======================================
+
+const allowedOrigins = [
+  'http://localhost:5173',
+  'https://www.prernainstituteofexcellence.in',
+  'https://prernainstituteofexcellence.in'
+]
 
 app.use(
   cors({
-    origin: 'http://localhost:5173',
+    origin: function (origin, callback) {
+
+      // Allow requests without an Origin
+      // such as Postman, server-to-server
+      // and ZKTeco device requests.
+
+      if (!origin) {
+        return callback(null, true)
+      }
+
+      if (allowedOrigins.includes(origin)) {
+        return callback(null, true)
+      }
+
+      return callback(
+        new Error('Not allowed by CORS')
+      )
+    },
+
     credentials: true
   })
 )
+
+
+// ======================================
+// JSON MIDDLEWARE
+// ======================================
 
 app.use(
   express.json()
