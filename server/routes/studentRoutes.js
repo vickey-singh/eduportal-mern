@@ -576,7 +576,11 @@ const normalizeCustomSchedule = (
       let status =
         item?.status || 'Pending'
 
-      if (amount === 0) {
+      if (
+        item?.status === 'Waived' ||
+        item?.adjustmentType === 'FullWaiver' ||
+        amount === 0
+      ) {
         status = 'Waived'
       }
       else if (paidAmount >= amount) {
@@ -750,7 +754,19 @@ const validateCustomSchedule = (
       }
     }
 
-    if (itemPaid > amount + 0.01) {
+    // A waived installment can have a historical payment
+    // greater than its current payable amount (which is ₹0).
+    // Example:
+    // Original = ₹3000
+    // Already Paid = ₹2000
+    // Full Waiver = ₹0
+    //
+    // For normal installments, paid amount must not exceed
+    // the current payable amount.
+    if (
+      !isWaived &&
+      itemPaid > amount + 0.01
+    ) {
       return {
         valid: false,
         message:
@@ -769,13 +785,10 @@ const validateCustomSchedule = (
     }
 
     if (isWaived) {
-      if (itemPaid > 0) {
-        return {
-          valid: false,
-          message:
-            'A waived installment cannot contain a paid amount.',
-        }
-      }
+      // A full waiver can happen after a partial payment.
+      // Preserve that historical payment while removing the
+      // installment's remaining payable amount.
+      paidTotal += itemPaid
       continue
     }
 
@@ -985,12 +998,22 @@ const preserveExistingInstallmentAdjustments = (
 
       if (
         oldItem?.status === 'Waived' ||
+        oldItem?.adjustmentType === 'FullWaiver' ||
         oldAmount === 0
       ) {
         next.amount = 0
-        next.paidAmount = 0
+        next.paidAmount = Number(
+          oldItem?.paidAmount || 0
+        )
         next.status = 'Waived'
-        next.paidDate = null
+        next.paidDate =
+          oldItem?.paidDate
+            ? toDate(oldItem.paidDate)
+            : (
+                next.paidAmount > 0
+                  ? new Date()
+                  : null
+              )
       }
       else if (
         next.paidAmount >= next.amount
@@ -3256,7 +3279,7 @@ router.put(
 
 
       if (
-        Number.isNaN(newAmount) ||
+        !Number.isFinite(newAmount) ||
         newAmount < 0
       ) {
 
@@ -3373,24 +3396,28 @@ router.put(
 
 
       // ==================================
-      // CANNOT REDUCE BELOW PAID AMOUNT
+      // ADMIN HAS FULL CONTROL OVER ADJUSTMENT
       // ==================================
-
-      if (
-        newAmount < paidAmount
-      ) {
-
-        return res.status(400).json({
-
-          success: false,
-
-          message:
-            `Adjusted amount cannot be less than already paid amount ₹${paidAmount}.`,
-
-        })
-
-      }
-
+      //
+      // The admin may set the installment payable
+      // amount to ANY value from ₹0 up to the
+      // original installment amount.
+      //
+      // IMPORTANT:
+      // - Already paid amount is NEVER removed.
+      // - ₹0 means Full Waiver.
+      // - If adjusted amount is below the amount
+      //   already paid, the student's historical
+      //   payment is preserved and the installment
+      //   is treated as fully settled.
+      //
+      // Examples:
+      // Original ₹3000, Paid ₹2000
+      // Adjust ₹1000 -> balance ₹0
+      // Adjust ₹500  -> balance ₹0
+      // Adjust ₹0    -> Full Waiver
+      //
+      // ==================================
 
       // ==================================
       // CALCULATE WAIVER
@@ -3496,17 +3523,33 @@ router.put(
         installment.status =
           'Waived'
 
+        // Preserve already paid amount.
         installment.paidAmount =
-          0
+          paidAmount
 
-        installment.paidDate =
-          null
+        // Preserve an existing paid date. If old data has a paid
+        // amount but no date, create a date for audit consistency.
+        if (
+          paidAmount > 0 &&
+          !installment.paidDate
+        ) {
+
+          installment.paidDate =
+            new Date()
+
+        }
 
       }
 
 
       // ==================================
-      // FULLY PAID
+      // FULLY SETTLED AFTER ADJUSTMENT
+      // ==================================
+      //
+      // If the admin reduces the payable amount
+      // to an amount already covered by historical
+      // payment, do NOT reduce paidAmount.
+      // The historical payment must remain intact.
       // ==================================
 
       else if (
@@ -3514,7 +3557,7 @@ router.put(
       ) {
 
         installment.paidAmount =
-          newAmount
+          paidAmount
 
         installment.status =
           'Paid'
@@ -3571,8 +3614,8 @@ router.put(
 
         message:
           newAmount === 0
-            ? 'Monthly fee waived successfully.'
-            : 'Monthly fee adjusted successfully.',
+            ? 'Installment fee waived successfully.'
+            : 'Installment fee adjusted successfully.',
 
         student,
 
@@ -3585,7 +3628,7 @@ router.put(
     catch (error) {
 
       console.log(
-        'Adjust Monthly Fee Error:',
+        'Adjust Installment Fee Error:',
         error
       )
 

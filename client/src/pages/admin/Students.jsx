@@ -1682,7 +1682,9 @@ function Students() {
               (sum, item) =>
                 sum +
                 Number(
-                  item.amount || 0
+                  item.originalAmount ??
+                  item.amount ??
+                  0
                 ),
               0
             )
@@ -1789,12 +1791,31 @@ function Students() {
 
           const invalid =
             schedule.some(
-              (item) =>
-                Number(item.amount || 0) <= 0 ||
-                !item.dueDate ||
-                Number(item.paidAmount || 0) < 0 ||
-                Number(item.paidAmount || 0) >
+              (item) => {
+
+                const amount =
                   Number(item.amount || 0)
+
+                const paidAmount =
+                  Number(item.paidAmount || 0)
+
+                const isWaived =
+                  item?.status === 'Waived' ||
+                  (
+                    amount === 0 &&
+                    item?.adjustmentType === 'FullWaiver'
+                  )
+
+                if (!item.dueDate || amount < 0 || paidAmount < 0) {
+                  return true
+                }
+
+                if (amount === 0 && !isWaived) {
+                  return true
+                }
+
+                return false
+              }
             )
 
           if (invalid) {
@@ -2296,6 +2317,31 @@ function Students() {
                     item.status ||
                     'Pending',
 
+                  originalAmount:
+                    item.originalAmount ??
+                    item.amount ??
+                    '',
+
+                  adjustmentAmount:
+                    item.adjustmentAmount ??
+                    0,
+
+                  adjustmentType:
+                    item.adjustmentType ||
+                    'None',
+
+                  adjustmentReason:
+                    item.adjustmentReason ||
+                    '',
+
+                  adjustedAt:
+                    item.adjustedAt ||
+                    null,
+
+                  adjustedBy:
+                    item.adjustedBy ||
+                    '',
+
                 })
               )
             : [],
@@ -2513,10 +2559,10 @@ function Students() {
 
 
   // ======================================
-  // ADJUST MONTHLY FEE
+  // ADJUST INSTALLMENT FEE
   // ======================================
 
-  const adjustMonthlyFee =
+  const adjustInstallmentFee =
     async (student, installment) => {
 
       if (!student?._id || !installment?._id) {
@@ -2541,14 +2587,11 @@ function Students() {
         )
 
       const defaultAmount =
-        Math.max(
-          currentAmount,
-          paidAmount
-        )
+        currentAmount
 
       const enteredAmount =
         window.prompt(
-          `Monthly Fee Adjustment\n\nOriginal Fee: ₹${originalAmount.toLocaleString('en-IN')}\nAlready Paid: ₹${paidAmount.toLocaleString('en-IN')}\n\nEnter final payable amount for this month:`,
+          `Installment Fee Adjustment\n\nOriginal Fee: ₹${originalAmount.toLocaleString('en-IN')}\nAlready Paid: ₹${paidAmount.toLocaleString('en-IN')}\n\nEnter final payable amount for this installment:`,
           String(defaultAmount)
         )
 
@@ -2567,11 +2610,9 @@ function Students() {
         return
       }
 
-      if (
-        adjustedAmount < paidAmount
-      ) {
+      if (adjustedAmount > originalAmount) {
         alert(
-          `Adjusted amount cannot be less than already paid amount ₹${paidAmount}.`
+          `Final payable amount cannot be greater than original installment fee ₹${originalAmount.toLocaleString('en-IN')}.`
         )
         return
       }
@@ -2583,7 +2624,7 @@ function Students() {
             ? 'Full month absent'
             : adjustedAmount < originalAmount
               ? 'Half month absent'
-              : 'Monthly fee adjustment'
+              : 'Installment fee adjustment'
         )
 
       if (!reason || !reason.trim()) {
@@ -2593,7 +2634,7 @@ function Students() {
 
       const confirmed =
         window.confirm(
-          `Confirm monthly fee adjustment?\n\nOriginal: ₹${originalAmount.toLocaleString('en-IN')}\nFinal Payable: ₹${adjustedAmount.toLocaleString('en-IN')}\nAdjustment: ₹${Math.max(originalAmount - adjustedAmount, 0).toLocaleString('en-IN')}\nReason: ${reason.trim()}`
+          `Confirm installment fee adjustment?\n\nOriginal: ₹${originalAmount.toLocaleString('en-IN')}\nFinal Payable: ₹${adjustedAmount.toLocaleString('en-IN')}\nAdjustment: ₹${Math.max(originalAmount - adjustedAmount, 0).toLocaleString('en-IN')}\nReason: ${reason.trim()}`
         )
 
       if (!confirmed) {
@@ -2636,7 +2677,7 @@ function Students() {
         if (!response.ok || !data?.success) {
           throw new Error(
             data?.message ||
-            'Monthly fee adjustment failed.'
+            'Installment fee adjustment failed.'
           )
         }
 
@@ -2659,7 +2700,7 @@ function Students() {
 
         alert(
           data.message ||
-          'Monthly fee adjusted successfully.'
+          'Installment fee adjusted successfully.'
         )
 
       }
@@ -2667,13 +2708,13 @@ function Students() {
       catch (error) {
 
         console.log(
-          'Monthly Fee Adjustment Error:',
+          'Installment Fee Adjustment Error:',
           error
         )
 
         alert(
           error.message ||
-          'Monthly fee adjustment failed.'
+          'Installment fee adjustment failed.'
         )
 
       }
@@ -3994,7 +4035,11 @@ function Students() {
                   ).reduce(
                     (sum, item) =>
                       sum +
-                      Number(item.amount || 0),
+                      Number(
+                        item.originalAmount ??
+                        item.amount ??
+                        0
+                      ),
                     0
                   )
 
@@ -5709,7 +5754,10 @@ function Students() {
                                   Status
                                 </th>
 
-                                {selectedStudent.paymentPlan === 'monthly' && (
+                                {(
+                                  selectedStudent.paymentPlan === 'monthly' ||
+                                  selectedStudent.paymentPlan === 'installment'
+                                ) && (
                                   <th>
                                     Action
                                   </th>
@@ -5725,10 +5773,25 @@ function Students() {
                               {selectedStudent.installmentSchedule.map(
                                 (item, index) => {
 
+                                  // Keep the original installment fee visible.
+                                  // The adjusted amount is used only for balance calculation.
                                   const amount =
                                     Number(
-                                      item?.amount || 0
+                                      item?.amount ?? 0
                                     )
+
+                                  const displayAmount =
+                                    Number(
+                                      item?.originalAmount ?? amount
+                                    )
+
+                                  const displayStatus =
+                                    item?.adjustmentType === 'FullWaiver' ||
+                                    item?.status === 'Waived'
+                                      ? 'Waived'
+                                      : item?.adjustmentType === 'PartialWaiver'
+                                        ? 'Partial Waived'
+                                        : (item?.status || 'Pending')
 
                                   const paidAmount =
                                     Number(
@@ -5778,7 +5841,7 @@ function Students() {
 
                                       <td className="fw-semibold">
                                         ₹{
-                                          amount.toLocaleString(
+                                          displayAmount.toLocaleString(
                                             'en-IN'
                                           )
                                         }
@@ -5834,17 +5897,17 @@ function Students() {
                                           {
                                             itemDue
                                               ? 'Due'
-                                              : (
-                                                  item.status ||
-                                                  'Pending'
-                                                )
+                                              : displayStatus
                                           }
 
                                         </span>
 
                                       </td>
 
-                                      {selectedStudent.paymentPlan === 'monthly' && (
+                                      {(
+                                  selectedStudent.paymentPlan === 'monthly' ||
+                                  selectedStudent.paymentPlan === 'installment'
+                                ) && (
                                         <td>
 
                                           {item.status === 'Waived' ? (
@@ -5856,7 +5919,7 @@ function Students() {
                                               type="button"
                                               className="btn btn-sm btn-outline-primary"
                                               onClick={() =>
-                                                adjustMonthlyFee(
+                                                adjustInstallmentFee(
                                                   selectedStudent,
                                                   item
                                                 )

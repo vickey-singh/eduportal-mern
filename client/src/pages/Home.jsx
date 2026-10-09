@@ -2349,7 +2349,7 @@ function Home() {
 
           <h3>
 
-            Admissions Open for 2025-26
+            Admissions Open for 2026-27
 
           </h3>
 
