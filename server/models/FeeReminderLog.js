@@ -31,6 +31,7 @@ const feeReminderLogSchema = new mongoose.Schema(
     reminderStage: {
       type: String,
       enum: [
+        'bulk_due',
         'before_due',
         'due_today',
         'overdue_3_days',
@@ -41,7 +42,7 @@ const feeReminderLogSchema = new mongoose.Schema(
 
     dueDate: {
       type: Date,
-      required: true,
+      default: null,
     },
 
     scheduledDate: {

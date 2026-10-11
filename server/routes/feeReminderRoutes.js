@@ -1,55 +1,86 @@
 
 const express = require('express')
 const crypto = require('crypto')
+const processFeeReminders = require('../utils/processFeeReminders')
 
 const router = express.Router()
-const processFeeReminders = require('../utils/processFeeReminders')
+
+const isValidSecret = (providedSecret, expectedSecret) => {
+  if (
+    typeof providedSecret !== 'string' ||
+    typeof expectedSecret !== 'string' ||
+    !providedSecret ||
+    !expectedSecret
+  ) {
+    return false
+  }
+
+  const provided = Buffer.from(providedSecret, 'utf8')
+  const expected = Buffer.from(expectedSecret, 'utf8')
+
+  if (provided.length !== expected.length) {
+    return false
+  }
+
+  return crypto.timingSafeEqual(provided, expected)
+}
 
 router.post('/fees/reminders/run', async (req, res) => {
   try {
-    const configuredSecret = process.env.FEE_REMINDER_CRON_SECRET
+    const expectedSecret = process.env.FEE_REMINDER_CRON_SECRET
     const providedSecret = req.get('x-fee-reminder-secret')
 
-    if (!configuredSecret) {
-      return res.status(500).json({
-        success: false,
-        message: 'Fee reminder secret is not configured on the server.',
-      })
-    }
-
-    if (
-      !providedSecret ||
-      Buffer.byteLength(providedSecret) !==
-        Buffer.byteLength(configuredSecret) ||
-      !crypto.timingSafeEqual(
-        Buffer.from(providedSecret),
-        Buffer.from(configuredSecret)
-      )
-    ) {
+    if (!isValidSecret(providedSecret, expectedSecret)) {
       return res.status(401).json({
         success: false,
-        message: 'Unauthorized.',
+        message: 'Unauthorized fee reminder request.',
       })
     }
 
-    // Safe by default: preview only unless dryRun=false is explicit.
-    const dryRun = req.query.dryRun !== 'false'
+    const mode = String(req.query.mode || 'scheduled').toLowerCase()
 
-    const summary = await processFeeReminders({ dryRun })
+    if (!['bulk', 'scheduled'].includes(mode)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid mode. Use bulk or scheduled.',
+      })
+    }
+
+    // Safe default: no email is sent unless dryRun=false
+    // is explicitly requested.
+    const dryRunValue = String(req.query.dryRun ?? 'true').toLowerCase()
+
+    if (!['true', 'false'].includes(dryRunValue)) {
+      return res.status(400).json({
+        success: false,
+        message: 'dryRun must be true or false.',
+      })
+    }
+
+    const dryRun = dryRunValue === 'true'
+
+    const summary = await processFeeReminders({
+      mode,
+      dryRun,
+    })
 
     return res.status(200).json({
       success: true,
       message: dryRun
-        ? 'Fee reminder dry run completed. No emails were sent.'
-        : 'Fee reminder processing completed.',
+        ? `Fee ${mode} reminder dry run completed. No emails were sent.`
+        : `Fee ${mode} reminder processing completed.`,
       summary,
     })
   } catch (error) {
-    console.error('Fee reminder route error:', error)
+    console.error('Fee reminder processing error:', error)
 
     return res.status(500).json({
       success: false,
       message: 'Fee reminder processing failed.',
+      error:
+        process.env.NODE_ENV === 'production'
+          ? undefined
+          : error.message,
     })
   }
 })
