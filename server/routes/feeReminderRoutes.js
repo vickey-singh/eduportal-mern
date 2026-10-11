@@ -37,7 +37,9 @@ router.post('/fees/reminders/run', async (req, res) => {
       })
     }
 
-    const mode = String(req.query.mode || 'scheduled').toLowerCase()
+    const mode = String(
+      req.query.mode || 'scheduled'
+    ).toLowerCase()
 
     if (!['bulk', 'scheduled'].includes(mode)) {
       return res.status(400).json({
@@ -46,9 +48,9 @@ router.post('/fees/reminders/run', async (req, res) => {
       })
     }
 
-    // Safe default: no email is sent unless dryRun=false
-    // is explicitly requested.
-    const dryRunValue = String(req.query.dryRun ?? 'true').toLowerCase()
+    const dryRunValue = String(
+      req.query.dryRun ?? 'true'
+    ).toLowerCase()
 
     if (!['true', 'false'].includes(dryRunValue)) {
       return res.status(400).json({
@@ -59,9 +61,24 @@ router.post('/fees/reminders/run', async (req, res) => {
 
     const dryRun = dryRunValue === 'true'
 
+    const admissionNumber = String(
+      req.query.admissionNumber || ''
+    ).trim()
+
+    if (
+      admissionNumber &&
+      !/^[a-zA-Z0-9_-]{1,50}$/.test(admissionNumber)
+    ) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid admission number.',
+      })
+    }
+
     const summary = await processFeeReminders({
       mode,
       dryRun,
+      admissionNumber,
     })
 
     return res.status(200).json({

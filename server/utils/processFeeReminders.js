@@ -41,19 +41,12 @@ const getReminderStage = (dueDate, todayKey) => {
   const dueDateKey = getDateKey(new Date(dueDate))
   const daysUntilDue = daysBetween(todayKey, dueDateKey)
 
-  if (daysUntilDue === 3) {
-    return 'before_due'
-  }
-
-  if (daysUntilDue === 0) {
-    return 'due_today'
-  }
+  if (daysUntilDue === 3) return 'before_due'
+  if (daysUntilDue === 0) return 'due_today'
 
   const overdueDays = -daysUntilDue
 
-  if (overdueDays === 3) {
-    return 'overdue_3_days'
-  }
+  if (overdueDays === 3) return 'overdue_3_days'
 
   if (overdueDays >= 10 && (overdueDays - 10) % 7 === 0) {
     return 'overdue_weekly'
@@ -71,8 +64,7 @@ const isInactiveStudent = (student) => {
   if (!student.studentStatus) return false
 
   return (
-    String(student.studentStatus).trim().toLowerCase() !==
-    'active'
+    String(student.studentStatus).trim().toLowerCase() !== 'active'
   )
 }
 
@@ -88,12 +80,7 @@ const isExcludedInstallment = (installment) => {
     .trim()
     .toLowerCase()
 
-  return [
-    'paid',
-    'waived',
-    'fullwaiver',
-    'full waiver',
-  ].includes(status)
+  return ['paid', 'waived', 'fullwaiver', 'full waiver'].includes(status)
 }
 
 const makePreviewItem = ({
@@ -173,8 +160,7 @@ const processBulkReminders = async ({
 
     if (dryRun) continue
 
-    // Stable key: a successful bulk reminder is sent only once
-    // per student. A Failed log can be retried with the same key.
+    // Stable key prevents repeat successful bulk reminders.
     const reminderKey = `${student._id}:bulk_due:v1`
 
     try {
@@ -199,14 +185,12 @@ const processBulkReminders = async ({
             status: 'Sending',
             attemptCount: 1,
           })
-        } catch (createError) {
-          // Another request may have created this unique key.
-          if (createError.code === 11000) {
+        } catch (error) {
+          if (error.code === 11000) {
             summary.skippedAlreadyProcessed++
             continue
           }
-
-          throw createError
+          throw error
         }
       } else {
         log.status = 'Sending'
@@ -228,7 +212,6 @@ const processBulkReminders = async ({
       summary.emailsSent++
     } catch (error) {
       summary.emailsFailed++
-
       summary.errors.push({
         admissionNumber: student.admissionNumber || '',
         message: error.message || 'Unknown email error',
@@ -240,7 +223,9 @@ const processBulkReminders = async ({
           {
             $set: {
               status: 'Failed',
-              errorMessage: String(error.message || 'Unknown error').slice(0, 1000),
+              errorMessage: String(
+                error.message || 'Unknown error'
+              ).slice(0, 1000),
             },
           }
         )
@@ -283,9 +268,9 @@ const processScheduledReminders = async ({
       continue
     }
 
-    const remainingFees = Number(student.remainingFees) || 0
-
-    if (remainingFees <= 0) continue
+    if ((Number(student.remainingFees) || 0) <= 0) {
+      continue
+    }
 
     const schedule = Array.isArray(student.installmentSchedule)
       ? student.installmentSchedule
@@ -297,10 +282,7 @@ const processScheduledReminders = async ({
       if (isExcludedInstallment(installment)) continue
 
       const remainingAmount = getInstallmentBalance(installment)
-
-      if (remainingAmount <= 0) continue
-
-      if (!installment.dueDate) continue
+      if (remainingAmount <= 0 || !installment.dueDate) continue
 
       const reminderStage = getReminderStage(
         installment.dueDate,
@@ -346,10 +328,8 @@ const processScheduledReminders = async ({
 
       if (dryRun) continue
 
-      let log
-
       try {
-        log = await FeeReminderLog.findOne({ reminderKey })
+        let log = await FeeReminderLog.findOne({ reminderKey })
 
         if (log && log.status !== 'Failed') {
           summary.skippedAlreadyProcessed++
@@ -360,8 +340,7 @@ const processScheduledReminders = async ({
           try {
             log = await FeeReminderLog.create({
               studentId: student._id,
-              installmentId:
-                installment._id || null,
+              installmentId: installment._id || null,
               admissionNumber: student.admissionNumber || '',
               studentEmail: String(student.email).trim().toLowerCase(),
               reminderStage,
@@ -371,13 +350,12 @@ const processScheduledReminders = async ({
               status: 'Sending',
               attemptCount: 1,
             })
-          } catch (createError) {
-            if (createError.code === 11000) {
+          } catch (error) {
+            if (error.code === 11000) {
               summary.skippedAlreadyProcessed++
               continue
             }
-
-            throw createError
+            throw error
           }
         } else {
           log.status = 'Sending'
@@ -409,7 +387,6 @@ const processScheduledReminders = async ({
         summary.emailsSent++
       } catch (error) {
         summary.emailsFailed++
-
         summary.errors.push({
           admissionNumber: student.admissionNumber || '',
           installmentNumber:
@@ -425,7 +402,9 @@ const processScheduledReminders = async ({
             {
               $set: {
                 status: 'Failed',
-                errorMessage: String(error.message || 'Unknown error').slice(0, 1000),
+                errorMessage: String(
+                  error.message || 'Unknown error'
+                ).slice(0, 1000),
               },
             }
           )
@@ -449,6 +428,7 @@ const processScheduledReminders = async ({
 const processFeeReminders = async ({
   mode = 'scheduled',
   dryRun = true,
+  admissionNumber = '',
 } = {}) => {
   if (!['bulk', 'scheduled'].includes(mode)) {
     throw new Error('Invalid reminder mode. Use bulk or scheduled.')
@@ -456,11 +436,15 @@ const processFeeReminders = async ({
 
   const todayKey = getDateKey(new Date())
 
-  // Only read student records. This processor does not change
-  // Student documents or payment records.
-  const students = await Student.find({
+  const studentQuery = {
     remainingFees: { $gt: 0 },
-  }).lean()
+  }
+
+  if (admissionNumber) {
+    studentQuery.admissionNumber = admissionNumber.trim()
+  }
+
+  const students = await Student.find(studentQuery).lean()
 
   if (mode === 'bulk') {
     return processBulkReminders({
