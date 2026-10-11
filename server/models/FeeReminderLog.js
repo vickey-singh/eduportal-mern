@@ -1,13 +1,26 @@
 
 const mongoose = require('mongoose')
 
+const REMINDER_STAGES = [
+  'bulk_due',
+  'before_due',
+  'due_today',
+  'overdue_3_days',
+  'overdue_weekly',
+]
+
+const REMINDER_STATUSES = [
+  'Sending',
+  'Sent',
+  'Failed',
+]
+
 const feeReminderLogSchema = new mongoose.Schema(
   {
     studentId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Student',
       required: true,
-      index: true,
     },
 
     installmentId: {
@@ -30,13 +43,7 @@ const feeReminderLogSchema = new mongoose.Schema(
 
     reminderStage: {
       type: String,
-      enum: [
-        'bulk_due',
-        'before_due',
-        'due_today',
-        'overdue_3_days',
-        'overdue_weekly',
-      ],
+      enum: REMINDER_STAGES,
       required: true,
     },
 
@@ -45,28 +52,36 @@ const feeReminderLogSchema = new mongoose.Schema(
       default: null,
     },
 
+    // Date key in YYYY-MM-DD format, using Asia/Kolkata.
     scheduledDate: {
       type: String,
       required: true,
+      match: /^\d{4}-\d{2}-\d{2}$/,
     },
 
+    // Unique key prevents the same reminder from being
+    // processed more than once.
     reminderKey: {
       type: String,
       required: true,
+      trim: true,
       unique: true,
     },
 
     status: {
       type: String,
-      enum: ['Sending', 'Sent', 'Failed'],
+      enum: REMINDER_STATUSES,
       default: 'Sending',
-      index: true,
     },
 
     attemptCount: {
       type: Number,
       default: 1,
       min: 0,
+      validate: {
+        validator: Number.isInteger,
+        message: 'attemptCount must be an integer',
+      },
     },
 
     sentAt: {
@@ -77,14 +92,27 @@ const feeReminderLogSchema = new mongoose.Schema(
     errorMessage: {
       type: String,
       default: '',
+      maxlength: 1000,
     },
   },
   {
     timestamps: true,
+    versionKey: false,
   }
 )
 
-module.exports = mongoose.model(
-  'FeeReminderLog',
-  feeReminderLogSchema
-)
+// Student reminder history.
+feeReminderLogSchema.index({
+  studentId: 1,
+  scheduledDate: -1,
+})
+
+// Operational monitoring and failed-reminder review.
+feeReminderLogSchema.index({
+  status: 1,
+  updatedAt: -1,
+})
+
+module.exports =
+  mongoose.models.FeeReminderLog ||
+  mongoose.model('FeeReminderLog', feeReminderLogSchema)
