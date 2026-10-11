@@ -38,9 +38,9 @@ const getReminderContent = (stage) => {
     case 'bulk_due':
       return {
         subject: 'Fee Due Reminder',
-        heading: 'Outstanding Fee Reminder',
+        heading: 'Current Due Fee Reminder',
         message:
-          'Our records indicate that your fee balance is outstanding. Please review the balance below and contact the institute if you have already paid.',
+          'Our records indicate that one or more installments are currently due. The amount below excludes future installments. If you have already paid, please contact the institute office.',
       }
 
     case 'due_today':
@@ -57,7 +57,7 @@ const getReminderContent = (stage) => {
         subject: 'Outstanding Fee Reminder',
         heading: 'Overdue Fee Reminder',
         message:
-          'Our records indicate that your installment is overdue. Please arrange payment or contact the institute if your payment has already been made.',
+          'Our records indicate that this installment is overdue. Please arrange payment or contact the institute if your payment has already been made.',
       }
 
     case 'before_due':
@@ -83,68 +83,107 @@ const sendFeeReminderEmail = async ({
   }
 
   const content = getReminderContent(reminderStage)
+  const isBulk = reminderStage === 'bulk_due'
 
   const studentName = escapeHtml(student?.name || 'Student')
   const admissionNumber = escapeHtml(
     student?.admissionNumber || 'Not available'
   )
 
-  const isBulk = reminderStage === 'bulk_due'
-
+  // For bulk reminders this is the sum of currently due
+  // unpaid installments, NOT student.remainingFees.
   const remainingAmount = isBulk
-    ? Number(student?.remainingFees) || 0
+    ? Number(installment?.remainingAmount ?? student?.remainingFees) || 0
     : Number(installment?.remainingAmount) || 0
 
-  const dueDate = isBulk
-    ? student?.dueDate
-    : installment?.dueDate
+  const dueDate = installment?.dueDate || null
 
-  const installmentLabel = isBulk
-    ? 'Overall outstanding fee balance'
-    : `Installment ${installment?.installmentNumber ?? ''}`
+  const dueInstallments = Array.isArray(installment?.dueInstallments)
+    ? installment.dueInstallments
+    : []
+
+  const bulkInstallmentRows = dueInstallments
+    .map((item) => {
+      const number =
+        item.installmentNumber === '' ||
+        item.installmentNumber === null ||
+        item.installmentNumber === undefined
+          ? 'Installment'
+          : `Installment ${item.installmentNumber}`
+
+      return `
+        <tr>
+          <td style="padding:10px;border:1px solid #ddd;">
+            ${escapeHtml(number)}
+          </td>
+          <td style="padding:10px;border:1px solid #ddd;">
+            ${escapeHtml(formatDate(item.dueDate))}
+          </td>
+          <td style="padding:10px;border:1px solid #ddd;text-align:right;">
+            ${formatINR(item.remainingAmount)}
+          </td>
+        </tr>
+      `
+    })
+    .join('')
 
   const detailRows = isBulk
     ? `
       <tr>
-        <td style="padding:10px;border:1px solid #ddd;">
-          Outstanding fee balance
+        <td colspan="3" style="padding:10px;border:1px solid #ddd;background:#f8fafc;">
+          <strong>Currently due installments</strong>
         </td>
-        <td style="padding:10px;border:1px solid #ddd;">
+      </tr>
+      <tr>
+        <th style="padding:10px;border:1px solid #ddd;text-align:left;">Installment</th>
+        <th style="padding:10px;border:1px solid #ddd;text-align:left;">Due date</th>
+        <th style="padding:10px;border:1px solid #ddd;text-align:right;">Balance</th>
+      </tr>
+      ${bulkInstallmentRows}
+      <tr>
+        <td colspan="2" style="padding:12px;border:1px solid #ddd;">
+          <strong>Total currently due</strong>
+        </td>
+        <td style="padding:12px;border:1px solid #ddd;text-align:right;">
           <strong>${formatINR(remainingAmount)}</strong>
         </td>
       </tr>
     `
     : `
       <tr>
+        <td style="padding:10px;border:1px solid #ddd;">Installment</td>
         <td style="padding:10px;border:1px solid #ddd;">
-          Installment
-        </td>
-        <td style="padding:10px;border:1px solid #ddd;">
-          ${escapeHtml(installmentLabel)}
+          ${escapeHtml(
+            String(
+              installment?.installmentNumber ??
+              installment?.installmentNo ??
+              ''
+            )
+          )}
         </td>
       </tr>
       <tr>
-        <td style="padding:10px;border:1px solid #ddd;">
-          Installment amount
-        </td>
+        <td style="padding:10px;border:1px solid #ddd;">Installment amount</td>
         <td style="padding:10px;border:1px solid #ddd;">
           ${formatINR(installment?.amount)}
         </td>
       </tr>
       <tr>
-        <td style="padding:10px;border:1px solid #ddd;">
-          Amount paid for this installment
-        </td>
+        <td style="padding:10px;border:1px solid #ddd;">Amount paid for this installment</td>
         <td style="padding:10px;border:1px solid #ddd;">
           ${formatINR(installment?.paidAmount)}
         </td>
       </tr>
       <tr>
-        <td style="padding:10px;border:1px solid #ddd;">
-          Remaining installment balance
-        </td>
+        <td style="padding:10px;border:1px solid #ddd;">Remaining installment balance</td>
         <td style="padding:10px;border:1px solid #ddd;">
           <strong>${formatINR(remainingAmount)}</strong>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:10px;border:1px solid #ddd;">Due date</td>
+        <td style="padding:10px;border:1px solid #ddd;">
+          ${escapeHtml(formatDate(dueDate))}
         </td>
       </tr>
     `
@@ -175,24 +214,10 @@ const sendFeeReminderEmail = async ({
                 <td style="padding:10px;border:1px solid #ddd;">Admission number</td>
                 <td style="padding:10px;border:1px solid #ddd;">${admissionNumber}</td>
               </tr>
-
               ${detailRows}
-
-              ${
-                dueDate
-                  ? `
-                    <tr>
-                      <td style="padding:10px;border:1px solid #ddd;">Due date</td>
-                      <td style="padding:10px;border:1px solid #ddd;">
-                        ${escapeHtml(formatDate(dueDate))}
-                      </td>
-                    </tr>
-                  `
-                  : ''
-              }
             </table>
 
-            <p>Please contact the institute office if you need help with your fee payment or if you believe this information is incorrect.</p>
+            <p>Please contact the institute office if you need help with your fee payment or believe this information is incorrect.</p>
 
             <p style="margin-top:28px;">
               Regards,<br />
@@ -208,15 +233,29 @@ const sendFeeReminderEmail = async ({
     </html>
   `
 
+  const textDetails = isBulk
+    ? [
+        'Currently due installments:',
+        ...dueInstallments.map(
+          (item) =>
+            `Installment ${item.installmentNumber || ''} | Due: ${formatDate(item.dueDate)} | Balance: ${formatINR(item.remainingAmount)}`
+        ),
+        `Total currently due: ${formatINR(remainingAmount)}`,
+      ].join('\n')
+    : [
+        `Installment: ${installment?.installmentNumber ?? installment?.installmentNo ?? ''}`,
+        `Installment amount: ${formatINR(installment?.amount)}`,
+        `Paid for installment: ${formatINR(installment?.paidAmount)}`,
+        `Remaining installment balance: ${formatINR(remainingAmount)}`,
+        `Due date: ${formatDate(dueDate)}`,
+      ].join('\n')
+
   const text = [
     `Hello ${student?.name || 'Student'},`,
     '',
     content.message,
     `Admission number: ${student?.admissionNumber || 'Not available'}`,
-    isBulk
-      ? `Outstanding fee balance: ${formatINR(remainingAmount)}`
-      : `Installment: ${installment?.installmentNumber ?? ''}`,
-    `Due date: ${formatDate(dueDate)}`,
+    textDetails,
     '',
     'Regards,',
     'Prerna Institute Of Excellence',

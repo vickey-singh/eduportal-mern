@@ -16,9 +16,7 @@ const getDateKey = (value = new Date()) => {
   const values = {}
 
   for (const part of parts) {
-    if (part.type !== 'literal') {
-      values[part.type] = part.value
-    }
+    if (part.type !== 'literal') values[part.type] = part.value
   }
 
   return `${values.year}-${values.month}-${values.day}`
@@ -80,7 +78,46 @@ const isExcludedInstallment = (installment) => {
     .trim()
     .toLowerCase()
 
-  return ['paid', 'waived', 'fullwaiver', 'full waiver'].includes(status)
+  return [
+    'paid',
+    'waived',
+    'fullwaiver',
+    'full waiver',
+  ].includes(status)
+}
+
+// For bulk reminders, only installments whose due date
+// has arrived are counted. Future Pending installments are excluded.
+const getCurrentlyDueInstallments = (student, todayKey) => {
+  const schedule = Array.isArray(student.installmentSchedule)
+    ? student.installmentSchedule
+    : []
+
+  return schedule
+    .filter((item) => {
+      if (!item.dueDate || isExcludedInstallment(item)) {
+        return false
+      }
+
+      const dueDateKey = getDateKey(new Date(item.dueDate))
+
+      return dueDateKey <= todayKey && getInstallmentBalance(item) > 0
+    })
+    .map((item) => ({
+      installmentNumber:
+        item.installmentNumber ?? item.installmentNo ?? '',
+      amount: Number(item.amount) || 0,
+      paidAmount: Number(item.paidAmount) || 0,
+      remainingAmount: getInstallmentBalance(item),
+      dueDate: item.dueDate,
+      status: item.status || '',
+      _id: item._id || null,
+    }))
+    .sort(
+      (a, b) =>
+        new Date(a.dueDate).getTime() -
+        new Date(b.dueDate).getTime()
+    )
 }
 
 const makePreviewItem = ({
@@ -94,18 +131,19 @@ const makePreviewItem = ({
   admissionNumber: student.admissionNumber || '',
   email: student.email || '',
   installmentNumber: bulk
-    ? 'All outstanding fees'
+    ? 'Currently due installments'
     : installment?.installmentNumber ??
       installment?.installmentNo ??
       '',
-  dueDate: bulk
-    ? student.dueDate
-      ? getDateKey(new Date(student.dueDate))
-      : null
-    : installment?.dueDate
-      ? getDateKey(new Date(installment.dueDate))
-      : null,
+  dueDate: installment?.dueDate
+    ? getDateKey(new Date(installment.dueDate))
+    : null,
   remainingAmount,
+  ...(bulk
+    ? {
+        dueInstallments: installment.dueInstallments,
+      }
+    : {}),
   reminderStage,
 })
 
@@ -131,20 +169,42 @@ const processBulkReminders = async ({
   }
 
   for (const student of students) {
-    const remainingFees = Number(student.remainingFees) || 0
-
-    if (remainingFees <= 0 || student.feesStatus !== 'Due') {
-      continue
-    }
+    if ((Number(student.remainingFees) || 0) <= 0) continue
 
     if (isInactiveStudent(student)) {
       summary.skippedInactive++
       continue
     }
 
+    const dueInstallments = getCurrentlyDueInstallments(
+      student,
+      todayKey
+    )
+
+    // No currently due unpaid installment means no bulk reminder.
+    if (dueInstallments.length === 0) {
+      summary.skippedNoDueInstallment++
+      continue
+    }
+
+    const currentDueAmount = dueInstallments.reduce(
+      (total, item) => total + item.remainingAmount,
+      0
+    )
+
+    if (currentDueAmount <= 0) continue
+
     if (!isValidEmail(student.email)) {
       summary.skippedNoEmail++
       continue
+    }
+
+    const earliestDueInstallment = dueInstallments[0]
+
+    const bulkInstallment = {
+      remainingAmount: currentDueAmount,
+      dueDate: earliestDueInstallment.dueDate,
+      dueInstallments,
     }
 
     summary.eligibleReminders++
@@ -152,15 +212,16 @@ const processBulkReminders = async ({
     summary.preview.push(
       makePreviewItem({
         student,
+        installment: bulkInstallment,
         reminderStage: 'bulk_due',
-        remainingAmount: remainingFees,
+        remainingAmount: currentDueAmount,
         bulk: true,
       })
     )
 
     if (dryRun) continue
 
-    // Stable key prevents repeat successful bulk reminders.
+    // One successful bulk reminder per student.
     const reminderKey = `${student._id}:bulk_due:v1`
 
     try {
@@ -179,7 +240,7 @@ const processBulkReminders = async ({
             admissionNumber: student.admissionNumber || '',
             studentEmail: String(student.email).trim().toLowerCase(),
             reminderStage: 'bulk_due',
-            dueDate: student.dueDate || null,
+            dueDate: earliestDueInstallment.dueDate || null,
             scheduledDate: todayKey,
             reminderKey,
             status: 'Sending',
@@ -201,6 +262,7 @@ const processBulkReminders = async ({
 
       await sendFeeReminderEmail({
         student,
+        installment: bulkInstallment,
         reminderStage: 'bulk_due',
       })
 
@@ -212,6 +274,7 @@ const processBulkReminders = async ({
       summary.emailsSent++
     } catch (error) {
       summary.emailsFailed++
+
       summary.errors.push({
         admissionNumber: student.admissionNumber || '',
         message: error.message || 'Unknown email error',
@@ -268,9 +331,7 @@ const processScheduledReminders = async ({
       continue
     }
 
-    if ((Number(student.remainingFees) || 0) <= 0) {
-      continue
-    }
+    if ((Number(student.remainingFees) || 0) <= 0) continue
 
     const schedule = Array.isArray(student.installmentSchedule)
       ? student.installmentSchedule
@@ -282,6 +343,7 @@ const processScheduledReminders = async ({
       if (isExcludedInstallment(installment)) continue
 
       const remainingAmount = getInstallmentBalance(installment)
+
       if (remainingAmount <= 0 || !installment.dueDate) continue
 
       const reminderStage = getReminderStage(
@@ -387,6 +449,7 @@ const processScheduledReminders = async ({
         summary.emailsSent++
       } catch (error) {
         summary.emailsFailed++
+
         summary.errors.push({
           admissionNumber: student.admissionNumber || '',
           installmentNumber:
