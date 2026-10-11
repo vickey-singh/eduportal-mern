@@ -18,6 +18,9 @@ const paymentRoutes =
 const testMailRoutes =
   require('./routes/testMailRoutes')
 
+const feeReminderRoutes =
+ require('./routes/feeReminderRoutes')
+
 const zktecoRoutes =
   require('./routes/zktecoRoutes')
 
@@ -379,6 +382,11 @@ app.use(
 app.use(
   '/api',
   testMailRoutes
+)
+
+app.use(
+  '/api',
+   feeReminderRoutes
 )
 
 app.use(
