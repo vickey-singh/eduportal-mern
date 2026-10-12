@@ -35,6 +35,7 @@ import {
   FaTimes,
   FaHome,
   FaFilePdf,
+  FaEnvelopeOpenText,
 
 } from 'react-icons/fa'
 
@@ -707,6 +708,26 @@ function AdminLayout() {
                 <FaFilePdf />
 
                 Fee Due Report
+
+              </NavLink>
+
+            </li>
+
+            <li>
+              
+              <NavLink
+                to="/admin/fee-reminders"
+                onClick={closeSidebar}
+                className={({ isActive }) =>
+                  isActive
+                    ? 'admin-link active-admin-link'
+                    : 'admin-link'
+                }
+              >
+
+                <FaEnvelopeOpenText />
+
+                Fee Reminders
 
               </NavLink>
 

@@ -5,6 +5,9 @@ const sendFeeReminderEmail = require('./sendFeeReminderEmail')
 
 const TIME_ZONE = 'Asia/Kolkata'
 const DAY_MS = 24 * 60 * 60 * 1000
+const IST_OFFSET_MS = 5.5 * 60 * 60 * 1000
+
+const VALID_MODES = new Set(['bulk', 'scheduled'])
 
 const EXCLUDED_INSTALLMENT_STATUSES = new Set([
   'paid',
@@ -13,11 +16,12 @@ const EXCLUDED_INSTALLMENT_STATUSES = new Set([
   'full waiver',
 ])
 
-const VALID_MODES = new Set(['bulk', 'scheduled'])
+const LEGACY_BULK_KEY = (studentId) =>
+  `${studentId}:bulk_due:v1`
 
-// --------------------------------------------------
+// ======================================================
 // DATE HELPERS
-// --------------------------------------------------
+// ======================================================
 
 const getDateKey = (value = new Date()) => {
   const date = value instanceof Date ? value : new Date(value)
@@ -43,7 +47,9 @@ const getDateKey = (value = new Date()) => {
 }
 
 const dateKeyToUTC = (key) => {
-  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(key)
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(
+    String(key || '')
+  )
 
   if (!match) return NaN
 
@@ -67,9 +73,10 @@ const daysBetween = (fromKey, toKey) => {
   return Math.round((to - from) / DAY_MS)
 }
 
-// --------------------------------------------------
-// REMINDER STAGE
-// --------------------------------------------------
+// ======================================================
+// SCHEDULED REMINDER STAGES
+// Existing schedule and key format are preserved.
+// ======================================================
 
 const getReminderStage = (dueDate, todayKey) => {
   const dueDateKey = getDateKey(dueDate)
@@ -79,6 +86,7 @@ const getReminderStage = (dueDate, todayKey) => {
   const daysUntilDue = daysBetween(todayKey, dueDateKey)
 
   if (daysUntilDue === 3) return 'before_due'
+
   if (daysUntilDue === 0) return 'due_today'
 
   const overdueDays = -daysUntilDue
@@ -97,9 +105,9 @@ const getReminderStage = (dueDate, todayKey) => {
   return null
 }
 
-// --------------------------------------------------
-// STUDENT / INSTALLMENT HELPERS
-// --------------------------------------------------
+// ======================================================
+// STUDENT AND INSTALLMENT HELPERS
+// ======================================================
 
 const isValidEmail = (email) =>
   /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(
@@ -140,14 +148,13 @@ const getInstallmentSchedule = (student) =>
     ? student.installmentSchedule
     : []
 
-// --------------------------------------------------
-// CURRENTLY DUE INSTALLMENTS
-// Used by manual bulk reminder only.
-// Future installments are excluded.
-// --------------------------------------------------
+// ======================================================
+// MANUAL BULK: CURRENTLY DUE / OVERDUE INSTALLMENTS
+// Future installments are not included.
+// ======================================================
 
-const getCurrentlyDueInstallments = (student, todayKey) => {
-  return getInstallmentSchedule(student)
+const getCurrentlyDueInstallments = (student, todayKey) =>
+  getInstallmentSchedule(student)
     .filter((installment) => {
       if (
         !installment.dueDate ||
@@ -158,46 +165,52 @@ const getCurrentlyDueInstallments = (student, todayKey) => {
 
       const dueDateKey = getDateKey(installment.dueDate)
 
-      if (!dueDateKey) return false
-
       return (
+        Boolean(dueDateKey) &&
         dueDateKey <= todayKey &&
         getInstallmentBalance(installment) > 0
       )
     })
     .map((installment) => ({
+      _id: installment._id || null,
       installmentNumber: getInstallmentNumber(installment),
       amount: Number(installment.amount) || 0,
       paidAmount: Number(installment.paidAmount) || 0,
       remainingAmount: getInstallmentBalance(installment),
       dueDate: installment.dueDate,
       status: installment.status || '',
-      _id: installment._id || null,
     }))
     .sort(
       (a, b) =>
         new Date(a.dueDate).getTime() -
         new Date(b.dueDate).getTime()
     )
-}
 
-// --------------------------------------------------
-// RESPONSE HELPERS
-// --------------------------------------------------
+// ======================================================
+// SUMMARY AND PREVIEW HELPERS
+// ======================================================
 
 const createSummary = (mode, todayKey, dryRun, students) => ({
   mode,
   date: todayKey,
   timeZone: TIME_ZONE,
   dryRun,
+
   studentsChecked: students.length,
+
+  // Manual bulk only: students with currently due fees,
+  // including inactive students and those without valid email.
+  totalDueStudents: 0,
+
   eligibleReminders: 0,
   emailsSent: 0,
   emailsFailed: 0,
+
   skippedNoEmail: 0,
   skippedNoDueInstallment: 0,
   skippedAlreadyProcessed: 0,
   skippedInactive: 0,
+
   errors: [],
   preview: [],
 })
@@ -212,38 +225,83 @@ const makePreviewItem = ({
   studentName: student.name || 'Student',
   admissionNumber: student.admissionNumber || '',
   email: String(student.email || '').trim(),
+
   installmentNumber: bulk
     ? 'Currently due installments'
     : getInstallmentNumber(installment),
+
   dueDate: installment?.dueDate
     ? getDateKey(installment.dueDate)
     : null,
+
   remainingAmount,
+
   ...(bulk
     ? { dueInstallments: installment.dueInstallments }
     : {}),
+
   reminderStage,
 })
 
-// --------------------------------------------------
-// DUPLICATE CHECK
-// --------------------------------------------------
+// ======================================================
+// DUPLICATE CHECKS
+// ======================================================
 
 const isReminderAlreadyProcessed = async (reminderKey) => {
-  const log = await FeeReminderLog.findOne({
-    reminderKey,
-  })
+  const log = await FeeReminderLog.findOne({ reminderKey })
     .select('status')
     .lean()
 
-  // Failed reminders are allowed to retry.
-  // Sending and Sent logs are not sent again.
+  // Failed reminders may retry.
+  // Sending and Sent reminders are deduplicated.
   return Boolean(log && log.status !== 'Failed')
 }
 
-// --------------------------------------------------
+/**
+ * Compatibility with the old manual bulk key:
+ * studentId:bulk_due:v1
+ *
+ * If that legacy reminder was sent today in India,
+ * prevent a second reminder today.
+ */
+const wasLegacyBulkReminderProcessedToday = async (
+  studentId,
+  todayKey
+) => {
+  const utcDayStart =
+    dateKeyToUTC(todayKey) - IST_OFFSET_MS
+
+  if (!Number.isFinite(utcDayStart)) {
+    throw new Error('Invalid date while checking legacy reminder.')
+  }
+
+  const utcDayEnd = utcDayStart + DAY_MS
+
+  const log = await FeeReminderLog.findOne({
+    reminderKey: LEGACY_BULK_KEY(studentId),
+    $or: [
+      {
+        status: 'Sent',
+        sentAt: {
+          $gte: new Date(utcDayStart),
+          $lt: new Date(utcDayEnd),
+        },
+      },
+      {
+        status: 'Sending',
+        scheduledDate: todayKey,
+      },
+    ],
+  })
+    .select('_id')
+    .lean()
+
+  return Boolean(log)
+}
+
+// ======================================================
 // SEND ONE REMINDER WITH LOGGING
-// --------------------------------------------------
+// ======================================================
 
 const sendReminder = async ({
   student,
@@ -268,18 +326,24 @@ const sendReminder = async ({
         log = await FeeReminderLog.create({
           studentId: student._id,
           installmentId: installment._id || null,
+
           admissionNumber: student.admissionNumber || '',
-          studentEmail: String(student.email).trim().toLowerCase(),
+
+          studentEmail: String(student.email || '')
+            .trim()
+            .toLowerCase(),
+
           reminderStage,
           dueDate: installment.dueDate || null,
           scheduledDate,
           reminderKey,
+
           status: 'Sending',
           attemptCount: 1,
         })
       } catch (error) {
-        // The unique reminderKey index protects against
-        // concurrent requests creating the same reminder.
+        // Unique reminderKey index protects against
+        // concurrent attempts creating duplicate logs.
         if (error.code === 11000) {
           summary.skippedAlreadyProcessed++
           return
@@ -288,9 +352,11 @@ const sendReminder = async ({
         throw error
       }
     } else {
+      // Retry an existing failed reminder.
       log.status = 'Sending'
       log.attemptCount = (log.attemptCount || 0) + 1
       log.errorMessage = ''
+
       await log.save()
     }
 
@@ -303,6 +369,7 @@ const sendReminder = async ({
     log.status = 'Sent'
     log.sentAt = new Date()
     log.errorMessage = ''
+
     await log.save()
 
     summary.emailsSent++
@@ -336,10 +403,10 @@ const sendReminder = async ({
   }
 }
 
-// --------------------------------------------------
-// BULK REMINDERS
-// Manual one-time reminder per student.
-// --------------------------------------------------
+// ======================================================
+// MANUAL BULK REMINDERS
+// One reminder per student per India calendar day.
+// ======================================================
 
 const processBulkReminders = async ({
   students,
@@ -354,11 +421,6 @@ const processBulkReminders = async ({
   )
 
   for (const student of students) {
-    if (isInactiveStudent(student)) {
-      summary.skippedInactive++
-      continue
-    }
-
     const dueInstallments = getCurrentlyDueInstallments(
       student,
       todayKey
@@ -380,6 +442,17 @@ const processBulkReminders = async ({
       continue
     }
 
+    // Count all students with currently due balances,
+    // even if inactive, missing email, or already processed.
+    summary.totalDueStudents++
+
+    // Inactive students are included in the total due count,
+    // but they must not receive reminders.
+    if (isInactiveStudent(student)) {
+      summary.skippedInactive++
+      continue
+    }
+
     if (!isValidEmail(student.email)) {
       summary.skippedNoEmail++
       continue
@@ -393,12 +466,20 @@ const processBulkReminders = async ({
       dueInstallments,
     }
 
-    // A bulk reminder is intentionally one successful
-    // bulk email per student, not a daily recurring email.
-    const reminderKey = `${student._id}:bulk_due:v1`
+    // Same student + same India date = same manual bulk reminder.
+    // The next India calendar day creates a new key.
+    const reminderKey =
+      `${student._id}:bulk_due:${todayKey}`
 
     try {
-      if (await isReminderAlreadyProcessed(reminderKey)) {
+      const alreadyProcessedToday =
+        (await isReminderAlreadyProcessed(reminderKey)) ||
+        (await wasLegacyBulkReminderProcessedToday(
+          student._id,
+          todayKey
+        ))
+
+      if (alreadyProcessedToday) {
         summary.skippedAlreadyProcessed++
         continue
       }
@@ -407,6 +488,7 @@ const processBulkReminders = async ({
         admissionNumber: student.admissionNumber || '',
         message: `Could not check reminder log: ${error.message}`,
       })
+
       continue
     }
 
@@ -425,6 +507,7 @@ const processBulkReminders = async ({
       })
     )
 
+    // Preview mode does not send emails or create logs.
     if (dryRun) continue
 
     await sendReminder({
@@ -440,9 +523,10 @@ const processBulkReminders = async ({
   return summary
 }
 
-// --------------------------------------------------
+// ======================================================
 // AUTOMATIC SCHEDULED REMINDERS
-// --------------------------------------------------
+// Existing stages and key format are preserved.
+// ======================================================
 
 const processScheduledReminders = async ({
   students,
@@ -466,11 +550,9 @@ const processScheduledReminders = async ({
       continue
     }
 
-    const schedule = getInstallmentSchedule(student)
-
     const eligibleInstallments = []
 
-    for (const installment of schedule) {
+    for (const installment of getInstallmentSchedule(student)) {
       if (
         isExcludedInstallment(installment) ||
         !installment.dueDate
@@ -501,8 +583,7 @@ const processScheduledReminders = async ({
       continue
     }
 
-    // Count missing/invalid email once per student,
-    // not once per installment.
+    // Count missing/invalid email once per student.
     if (!isValidEmail(student.email)) {
       summary.skippedNoEmail++
       continue
@@ -523,8 +604,7 @@ const processScheduledReminders = async ({
         getInstallmentNumber(installment) ||
         dueDateKey
 
-      // Includes the current date so each scheduled
-      // stage can be processed only once per day.
+      // Preserve the existing scheduled reminder key format.
       const reminderKey = [
         student._id,
         String(installmentId),
@@ -544,6 +624,7 @@ const processScheduledReminders = async ({
           installmentNumber: getInstallmentNumber(installment),
           message: `Could not check reminder log: ${error.message}`,
         })
+
         continue
       }
 
@@ -581,9 +662,9 @@ const processScheduledReminders = async ({
   return summary
 }
 
-// --------------------------------------------------
+// ======================================================
 // MAIN PROCESSOR
-// --------------------------------------------------
+// ======================================================
 
 const processFeeReminders = async ({
   mode = 'scheduled',
@@ -597,6 +678,10 @@ const processFeeReminders = async ({
   }
 
   const todayKey = getDateKey(new Date())
+
+  if (!todayKey) {
+    throw new Error('Could not determine current India date.')
+  }
 
   const studentQuery = {
     remainingFees: { $gt: 0 },

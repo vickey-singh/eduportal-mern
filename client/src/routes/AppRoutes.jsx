@@ -87,6 +87,9 @@ import Payments
 import FeeDueReport
   from '../pages/admin/FeeDueReport'
 
+import FeeReminders
+ from '../pages/admin/FeeReminders'
+
 
 // ======================================
 // RECEIPT
@@ -455,7 +458,17 @@ function AppRoutes() {
             element={<FeeDueReport />}
           />
 
+        
+
+        <Route
+          path="fee-reminders"
+          element={<FeeReminders />}
+
+        />
+        
         </Route>
+        
+        
 
 
         {/* ====================================== */}
