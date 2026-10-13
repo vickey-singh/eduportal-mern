@@ -1,41 +1,57 @@
 const express =
+
   require('express')
 
 const router =
+
   express.Router()
 
 const Student =
+
   require('../models/Student')
 
-
 // ======================================
+
 // CONSTANTS
+
 // ======================================
 
 const PAYMENT_PLANS = [
+
   'full',
+
   'monthly',
+
   'installment',
+
 ]
 
-
 // ======================================
+
 // DATE HELPER
+
 // ======================================
 
 const toDate = (value) => {
 
   if (!value) {
+
     return null
+
   }
 
   const date =
+
     new Date(value)
 
   if (
+
     Number.isNaN(
+
       date.getTime()
+
     )
+
   ) {
 
     return null
@@ -43,42 +59,67 @@ const toDate = (value) => {
   }
 
   date.setHours(
+
     0,
+
     0,
+
     0,
+
     0
+
   )
 
   return date
 
 }
 
+// ======================================
+
+// REFRESH INSTALLMENT STATUS
 
 // ======================================
-// REFRESH INSTALLMENT STATUS
-// ======================================
+
 //
+
 // Status:
+
 //
+
 // Paid
+
 // Due
+
 // Pending
+
 //
+
 // Example:
+
 //
+
 // 01 Sep -> Paid
+
 // 01 Oct -> Due
+
 // 01 Nov -> Due
+
 // 01 Dec -> Pending
+
 //
+
 // ======================================
 
 const refreshInstallmentStatuses = (
+
   schedule
+
 ) => {
 
   if (
+
     !Array.isArray(schedule)
+
   ) {
 
     return []
@@ -86,57 +127,83 @@ const refreshInstallmentStatuses = (
   }
 
   const today =
+
     toDate(
+
       new Date()
+
     )
 
   return schedule.map(
+
     (item) => {
 
       const amount =
+
         Number(
+
           item.amount || 0
+
         )
 
       const paidAmount =
+
         Number(
+
           item.paidAmount || 0
+
         )
 
       let status =
+
         'Pending'
 
       // ------------------------------
+
       // FULLY PAID
+
       // ------------------------------
 
       if (
+
         amount > 0 &&
+
         paidAmount >= amount
+
       ) {
 
         status =
+
           'Paid'
 
       }
 
       // ------------------------------
+
       // DUE
+
       // ------------------------------
 
       else {
 
         const dueDate =
+
           toDate(
+
             item.dueDate
+
           )
 
         if (
+
           dueDate &&
+
           dueDate <= today
+
         ) {
 
           status =
+
             'Due'
 
         }
@@ -156,51 +223,83 @@ const refreshInstallmentStatuses = (
       }
 
     }
+
   )
 
 }
 
+// ======================================
+
+// GET OVERALL STUDENT FEE STATUS
 
 // ======================================
-// GET OVERALL STUDENT FEE STATUS
-// ======================================
+
 //
+
 // IMPORTANT:
+
 //
+
 // Overall student status:
+
 //
+
 // Paid
+
 // Due
+
 // Partial
+
 //
+
 // If even ONE installment is Due:
+
 // student = Due
+
 //
+
 // If no installment is Due but
+
 // remaining fee exists:
+
 // student = Partial
+
 //
+
 // If remaining fee = 0:
+
 // student = Paid
+
 //
+
 // ======================================
 
 const getOverallFeeStatus = (
+
   student,
+
   schedule
+
 ) => {
 
   const remainingFees =
+
     Number(
+
       student.remainingFees || 0
+
     )
 
   // ------------------------------
+
   // FULLY PAID
+
   // ------------------------------
 
   if (
+
     remainingFees <= 0
+
   ) {
 
     return 'Paid'
@@ -208,18 +307,27 @@ const getOverallFeeStatus = (
   }
 
   // ------------------------------
+
   // CHECK DUE INSTALLMENTS
+
   // ------------------------------
 
   const dueInstallments =
+
     schedule.filter(
+
       item =>
+
         item.status ===
+
         'Due'
+
     )
 
   if (
+
     dueInstallments.length > 0
+
   ) {
 
     return 'Due'
@@ -227,35 +335,53 @@ const getOverallFeeStatus = (
   }
 
   // ------------------------------
+
   // OTHERWISE PARTIAL
+
   // ------------------------------
 
   return 'Partial'
 
 }
 
+// ======================================
+
+// GET DISPLAY DUE DATE
 
 // ======================================
-// GET DISPLAY DUE DATE
-// ======================================
+
 //
+
 // If multiple installments are Due:
+
 //
+
 // latest Due date is shown.
+
 //
+
 // If no installment is Due:
+
 //
+
 // next Pending date is shown.
+
 //
+
 // ======================================
 
 const getDisplayDueDate = (
+
   schedule
+
 ) => {
 
   if (
+
     !Array.isArray(schedule) ||
+
     schedule.length === 0
+
   ) {
 
     return null
@@ -263,57 +389,93 @@ const getDisplayDueDate = (
   }
 
   // ------------------------------
+
   // CURRENT DUE
+
   // ------------------------------
 
   const due =
+
     schedule
+
       .filter(
+
         item =>
+
           item.status ===
+
           'Due'
+
       )
+
       .sort(
+
         (a, b) =>
+
           new Date(a.dueDate) -
+
           new Date(b.dueDate)
+
       )
 
   if (
+
     due.length > 0
+
   ) {
 
     return (
+
       due[due.length - 1]
+
         .dueDate || null
+
     )
 
   }
 
   // ------------------------------
+
   // NEXT PENDING
+
   // ------------------------------
 
   const pending =
+
     schedule
+
       .filter(
+
         item =>
+
           item.status ===
+
           'Pending'
+
       )
+
       .sort(
+
         (a, b) =>
+
           new Date(a.dueDate) -
+
           new Date(b.dueDate)
+
       )
 
   if (
+
     pending.length > 0
+
   ) {
 
     return (
+
       pending[0]
+
         .dueDate || null
+
     )
 
   }
@@ -322,65 +484,102 @@ const getDisplayDueDate = (
 
 }
 
-
 // ======================================
+
 // FORMAT STUDENT FOR REPORT
+
 // ======================================
 
 const formatStudent = (
+
   student
+
 ) => {
 
   const rawSchedule =
+
     Array.isArray(
+
       student.installmentSchedule
+
     )
+
       ? student.installmentSchedule
+
       : []
 
   const schedule =
+
     refreshInstallmentStatuses(
+
       rawSchedule
+
     )
 
   const feesStatus =
+
     getOverallFeeStatus(
+
       student,
+
       schedule
+
     )
 
   const displayDueDate =
+
     getDisplayDueDate(
+
       schedule
+
     )
 
   const dueInstallments =
+
     schedule.filter(
+
       item =>
+
         item.status ===
+
         'Due'
+
     )
 
   const pendingInstallments =
+
     schedule.filter(
+
       item =>
+
         item.status ===
+
         'Pending'
+
     )
 
   const paidInstallments =
+
     schedule.filter(
+
       item =>
+
         item.status ===
+
         'Paid'
+
     )
 
   const dueAmount =
+
     dueInstallments.reduce(
 
       (
+
         total,
+
         item
+
       ) =>
 
         total +
@@ -390,11 +589,15 @@ const formatStudent = (
           0,
 
           Number(
+
             item.amount || 0
+
           ) -
 
           Number(
+
             item.paidAmount || 0
+
           )
 
         ),
@@ -404,11 +607,15 @@ const formatStudent = (
     )
 
   const pendingAmount =
+
     pendingInstallments.reduce(
 
       (
+
         total,
+
         item
+
       ) =>
 
         total +
@@ -418,11 +625,15 @@ const formatStudent = (
           0,
 
           Number(
+
             item.amount || 0
+
           ) -
 
           Number(
+
             item.paidAmount || 0
+
           )
 
         ),
@@ -432,17 +643,23 @@ const formatStudent = (
     )
 
   const paidInstallmentAmount =
+
     paidInstallments.reduce(
 
       (
+
         total,
+
         item
+
       ) =>
 
         total +
 
         Number(
+
           item.paidAmount || 0
+
         ),
 
       0
@@ -452,60 +669,87 @@ const formatStudent = (
   return {
 
     _id:
+
       student._id,
 
     admissionNumber:
+
       student.admissionNumber,
 
     name:
+
       student.name,
 
     fatherName:
+
       student.fatherName,
 
+    fatherMobile:
+
+      student.fatherMobile || '',
+
     contact:
+
       student.contact,
 
     course:
+
       student.course,
 
     batchTime:
+
       student.batchTime,
 
     paymentPlan:
+
       student.paymentPlan || '',
 
     totalFees:
+
       Number(
+
         student.totalFees || 0
+
       ),
 
     paidFees:
+
       Number(
+
         student.paidFees || 0
+
       ),
 
     remainingFees:
+
       Number(
+
         student.remainingFees || 0
+
       ),
 
     feesStatus,
 
     dueDate:
+
       displayDueDate,
 
     admissionDate:
+
       student.admissionDate,
 
     // ==================================
+
     // INSTALLMENT DATA
+
     // ==================================
 
     installmentCount:
+
       schedule.length,
 
     installmentSchedule:
+
       schedule,
 
     dueInstallments,
@@ -515,12 +759,15 @@ const formatStudent = (
     paidInstallments,
 
     dueInstallmentCount:
+
       dueInstallments.length,
 
     pendingInstallmentCount:
+
       pendingInstallments.length,
 
     paidInstallmentCount:
+
       paidInstallments.length,
 
     dueAmount,
@@ -533,21 +780,34 @@ const formatStudent = (
 
 }
 
+// ======================================
+
+// GET FEE REPORT
 
 // ======================================
-// GET FEE REPORT
-// ======================================
+
 //
+
 // GET
+
 // /api/admin/fee-reports
+
 //
+
 // Query:
+
 //
+
 // ?course=SSC%20CGL
+
 // &status=Due
+
 // &batchTime=Morning
+
 // &paymentPlan=monthly
+
 //
+
 // ======================================
 
 router.get(
@@ -570,16 +830,18 @@ router.get(
 
       } = req.query
 
-
       // ==================================
+
       // BUILD DATABASE FILTER
+
       // ==================================
 
       const filter = {}
 
-
       // ==================================
+
       // COURSE
+
       // ==================================
 
       if (
@@ -591,13 +853,15 @@ router.get(
       ) {
 
         filter.course =
+
           course
 
       }
 
-
       // ==================================
+
       // BATCH TIME
+
       // ==================================
 
       if (
@@ -609,13 +873,15 @@ router.get(
       ) {
 
         filter.batchTime =
+
           batchTime
 
       }
 
-
       // ==================================
+
       // PAYMENT PLAN
+
       // ==================================
 
       if (
@@ -627,12 +893,17 @@ router.get(
       ) {
 
         if (
+
           PAYMENT_PLANS.includes(
+
             paymentPlan
+
           )
+
         ) {
 
           filter.paymentPlan =
+
             paymentPlan
 
         }
@@ -644,6 +915,7 @@ router.get(
             success: false,
 
             message:
+
               'Invalid payment plan.',
 
           })
@@ -652,21 +924,32 @@ router.get(
 
       }
 
+      // ==================================
+
+      // IMPORTANT
 
       // ==================================
-      // IMPORTANT
-      // ==================================
+
       //
+
       // Fee status is NOT filtered directly
+
       // in MongoDB because Due status is
+
       // calculated from installmentSchedule
+
       // against today's date.
+
       //
+
       // ==================================
 
       const students =
+
         await Student.find(
+
           filter
+
         )
 
           .select({
@@ -676,6 +959,8 @@ router.get(
             name: 1,
 
             fatherName: 1,
+
+            fatherMobile: 1,
 
             contact: 1,
 
@@ -715,19 +1000,24 @@ router.get(
 
           .lean()
 
-
       // ==================================
+
       // FORMAT STUDENTS
+
       // ==================================
 
       let formattedStudents =
+
         students.map(
+
           formatStudent
+
         )
 
-
       // ==================================
+
       // STATUS FILTER
+
       // ==================================
 
       if (
@@ -749,9 +1039,13 @@ router.get(
         ]
 
         if (
+
           !allowedStatuses.includes(
+
             status
+
           )
+
         ) {
 
           return res.status(400).json({
@@ -759,6 +1053,7 @@ router.get(
             success: false,
 
             message:
+
               'Invalid fee status.',
 
           })
@@ -766,46 +1061,60 @@ router.get(
         }
 
         formattedStudents =
+
           formattedStudents.filter(
+
             student =>
+
               student.feesStatus ===
+
               status
+
           )
 
       }
 
-
       // ==================================
+
       // SUMMARY
+
       // ==================================
 
       let totalCourseFee =
+
         0
 
       let totalPaid =
+
         0
 
       let totalDue =
+
         0
 
       let totalDueAmount =
+
         0
 
       let totalPendingAmount =
+
         0
 
       let totalInstallments =
+
         0
 
       let totalDueInstallments =
+
         0
 
       let totalPendingInstallments =
+
         0
 
       let totalPaidInstallments =
-        0
 
+        0
 
       formattedStudents.forEach(
 
@@ -814,72 +1123,83 @@ router.get(
           totalCourseFee +=
 
             Number(
-              student.totalFees || 0
-            )
 
+              student.totalFees || 0
+
+            )
 
           totalPaid +=
 
             Number(
-              student.paidFees || 0
-            )
 
+              student.paidFees || 0
+
+            )
 
           totalDue +=
 
             Number(
-              student.remainingFees || 0
-            )
 
+              student.remainingFees || 0
+
+            )
 
           totalDueAmount +=
 
             Number(
-              student.dueAmount || 0
-            )
 
+              student.dueAmount || 0
+
+            )
 
           totalPendingAmount +=
 
             Number(
-              student.pendingAmount || 0
-            )
 
+              student.pendingAmount || 0
+
+            )
 
           totalInstallments +=
 
             Number(
-              student.installmentCount || 0
-            )
 
+              student.installmentCount || 0
+
+            )
 
           totalDueInstallments +=
 
             Number(
-              student.dueInstallmentCount || 0
-            )
 
+              student.dueInstallmentCount || 0
+
+            )
 
           totalPendingInstallments +=
 
             Number(
-              student.pendingInstallmentCount || 0
-            )
 
+              student.pendingInstallmentCount || 0
+
+            )
 
           totalPaidInstallments +=
 
             Number(
+
               student.paidInstallmentCount || 0
+
             )
 
         }
 
       )
 
-
       // ==================================
+
       // RESPONSE
+
       // ==================================
 
       return res.status(200).json({
@@ -889,15 +1209,19 @@ router.get(
         filters: {
 
           course:
+
             course || 'All',
 
           status:
+
             status || 'All',
 
           batchTime:
+
             batchTime || 'All',
 
           paymentPlan:
+
             paymentPlan || 'All',
 
         },
@@ -905,6 +1229,7 @@ router.get(
         summary: {
 
           totalStudents:
+
             formattedStudents.length,
 
           totalCourseFee,
@@ -914,6 +1239,7 @@ router.get(
           totalDue,
 
           // Amount from installments
+
           // whose due date has arrived.
 
           totalDueAmount,
@@ -933,6 +1259,7 @@ router.get(
         },
 
         students:
+
           formattedStudents,
 
       })
@@ -949,15 +1276,16 @@ router.get(
 
       )
 
-
       return res.status(500).json({
 
         success: false,
 
         message:
+
           'Server Error',
 
         error:
+
           error.message,
 
       })
@@ -968,14 +1296,20 @@ router.get(
 
 )
 
+// ======================================
+
+// GET FEE REPORT FILTER OPTIONS
 
 // ======================================
-// GET FEE REPORT FILTER OPTIONS
-// ======================================
+
 //
+
 // GET
+
 // /api/admin/fee-reports/options
+
 //
+
 // ======================================
 
 router.get(
@@ -987,30 +1321,41 @@ router.get(
     try {
 
       // ==================================
+
       // COURSES
+
       // ==================================
 
       const courses =
+
         await Student.distinct(
+
           'course'
+
         )
 
-
       // ==================================
+
       // BATCH TIMES
+
       // ==================================
 
       const batchTimes =
+
         await Student.distinct(
+
           'batchTime'
+
         )
 
-
       // ==================================
+
       // CLEAN COURSES
+
       // ==================================
 
       const cleanCourses =
+
         courses
 
           .filter(
@@ -1020,19 +1365,23 @@ router.get(
               item &&
 
               String(
+
                 item
+
               ).trim() !== ''
 
           )
 
           .sort()
 
-
       // ==================================
+
       // CLEAN BATCH TIMES
+
       // ==================================
 
       const cleanBatchTimes =
+
         batchTimes
 
           .filter(
@@ -1042,37 +1391,55 @@ router.get(
               item &&
 
               String(
+
                 item
+
               ).trim() !== ''
 
           )
 
           .sort()
 
+      // ==================================
+
+      // NEW PAYMENT PLANS ONLY
 
       // ==================================
-      // NEW PAYMENT PLANS ONLY
-      // ==================================
+
       //
+
       // Do NOT read old plans from DB.
+
       //
+
       // Old:
+
       // three_month
+
       // six_month
+
       //
+
       // New:
+
       // full
+
       // monthly
+
       // installment
+
       //
+
       // ==================================
 
       const paymentPlans =
+
         PAYMENT_PLANS
 
-
       // ==================================
+
       // RESPONSE
+
       // ==================================
 
       return res.status(200).json({
@@ -1080,9 +1447,11 @@ router.get(
         success: true,
 
         courses:
+
           cleanCourses,
 
         batchTimes:
+
           cleanBatchTimes,
 
         paymentPlans,
@@ -1101,15 +1470,16 @@ router.get(
 
       )
 
-
       return res.status(500).json({
 
         success: false,
 
         message:
+
           'Server Error',
 
         error:
+
           error.message,
 
       })
@@ -1120,10 +1490,12 @@ router.get(
 
 )
 
-
 // ======================================
+
 // EXPORT
+
 // ======================================
 
 module.exports =
+
   router
