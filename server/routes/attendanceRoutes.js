@@ -588,16 +588,11 @@ router.get(
 
           (record) => {
 
-            attendanceMap[
-
-              record.student.toString()
-
-            ] = {
-
-              status: record.status,
-
+            attendanceMap[record.student.toString()] = {
+              // Old Late records are represented as Present + Late.
+              status: record.status === 'Late' ? 'Present' : record.status,
+              isLate: record.isLate === true || record.status === 'Late',
               remarks: record.remarks || '',
-
             }
 
           }
@@ -651,11 +646,10 @@ router.get(
               student.email || '',
 
             attendanceStatus:
-
               attendanceMap[student._id.toString()]?.status || '',
-
+            attendanceIsLate:
+              attendanceMap[student._id.toString()]?.isLate || false,
             attendanceRemarks:
-
               attendanceMap[student._id.toString()]?.remarks || '',
 
           })
@@ -858,16 +852,11 @@ router.get(
 
           (record) => {
 
-            attendanceMap[
-
-              record.student.toString()
-
-            ] = {
-
-              status: record.status,
-
+            attendanceMap[record.student.toString()] = {
+              // Old Late records are represented as Present + Late.
+              status: record.status === 'Late' ? 'Present' : record.status,
+              isLate: record.isLate === true || record.status === 'Late',
               remarks: record.remarks || '',
-
             }
 
           }
@@ -921,11 +910,10 @@ router.get(
               student.email || '',
 
             attendanceStatus:
-
               attendanceMap[student._id.toString()]?.status || '',
-
+            attendanceIsLate:
+              attendanceMap[student._id.toString()]?.isLate || false,
             attendanceRemarks:
-
               attendanceMap[student._id.toString()]?.remarks || '',
 
           })
@@ -1002,11 +990,21 @@ router.post(
 
         date,
 
-        status,
+        status: requestedStatus,
+
+        isLate: requestedIsLate = false,
 
         remarks = '',
 
       } = req.body
+
+      // ==================================
+      // NORMALIZE STATUS
+      // Present is the attendance status; Late is an independent flag.
+      // Legacy clients sending status='Late' are supported.
+      // ==================================
+      const status = requestedStatus === 'Late' ? 'Present' : requestedStatus
+      const isLate = requestedStatus !== 'Absent' && (requestedStatus === 'Late' || requestedIsLate === true)
 
       // ==================================
 
@@ -1020,7 +1018,7 @@ router.post(
 
         !date ||
 
-        !status
+        !requestedStatus
 
       ) {
 
@@ -1036,7 +1034,7 @@ router.post(
 
       }
 
-      if (!['Present', 'Absent', 'Late'].includes(status)) {
+      if (!['Present', 'Absent'].includes(status)) {
 
         return res.status(400).json({
 
@@ -1046,6 +1044,13 @@ router.post(
 
         })
 
+      }
+
+      if (isLate && (typeof remarks !== 'string' || !remarks.trim())) {
+        return res.status(400).json({
+          success: false,
+          message: 'Remarks are required when marking Late.',
+        })
       }
 
       if (typeof remarks !== 'string' || remarks.length > 500) {
@@ -1128,9 +1133,11 @@ router.post(
 
             date,
 
-            status,
+            status: status === 'Absent' ? 'Absent' : 'Present',
 
-            remarks: remarks.trim(),
+            isLate: status === 'Absent' ? false : isLate,
+
+            remarks: status === 'Absent' || !isLate ? '' : remarks.trim(),
 
           },
 
@@ -1168,7 +1175,9 @@ router.post(
 
         studentData.name,
 
-        attendance.status,
+        attendance.isLate && attendance.status === 'Present'
+          ? 'Present (Late)'
+          : attendance.status,
 
         attendance.date,
 
@@ -1294,6 +1303,17 @@ router.post(
 
       }
 
+      const lateWithoutRemarks = attendance.some((item) => {
+        const itemIsLate = item?.status === 'Late' || item?.isLate === true
+        return itemIsLate && (typeof item?.remarks !== 'string' || !item.remarks.trim())
+      })
+      if (lateWithoutRemarks) {
+        return res.status(400).json({
+          success: false,
+          message: 'Remarks are required when marking Late.',
+        })
+      }
+
       // ==================================
 
       // RESULTS
@@ -1318,11 +1338,16 @@ router.post(
 
           student,
 
-          status,
+          status: requestedStatus,
+
+          isLate: requestedIsLate = false,
 
           remarks = '',
 
         } = item
+
+        const status = requestedStatus === 'Late' ? 'Present' : requestedStatus
+        const isLate = requestedStatus !== 'Absent' && (requestedStatus === 'Late' || requestedIsLate === true)
 
         // ==================================
 
@@ -1342,7 +1367,7 @@ router.post(
 
         }
 
-        if (!['Present', 'Absent', 'Late'].includes(status)) {
+        if (!['Present', 'Absent'].includes(status)) {
 
           continue
 
@@ -1414,9 +1439,11 @@ router.post(
 
               date,
 
-              status,
+              status: status === 'Absent' ? 'Absent' : 'Present',
 
-              remarks: remarks.trim(),
+              isLate: status === 'Absent' ? false : isLate,
+
+              remarks: status === 'Absent' || !isLate ? '' : remarks.trim(),
 
             },
 
@@ -1454,7 +1481,9 @@ router.post(
 
           studentData.name,
 
-          record.status,
+          record.isLate && record.status === 'Present'
+            ? 'Present (Late)'
+            : record.status,
 
           record.date,
 
@@ -1608,6 +1637,17 @@ router.post(
 
       }
 
+      const lateWithoutRemarks = attendance.some((item) => {
+        const itemIsLate = item?.status === 'Late' || item?.isLate === true
+        return itemIsLate && (typeof item?.remarks !== 'string' || !item.remarks.trim())
+      })
+      if (lateWithoutRemarks) {
+        return res.status(400).json({
+          success: false,
+          message: 'Remarks are required when marking Late.',
+        })
+      }
+
       // ==================================
 
       // RESULTS
@@ -1632,11 +1672,16 @@ router.post(
 
           student,
 
-          status,
+          status: requestedStatus,
+
+          isLate: requestedIsLate = false,
 
           remarks = '',
 
         } = item
+
+        const status = requestedStatus === 'Late' ? 'Present' : requestedStatus
+        const isLate = requestedStatus !== 'Absent' && (requestedStatus === 'Late' || requestedIsLate === true)
 
         // ==================================
 
@@ -1656,7 +1701,7 @@ router.post(
 
         }
 
-        if (!['Present', 'Absent', 'Late'].includes(status)) {
+        if (!['Present', 'Absent'].includes(status)) {
 
           continue
 
@@ -1728,9 +1773,11 @@ router.post(
 
               date,
 
-              status,
+              status: status === 'Absent' ? 'Absent' : 'Present',
 
-              remarks: remarks.trim(),
+              isLate: status === 'Absent' ? false : isLate,
+
+              remarks: status === 'Absent' || !isLate ? '' : remarks.trim(),
 
             },
 
@@ -1768,7 +1815,9 @@ router.post(
 
           studentData.name,
 
-          record.status,
+          record.isLate && record.status === 'Present'
+            ? 'Present (Late)'
+            : record.status,
 
           record.date,
 
@@ -1912,7 +1961,7 @@ router.get(
 
           (item) =>
 
-            item.status === 'Present'
+            (item.status === 'Present' || item.status === 'Late')
 
         ).length
 
@@ -1930,7 +1979,7 @@ router.get(
 
         attendance.filter(
 
-          (item) => item.status === 'Late'
+          (item) => (item.isLate === true || item.status === 'Late')
 
         ).length
 
@@ -1942,7 +1991,7 @@ router.get(
 
               (
 
-                (present + late) /
+                present /
 
                 total
 
@@ -2174,7 +2223,7 @@ router.get(
 
           (item) =>
 
-            item.status === 'Present'
+            (item.status === 'Present' || item.status === 'Late')
 
         ).length
 
@@ -2192,7 +2241,7 @@ router.get(
 
         attendance.filter(
 
-          (item) => item.status === 'Late'
+          (item) => (item.isLate === true || item.status === 'Late')
 
         ).length
 
@@ -2204,7 +2253,7 @@ router.get(
 
               (
 
-                (present + late) /
+                present /
 
                 total
 
@@ -2364,7 +2413,7 @@ router.get(
 
           (item) =>
 
-            item.status === 'Present'
+            (item.status === 'Present' || item.status === 'Late')
 
         ).length
 
@@ -2382,7 +2431,7 @@ router.get(
 
         attendance.filter(
 
-          (item) => item.status === 'Late'
+          (item) => (item.isLate === true || item.status === 'Late')
 
         ).length
 
@@ -2394,7 +2443,7 @@ router.get(
 
               (
 
-                (present + late) /
+                present /
 
                 total
 
@@ -2460,42 +2509,15 @@ router.get(
 
           ].total += 1
 
-          if (
-
-            item.status ===
-
-            'Present'
-
-          ) {
-
-            monthlySummary[
-
-              month
-
-            ].present += 1
-
+          if (item.status === 'Present' || item.status === 'Late') {
+            monthlySummary[month].present += 1
+          } else if (item.status === 'Absent') {
+            monthlySummary[month].absent += 1
           }
 
-          else if (
-
-            item.status ===
-
-            'Absent'
-
-          ) {
-
-            monthlySummary[
-
-              month
-
-            ].absent += 1
-
-          }
-
-          else if (item.status === 'Late') {
-
+          // Late is a separate flag and can coexist with Present.
+          if (item.isLate === true || item.status === 'Late') {
             monthlySummary[month].late += 1
-
           }
 
         }
@@ -2532,7 +2554,7 @@ router.get(
 
                   (
 
-                    (data.present + data.late) /
+                    data.present /
 
                     data.total
 

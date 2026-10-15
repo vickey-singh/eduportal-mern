@@ -1,4 +1,3 @@
-
 const mongoose = require('mongoose')
 
 // ======================================
@@ -7,10 +6,6 @@ const mongoose = require('mongoose')
 
 const attendanceSchema = new mongoose.Schema(
   {
-    // ======================================
-    // STUDENT
-    // ======================================
-
     student: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Student',
@@ -29,19 +24,11 @@ const attendanceSchema = new mongoose.Schema(
       trim: true,
     },
 
-    // ======================================
-    // COURSE
-    // ======================================
-
     course: {
       type: String,
       required: true,
       trim: true,
     },
-
-    // ======================================
-    // BATCH TIME
-    // ======================================
 
     batchTime: {
       type: String,
@@ -49,20 +36,13 @@ const attendanceSchema = new mongoose.Schema(
       trim: true,
     },
 
-    // ======================================
-    // ATTENDANCE DATE
     // Format: YYYY-MM-DD
-    // ======================================
-
     date: {
       type: String,
       required: true,
     },
 
-    // ======================================
-    // ATTENDANCE STATUS
-    // ======================================
-
+    // Primary attendance status. Late is retained for backward compatibility.
     status: {
       type: String,
       enum: ['Present', 'Absent', 'Late'],
@@ -70,9 +50,11 @@ const attendanceSchema = new mongoose.Schema(
       default: 'Present',
     },
 
-    // ======================================
-    // ADMIN REMARKS
-    // ======================================
+    // Late is independent from Present, so both can be true at once.
+    isLate: {
+      type: Boolean,
+      default: false,
+    },
 
     remarks: {
       type: String,
@@ -81,42 +63,21 @@ const attendanceSchema = new mongoose.Schema(
       maxlength: 500,
     },
 
-    // ======================================
-    // ABSENT EMAIL STATUS
-    // ======================================
-
     absentEmailStatus: {
       type: String,
-      enum: [
-        'NotSent',
-        'Sending',
-        'Sent',
-        'Failed',
-      ],
+      enum: ['NotSent', 'Sending', 'Sent', 'Failed'],
       default: 'NotSent',
     },
-
-    // ======================================
-    // LAST EMAIL ATTEMPT TIME
-    // ======================================
 
     absentEmailAttemptedAt: {
       type: Date,
       default: null,
     },
 
-    // ======================================
-    // SUCCESSFUL EMAIL TIME
-    // ======================================
-
     absentEmailSentAt: {
       type: Date,
       default: null,
     },
-
-    // ======================================
-    // EMAIL ERROR DETAILS
-    // ======================================
 
     absentEmailError: {
       type: String,
@@ -129,11 +90,7 @@ const attendanceSchema = new mongoose.Schema(
   }
 )
 
-// ======================================
-// PREVENT DUPLICATE ATTENDANCE
 // One student = one attendance record per date
-// ======================================
-
 attendanceSchema.index(
   {
     student: 1,
@@ -144,11 +101,4 @@ attendanceSchema.index(
   }
 )
 
-// ======================================
-// EXPORT MODEL
-// ======================================
-
-module.exports = mongoose.model(
-  'Attendance',
-  attendanceSchema
-)
+module.exports = mongoose.model('Attendance', attendanceSchema)

@@ -922,15 +922,7 @@ function StudentAttendance() {
 
       const present =
 
-        records.filter(
-
-          (record) =>
-
-            record.status ===
-
-            'Present'
-
-        ).length
+        records.filter((record) => record.status === 'Present' || record.status === 'Late').length
 
 
 
@@ -1979,7 +1971,14 @@ function StudentAttendance() {
             ) : reportRecords.map((record, index) => (
               <tr key={record._id || `${record.date}-${index}`}>
                 <td>{index + 1}</td><td>{formatDate(record.date)}</td><td>{record.course || student.course || '-'}</td><td>{record.batchTime || student.batchTime || '-'}</td>
-                <td className={`print-status ${record.status === 'Present' ? 'print-status-present' : record.status === 'Late' ? 'print-status-late' : 'print-status-absent'}`}>{record.status || '-'}</td>
+                <td>
+                  <span className={`print-status ${record.status === 'Absent' ? 'print-status-absent' : 'print-status-present'}`}>
+                    {record.status === 'Late' ? 'Present' : (record.status || '-')}
+                  </span>
+                  {(record.isLate === true || record.status === 'Late') && (
+                    <span className="print-status print-status-late"> + Late</span>
+                  )}
+                </td>
               </tr>
             ))}
           </tbody>
@@ -2911,45 +2910,12 @@ function StudentAttendance() {
 
 
 
-                          <span
-
-                            className={
-
-                              record.status ===
-
-                              'Present'
-
-
-
-                                ? 'badge bg-success'
-
-
-
-                                : record.status === 'Late'
-
-
-
-                                  ? 'badge bg-warning text-dark'
-
-
-
-                                  : 'badge bg-danger'
-
-                            }
-
-                          >
-
-
-
-                            {
-
-                              record.status
-
-                            }
-
-
-
+                          <span className={record.status === 'Absent' ? 'badge bg-danger' : 'badge bg-success'}>
+                            {record.status === 'Late' ? 'Present' : record.status}
                           </span>
+                          {(record.isLate === true || record.status === 'Late') && (
+                            <span className="badge bg-warning text-dark ms-1">Late</span>
+                          )}
 
 
 
@@ -3541,45 +3507,12 @@ function StudentAttendance() {
 
 
 
-                          <span
-
-                            className={
-
-                              record.status ===
-
-                              'Present'
-
-
-
-                                ? 'badge bg-success'
-
-
-
-                                : record.status === 'Late'
-
-
-
-                                  ? 'badge bg-warning text-dark'
-
-
-
-                                  : 'badge bg-danger'
-
-                            }
-
-                          >
-
-
-
-                            {
-
-                              record.status
-
-                            }
-
-
-
+                          <span className={record.status === 'Absent' ? 'badge bg-danger' : 'badge bg-success'}>
+                            {record.status === 'Late' ? 'Present' : record.status}
                           </span>
+                          {(record.isLate === true || record.status === 'Late') && (
+                            <span className="badge bg-warning text-dark ms-1">Late</span>
+                          )}
 
 
 
@@ -4243,45 +4176,12 @@ function StudentAttendance() {
 
 
 
-                          <span
-
-                            className={
-
-                              record.status ===
-
-                              'Present'
-
-
-
-                                ? 'badge bg-success'
-
-
-
-                                : record.status === 'Late'
-
-
-
-                                  ? 'badge bg-warning text-dark'
-
-
-
-                                  : 'badge bg-danger'
-
-                            }
-
-                          >
-
-
-
-                            {
-
-                              record.status
-
-                            }
-
-
-
+                          <span className={record.status === 'Absent' ? 'badge bg-danger' : 'badge bg-success'}>
+                            {record.status === 'Late' ? 'Present' : record.status}
                           </span>
+                          {(record.isLate === true || record.status === 'Late') && (
+                            <span className="badge bg-warning text-dark ms-1">Late</span>
+                          )}
 
 
 
@@ -5133,45 +5033,12 @@ function StudentAttendance() {
 
 
 
-                            <span
-
-                              className={
-
-                                record.status ===
-
-                                'Present'
-
-
-
-                                  ? 'badge bg-success'
-
-
-
-                                  : record.status === 'Late'
-
-
-
-                                    ? 'badge bg-warning text-dark'
-
-
-
-                                    : 'badge bg-danger'
-
-                              }
-
-                            >
-
-
-
-                              {
-
-                                record.status
-
-                              }
-
-
-
-                            </span>
+                            <span className={record.status === 'Absent' ? 'badge bg-danger' : 'badge bg-success'}>
+                            {record.status === 'Late' ? 'Present' : record.status}
+                          </span>
+                          {(record.isLate === true || record.status === 'Late') && (
+                            <span className="badge bg-warning text-dark ms-1">Late</span>
+                          )}
 
 
 
