@@ -1930,6 +1930,7 @@ function StudentAttendance() {
           .print-status { font-weight: 700; }
           .print-status-present { color: #166534 !important; }
           .print-status-absent { color: #b91c1c !important; }
+          .print-status-late { color: #854d0e !important; background: #fef3c7 !important; }
           .print-empty { text-align: center; padding: 18px; color: #64748b !important; }
           .print-footer { margin-top: 24px; display: flex; justify-content: space-between; gap: 20px; font-size: 8pt; color: #64748b !important; page-break-inside: avoid; }
           .print-signature { margin-top: 30px; width: 180px; border-top: 1px solid #64748b; padding-top: 6px; text-align: center; color: #475569 !important; }
@@ -1978,7 +1979,7 @@ function StudentAttendance() {
             ) : reportRecords.map((record, index) => (
               <tr key={record._id || `${record.date}-${index}`}>
                 <td>{index + 1}</td><td>{formatDate(record.date)}</td><td>{record.course || student.course || '-'}</td><td>{record.batchTime || student.batchTime || '-'}</td>
-                <td className={`print-status ${record.status === 'Present' ? 'print-status-present' : 'print-status-absent'}`}>{record.status || '-'}</td>
+                <td className={`print-status ${record.status === 'Present' ? 'print-status-present' : record.status === 'Late' ? 'print-status-late' : 'print-status-absent'}`}>{record.status || '-'}</td>
               </tr>
             ))}
           </tbody>
@@ -2924,7 +2925,15 @@ function StudentAttendance() {
 
 
 
-                                : 'badge bg-danger'
+                                : record.status === 'Late'
+
+
+
+                                  ? 'badge bg-warning text-dark'
+
+
+
+                                  : 'badge bg-danger'
 
                             }
 
@@ -3546,7 +3555,15 @@ function StudentAttendance() {
 
 
 
-                                : 'badge bg-danger'
+                                : record.status === 'Late'
+
+
+
+                                  ? 'badge bg-warning text-dark'
+
+
+
+                                  : 'badge bg-danger'
 
                             }
 
@@ -4240,7 +4257,15 @@ function StudentAttendance() {
 
 
 
-                                : 'badge bg-danger'
+                                : record.status === 'Late'
+
+
+
+                                  ? 'badge bg-warning text-dark'
+
+
+
+                                  : 'badge bg-danger'
 
                             }
 
@@ -5122,7 +5147,15 @@ function StudentAttendance() {
 
 
 
-                                  : 'badge bg-danger'
+                                  : record.status === 'Late'
+
+
+
+                                    ? 'badge bg-warning text-dark'
+
+
+
+                                    : 'badge bg-danger'
 
                               }
 

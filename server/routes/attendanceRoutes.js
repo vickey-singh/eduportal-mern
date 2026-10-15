@@ -592,9 +592,13 @@ router.get(
 
               record.student.toString()
 
-            ] =
+            ] = {
 
-              record.status
+              status: record.status,
+
+              remarks: record.remarks || '',
+
+            }
 
           }
 
@@ -648,11 +652,11 @@ router.get(
 
             attendanceStatus:
 
-              attendanceMap[
+              attendanceMap[student._id.toString()]?.status || '',
 
-                student._id.toString()
+            attendanceRemarks:
 
-              ] || '',
+              attendanceMap[student._id.toString()]?.remarks || '',
 
           })
 
@@ -858,9 +862,13 @@ router.get(
 
               record.student.toString()
 
-            ] =
+            ] = {
 
-              record.status
+              status: record.status,
+
+              remarks: record.remarks || '',
+
+            }
 
           }
 
@@ -914,11 +922,11 @@ router.get(
 
             attendanceStatus:
 
-              attendanceMap[
+              attendanceMap[student._id.toString()]?.status || '',
 
-                student._id.toString()
+            attendanceRemarks:
 
-              ] || '',
+              attendanceMap[student._id.toString()]?.remarks || '',
 
           })
 
@@ -996,6 +1004,8 @@ router.post(
 
         status,
 
+        remarks = '',
+
       } = req.body
 
       // ==================================
@@ -1026,25 +1036,25 @@ router.post(
 
       }
 
-      if (
-
-        ![
-
-          'Present',
-
-          'Absent',
-
-        ].includes(status)
-
-      ) {
+      if (!['Present', 'Absent', 'Late'].includes(status)) {
 
         return res.status(400).json({
 
           success: false,
 
-          message:
+          message: 'Invalid attendance status',
 
-            'Invalid attendance status',
+        })
+
+      }
+
+      if (typeof remarks !== 'string' || remarks.length > 500) {
+
+        return res.status(400).json({
+
+          success: false,
+
+          message: 'Remarks must be text and cannot exceed 500 characters',
 
         })
 
@@ -1119,6 +1129,8 @@ router.post(
             date,
 
             status,
+
+            remarks: remarks.trim(),
 
           },
 
@@ -1308,6 +1320,8 @@ router.post(
 
           status,
 
+          remarks = '',
+
         } = item
 
         // ==================================
@@ -1328,17 +1342,13 @@ router.post(
 
         }
 
-        if (
+        if (!['Present', 'Absent', 'Late'].includes(status)) {
 
-          ![
+          continue
 
-            'Present',
+        }
 
-            'Absent',
-
-          ].includes(status)
-
-        ) {
+        if (typeof remarks !== 'string' || remarks.length > 500) {
 
           continue
 
@@ -1405,6 +1415,8 @@ router.post(
               date,
 
               status,
+
+              remarks: remarks.trim(),
 
             },
 
@@ -1622,6 +1634,8 @@ router.post(
 
           status,
 
+          remarks = '',
+
         } = item
 
         // ==================================
@@ -1642,17 +1656,13 @@ router.post(
 
         }
 
-        if (
+        if (!['Present', 'Absent', 'Late'].includes(status)) {
 
-          ![
+          continue
 
-            'Present',
+        }
 
-            'Absent',
-
-          ].includes(status)
-
-        ) {
+        if (typeof remarks !== 'string' || remarks.length > 500) {
 
           continue
 
@@ -1719,6 +1729,8 @@ router.post(
               date,
 
               status,
+
+              remarks: remarks.trim(),
 
             },
 
@@ -1914,6 +1926,14 @@ router.get(
 
         ).length
 
+      const late =
+
+        attendance.filter(
+
+          (item) => item.status === 'Late'
+
+        ).length
+
       const percentage =
 
         total > 0
@@ -1922,7 +1942,7 @@ router.get(
 
               (
 
-                present /
+                (present + late) /
 
                 total
 
@@ -1971,6 +1991,8 @@ router.get(
           present,
 
           absent,
+
+          late,
 
           percentage,
 
@@ -2166,6 +2188,14 @@ router.get(
 
         ).length
 
+      const late =
+
+        attendance.filter(
+
+          (item) => item.status === 'Late'
+
+        ).length
+
       const percentage =
 
         total > 0
@@ -2174,7 +2204,7 @@ router.get(
 
               (
 
-                present /
+                (present + late) /
 
                 total
 
@@ -2203,6 +2233,8 @@ router.get(
           present,
 
           absent,
+
+          late,
 
           percentage,
 
@@ -2346,6 +2378,14 @@ router.get(
 
         ).length
 
+      const late =
+
+        attendance.filter(
+
+          (item) => item.status === 'Late'
+
+        ).length
+
       const percentage =
 
         total > 0
@@ -2354,7 +2394,7 @@ router.get(
 
               (
 
-                present /
+                (present + late) /
 
                 total
 
@@ -2406,6 +2446,10 @@ router.get(
 
                 0,
 
+              late:
+
+                0,
+
             }
 
           }
@@ -2448,6 +2492,12 @@ router.get(
 
           }
 
+          else if (item.status === 'Late') {
+
+            monthlySummary[month].late += 1
+
+          }
+
         }
 
       )
@@ -2482,7 +2532,7 @@ router.get(
 
                   (
 
-                    data.present /
+                    (data.present + data.late) /
 
                     data.total
 
@@ -2511,6 +2561,8 @@ router.get(
           present,
 
           absent,
+
+          late,
 
           percentage,
 

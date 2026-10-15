@@ -30,6 +30,8 @@ function FacultyAttendance() {
 
   const [attendance, setAttendance] =
     useState({})
+  const [remarks, setRemarks] =
+    useState({})
 
   // ======================================
   // LOADING
@@ -224,6 +226,11 @@ function FacultyAttendance() {
           setAttendance(
             attendanceData
           )
+          const remarksData = {}
+          facultyList.forEach((member) => {
+            remarksData[member.facultyId] = member.remarks || member.attendanceRemarks || ''
+          })
+          setRemarks(remarksData)
         }
         else {
           setError(
@@ -305,6 +312,8 @@ function FacultyAttendance() {
                 attendance[
                   member.facultyId
                 ],
+              remarks:
+                remarks[member.facultyId] || '',
             })
           )
           .filter(
@@ -312,7 +321,9 @@ function FacultyAttendance() {
               item.status ===
                 'Present' ||
               item.status ===
-                'Absent'
+                'Absent' ||
+              item.status ===
+                'Late'
           )
         if (
           records.length === 0
@@ -728,6 +739,11 @@ function FacultyAttendance() {
       ) {
         return 'badge bg-danger'
       }
+      if (
+        status === 'Late'
+      ) {
+        return 'badge bg-warning text-dark'
+      }
       return 'badge bg-secondary'
     }
 
@@ -1015,7 +1031,44 @@ function FacultyAttendance() {
                               <i className="fas fa-times me-1" />
                               Absent
                             </button>
+                            <button
+                              type="button"
+                              className={
+                                attendance[member.facultyId] === 'Late'
+                                  ? 'btn btn-warning btn-sm'
+                                  : 'btn btn-outline-warning btn-sm'
+                              }
+                              onClick={() =>
+                                markAttendance(member.facultyId, 'Late')
+                              }
+                              disabled={
+                                calendarStatus.loading ||
+                                !calendarStatus.isWorkingDay
+                              }
+                            >
+                              <i className="fas fa-clock me-1" />
+                              Late
+                            </button>
                           </div>
+                          {attendance[member.facultyId] === 'Late' && (
+                            <input
+                              type="text"
+                              className="form-control form-control-sm mt-2"
+                              placeholder="Late remarks (optional)"
+                              maxLength={500}
+                              value={remarks[member.facultyId] || ''}
+                              onChange={(event) =>
+                                setRemarks((previous) => ({
+                                  ...previous,
+                                  [member.facultyId]: event.target.value,
+                                }))
+                              }
+                              disabled={
+                                calendarStatus.loading ||
+                                !calendarStatus.isWorkingDay
+                              }
+                            />
+                          )}
                         </td>
                         <td>
                           <button
@@ -1168,6 +1221,9 @@ function FacultyAttendance() {
                                   <th>
                                     Status
                                   </th>
+                                  <th>
+                                    Remarks
+                                  </th>
                                 </tr>
                               </thead>
                               <tbody>
@@ -1203,6 +1259,7 @@ function FacultyAttendance() {
                                           }
                                         </span>
                                       </td>
+                                      <td>{record.remarks || '-'}</td>
                                     </tr>
                                   )
                                 )}
@@ -1250,6 +1307,18 @@ function FacultyAttendance() {
                             <div className="card border">
                               <div className="card-body">
                                 <small className="text-muted">
+                                  Late
+                                </small>
+                                <h4 className="fw-bold text-warning mb-0 mt-2">
+                                  {viewData?.summary?.late || 0}
+                                </h4>
+                              </div>
+                            </div>
+                          </div>
+                          <div className="col-md-3">
+                            <div className="card border">
+                              <div className="card-body">
+                                <small className="text-muted">
                                   Total
                                 </small>
                                 <h4 className="fw-bold mb-0 mt-2">
@@ -1288,6 +1357,9 @@ function FacultyAttendance() {
                                 <th>
                                   Status
                                 </th>
+                                <th>
+                                  Remarks
+                                </th>
                               </tr>
                             </thead>
                             <tbody>
@@ -1323,6 +1395,7 @@ function FacultyAttendance() {
                                         }
                                       </span>
                                     </td>
+                                    <td>{record.remarks || '-'}</td>
                                   </tr>
                                 )
                               )}
@@ -1369,6 +1442,18 @@ function FacultyAttendance() {
                             <div className="card border">
                               <div className="card-body">
                                 <small className="text-muted">
+                                  Late
+                                </small>
+                                <h4 className="fw-bold text-warning mb-0 mt-2">
+                                  {viewData?.summary?.late || 0}
+                                </h4>
+                              </div>
+                            </div>
+                          </div>
+                          <div className="col-md-3">
+                            <div className="card border">
+                              <div className="card-body">
+                                <small className="text-muted">
                                   Total
                                 </small>
                                 <h4 className="fw-bold mb-0 mt-2">
@@ -1407,6 +1492,9 @@ function FacultyAttendance() {
                                 <th>
                                   Status
                                 </th>
+                                <th>
+                                  Remarks
+                                </th>
                               </tr>
                             </thead>
                             <tbody>
@@ -1442,6 +1530,7 @@ function FacultyAttendance() {
                                         }
                                       </span>
                                     </td>
+                                    <td>{record.remarks || '-'}</td>
                                   </tr>
                                 )
                               )}

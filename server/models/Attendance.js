@@ -1,3 +1,4 @@
+
 const mongoose = require('mongoose')
 
 // ======================================
@@ -64,9 +65,20 @@ const attendanceSchema = new mongoose.Schema(
 
     status: {
       type: String,
-      enum: ['Present', 'Absent'],
+      enum: ['Present', 'Absent', 'Late'],
       required: true,
       default: 'Present',
+    },
+
+    // ======================================
+    // ADMIN REMARKS
+    // ======================================
+
+    remarks: {
+      type: String,
+      default: '',
+      trim: true,
+      maxlength: 500,
     },
 
     // ======================================

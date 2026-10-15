@@ -516,6 +516,11 @@ function TeacherAttendance() {
                   attendanceStatus:
                     status,
 
+                  attendanceRemarks:
+                    status === 'Late'
+                      ? (student.attendanceRemarks || '')
+                      : '',
+
                 }
 
               }
@@ -523,6 +528,38 @@ function TeacherAttendance() {
               return student
 
             }
+
+          )
+
+      )
+
+    }
+
+
+  // ======================================
+  // CHANGE REMARKS
+  // ======================================
+
+  const handleRemarksChange =
+    (
+      studentId,
+      remarks
+    ) => {
+
+      setStudents(
+
+        (current) =>
+
+          current.map(
+
+            (student) =>
+
+              student._id === studentId
+                ? {
+                    ...student,
+                    attendanceRemarks: remarks.slice(0, 500),
+                  }
+                : student
 
           )
 
@@ -550,6 +587,8 @@ function TeacherAttendance() {
 
               attendanceStatus:
                 'Present',
+
+              attendanceRemarks: '',
 
             })
 
@@ -579,6 +618,8 @@ function TeacherAttendance() {
 
               attendanceStatus:
                 'Absent',
+
+              attendanceRemarks: '',
 
             })
 
@@ -629,6 +670,11 @@ function TeacherAttendance() {
                 status:
                   student.attendanceStatus,
 
+                remarks:
+                  student.attendanceStatus === 'Late'
+                    ? (student.attendanceRemarks || '').trim()
+                    : '',
+
               })
 
             )
@@ -646,6 +692,19 @@ function TeacherAttendance() {
 
           return
 
+        }
+
+        const lateWithoutRemarks = attendance.filter(
+          (record) =>
+            record.status === 'Late' &&
+            !record.remarks
+        )
+
+        if (lateWithoutRemarks.length > 0) {
+          setError(
+            'Please add remarks for every student marked Late.'
+          )
+          return
         }
 
 
@@ -760,11 +819,21 @@ function TeacherAttendance() {
 
     ).length
 
+  const lateCount =
+    students.filter(
+
+      (student) =>
+        student.attendanceStatus ===
+        'Late'
+
+    ).length
+
 
   const unmarkedCount =
     students.length -
     presentCount -
-    absentCount
+    absentCount -
+    lateCount
 
 
   // ======================================
@@ -1190,7 +1259,7 @@ function TeacherAttendance() {
 
               <div className="row g-3 mb-4">
 
-                <div className="col-md-4">
+                <div className="col-md-3">
 
                   <div className="border rounded p-3">
 
@@ -1214,7 +1283,7 @@ function TeacherAttendance() {
                 </div>
 
 
-                <div className="col-md-4">
+                <div className="col-md-3">
 
                   <div className="border rounded p-3">
 
@@ -1238,7 +1307,7 @@ function TeacherAttendance() {
                 </div>
 
 
-                <div className="col-md-4">
+                <div className="col-md-3">
 
                   <div className="border rounded p-3">
 
@@ -1255,6 +1324,22 @@ function TeacherAttendance() {
                         absentCount
                       }
 
+                    </h4>
+
+                  </div>
+
+                </div>
+
+                <div className="col-md-3">
+
+                  <div className="border rounded p-3">
+
+                    <small className="text-muted">
+                      Late
+                    </small>
+
+                    <h4 className="fw-bold text-dark mb-0 mt-1">
+                      {lateCount}
                     </h4>
 
                   </div>
@@ -1454,7 +1539,49 @@ function TeacherAttendance() {
 
                               </button>
 
+                              <button
+
+                                type="button"
+
+                                className={
+                                  student.attendanceStatus === 'Late'
+                                    ? 'btn btn-warning btn-sm text-dark'
+                                    : 'btn btn-outline-warning btn-sm'
+                                }
+
+                                onClick={() =>
+                                  handleStatusChange(
+                                    student._id,
+                                    'Late'
+                                  )
+                                }
+
+                              >
+
+                                Late
+
+                              </button>
+
                             </div>
+
+                            {student.attendanceStatus === 'Late' && (
+
+                              <input
+                                type="text"
+                                className="form-control form-control-sm mt-2"
+                                value={student.attendanceRemarks || ''}
+                                maxLength={500}
+                                placeholder="Remarks required for Late"
+                                aria-label={`Remarks for ${student.name}`}
+                                onChange={(e) =>
+                                  handleRemarksChange(
+                                    student._id,
+                                    e.target.value
+                                  )
+                                }
+                              />
+
+                            )}
 
                           </td>
 

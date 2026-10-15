@@ -174,6 +174,8 @@ router.get(
                 member.image || '',
               status:
                 record?.status || '',
+              remarks:
+                record?.remarks || '',
               attendanceId:
                 record?._id || null,
             }
@@ -215,6 +217,7 @@ router.post(
         facultyId,
         date,
         status,
+        remarks = '',
       } = req.body
       // ==================================
       // VALIDATION
@@ -234,6 +237,7 @@ router.post(
         ![
           'Present',
           'Absent',
+          'Late',
         ].includes(status)
       ) {
         return res.status(400).json({
@@ -242,6 +246,16 @@ router.post(
             'Invalid attendance status.',
         })
       }
+      if (
+        typeof remarks !== 'string' ||
+        remarks.length > 500
+      ) {
+        return res.status(400).json({
+          success: false,
+          message: 'Remarks must be text and cannot exceed 500 characters.',
+        })
+      }
+
       // ==================================
       // GET FACULTY
       // ==================================
@@ -271,6 +285,7 @@ router.post(
               faculty.name,
             date,
             status,
+            remarks: remarks.trim(),
           },
           {
             new: true,
@@ -351,9 +366,17 @@ router.post(
           ![
             'Present',
             'Absent',
+            'Late',
           ].includes(
             item.status
           )
+        ) {
+          continue
+        }
+        const remarks = item.remarks ?? ''
+        if (
+          typeof remarks !== 'string' ||
+          remarks.length > 500
         ) {
           continue
         }
@@ -379,6 +402,7 @@ router.post(
               date,
               status:
                 item.status,
+              remarks: remarks.trim(),
             },
             upsert: true,
           },
@@ -542,12 +566,18 @@ router.get(
             item.status ===
             'Absent'
         ).length
+      const late =
+        records.filter(
+          (item) =>
+            item.status ===
+            'Late'
+        ).length
       const total =
-        present + absent
+        present + absent + late
       const percentage =
         total > 0
           ? (
-              present /
+              (present + late) /
               total
             ) * 100
           : 0
@@ -560,6 +590,7 @@ router.get(
         summary: {
           present,
           absent,
+          late,
           total,
           percentage:
             Number(
@@ -641,12 +672,18 @@ router.get(
             item.status ===
             'Absent'
         ).length
+      const late =
+        records.filter(
+          (item) =>
+            item.status ===
+            'Late'
+        ).length
       const total =
-        present + absent
+        present + absent + late
       const percentage =
         total > 0
           ? (
-              present /
+              (present + late) /
               total
             ) * 100
           : 0
@@ -657,6 +694,7 @@ router.get(
         summary: {
           present,
           absent,
+          late,
           total,
           percentage:
             Number(
@@ -736,7 +774,7 @@ router.delete(
 //
 // Rule:
 // - Only Active faculty with biometricUserId are considered.
-// - Existing Present/Absent records are never overwritten.
+// - Existing Present/Absent/Late records are never overwritten.
 // - Faculty with no record by 8 PM are inserted as Absent.
 // - Faculty without biometricUserId are ignored.
 //
@@ -883,6 +921,9 @@ router.post(
       const absent = finalAttendance.filter(
         (record) => record.status === 'Absent'
       ).length
+      const late = finalAttendance.filter(
+        (record) => record.status === 'Late'
+      ).length
       return res.status(200).json({
         success: true,
         message:
@@ -891,6 +932,7 @@ router.post(
         biometricFaculty: faculty.length,
         present,
         absent,
+        late,
         createdAbsent: absentFaculty.length,
       })
     } catch (error) {

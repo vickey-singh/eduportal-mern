@@ -93,6 +93,8 @@ function Attendance() {
   // ======================================
   const [attendance, setAttendance] =
     useState({})
+  const [attendanceRemarks, setAttendanceRemarks] =
+    useState({})
   const [attendanceReportHtml, setAttendanceReportHtml] = useState('')
   // ======================================
   // LOADING
@@ -333,6 +335,7 @@ function Attendance() {
     // RESET ATTENDANCE
     // ==================================
     setAttendance({})
+    setAttendanceRemarks({})
     // ==================================
     // NO COURSE
     // ==================================
@@ -390,6 +393,7 @@ function Attendance() {
     setStudents([])
     // Attendance reset
     setAttendance({})
+    setAttendanceRemarks({})
   }
   // ======================================
   // DATE CHANGE
@@ -405,6 +409,7 @@ function Attendance() {
     setStudents([])
     // Attendance reset
     setAttendance({})
+    setAttendanceRemarks({})
   }
   // ======================================
   // LOAD STUDENTS
@@ -460,21 +465,19 @@ function Attendance() {
       // EXISTING ATTENDANCE
       // ==================================
       const attendanceData = {}
+      const remarksData = {}
       studentList.forEach(
         (student) => {
-          if (
-            student.attendanceStatus
-          ) {
-            attendanceData[
-              student._id
-            ] =
-              student.attendanceStatus
+          if (student.attendanceStatus) {
+            attendanceData[student._id] = student.attendanceStatus
+          }
+          if (student.attendanceRemarks) {
+            remarksData[student._id] = student.attendanceRemarks
           }
         }
       )
-      setAttendance(
-        attendanceData
-      )
+      setAttendance(attendanceData)
+      setAttendanceRemarks(remarksData)
     }
     catch (error) {
       console.log(
@@ -498,13 +501,24 @@ function Attendance() {
     status
   ) => {
     setAttendanceReportHtml('')
-    setAttendance(
-      (previous) => ({
+    setAttendance((previous) => ({
+      ...previous,
+      [studentId]: status,
+    }))
+    if (status !== 'Late') {
+      setAttendanceRemarks((previous) => ({
         ...previous,
-        [studentId]:
-          status,
-      })
-    )
+        [studentId]: '',
+      }))
+    }
+  }
+
+  const handleAttendanceRemarksChange = (studentId, value) => {
+    setAttendanceReportHtml('')
+    setAttendanceRemarks((previous) => ({
+      ...previous,
+      [studentId]: value.slice(0, 500),
+    }))
   }
   // ======================================
   // MARK ALL PRESENT
@@ -519,9 +533,8 @@ function Attendance() {
         ] = 'Present'
       }
     )
-    setAttendance(
-      updatedAttendance
-    )
+    setAttendance(updatedAttendance)
+    setAttendanceRemarks({})
   }
   // ======================================
   // MARK ALL ABSENT
@@ -536,9 +549,8 @@ function Attendance() {
         ] = 'Absent'
       }
     )
-    setAttendance(
-      updatedAttendance
-    )
+    setAttendance(updatedAttendance)
+    setAttendanceRemarks({})
   }
   // ======================================
   // SAVE ATTENDANCE
@@ -556,22 +568,22 @@ function Attendance() {
         )
         return
       }
-      // ==================================
-      // CHECK UNMARKED
-      // ==================================
-      const unmarkedStudents =
-        students.filter(
-          (student) =>
-            !attendance[
-              student._id
-            ]
-        )
-      if (
-        unmarkedStudents.length > 0
-      ) {
-        alert(
-          'Please mark Present or Absent for all students'
-        )
+      // Save only the students explicitly marked by the admin.
+      // Unmarked students are allowed to remain unmarked.
+      const markedStudents = students.filter(
+        (student) => ['Present', 'Absent', 'Late'].includes(attendance[student._id])
+      )
+      if (markedStudents.length === 0) {
+        alert('Please mark attendance for at least one student.')
+        return
+      }
+      const lateWithoutRemarks = markedStudents.filter(
+        (student) =>
+          attendance[student._id] === 'Late' &&
+          !String(attendanceRemarks[student._id] || '').trim()
+      )
+      if (lateWithoutRemarks.length > 0) {
+        alert(`Please add remarks for every Late student. Missing remarks: ${lateWithoutRemarks.length}.`)
         return
       }
       try {
@@ -579,17 +591,13 @@ function Attendance() {
         // ==================================
         // PREPARE DATA
         // ==================================
-        const attendanceData =
-          students.map(
-            (student) => ({
-              student:
-                student._id,
-              status:
-                attendance[
-                  student._id
-                ],
-            })
-          )
+        const attendanceData = markedStudents.map((student) => ({
+          student: student._id,
+          status: attendance[student._id],
+          remarks: attendance[student._id] === 'Late'
+            ? String(attendanceRemarks[student._id] || '').trim()
+            : '',
+        }))
         // ==================================
         // SAVE
         // ==================================
@@ -650,10 +658,18 @@ function Attendance() {
           student._id
         ] === 'Absent'
     ).length
+  const lateCount =
+    students.filter(
+      (student) =>
+        attendance[
+          student._id
+        ] === 'Late'
+    ).length
   const unmarkedCount =
     students.length -
     presentCount -
-    absentCount
+    absentCount -
+    lateCount
   // Generate a print-ready attendance report. In the browser print dialog,
   // choose "Save as PDF" to download the PDF without an extra dependency.
   const handleCreateAttendancePDF = () => {
@@ -674,8 +690,11 @@ function Attendance() {
     const reportAbsentCount = students.filter(
       (student) => attendance[student._id] === 'Absent'
     ).length
+    const reportLateCount = students.filter(
+      (student) => attendance[student._id] === 'Late'
+    ).length
     const reportUnmarkedCount =
-      students.length - reportPresentCount - reportAbsentCount
+      students.length - reportPresentCount - reportAbsentCount - reportLateCount
     const rows = students
       .map((student, index) => {
         const status = attendance[student._id] || 'Not Marked'
@@ -684,7 +703,9 @@ function Attendance() {
             ? 'present'
             : status === 'Absent'
               ? 'absent'
-              : 'unmarked'
+              : status === 'Late'
+                ? 'late'
+                : 'unmarked'
         return `
           <tr>
             <td class="number">${index + 1}</td>
@@ -693,6 +714,7 @@ function Attendance() {
             <td>${escapeHtml(student.rollNumber || '-')}</td>
             <td>${escapeHtml(student.batchTime || '-')}</td>
             <td><span class="status ${statusClass}">${escapeHtml(status)}</span></td>
+            <td>${escapeHtml(attendance[student._id] === 'Late' ? (attendanceRemarks[student._id] || '-') : '-')}</td>
           </tr>`
       })
       .join('')
@@ -761,7 +783,7 @@ function Attendance() {
           .meta-value { color: #172033; font-size: 11px; font-weight: 700; }
           .summary {
             display: grid;
-            grid-template-columns: repeat(4, minmax(0, 1fr));
+            grid-template-columns: repeat(5, minmax(0, 1fr));
             gap: 9px;
             margin-bottom: 18px;
           }
@@ -775,7 +797,8 @@ function Attendance() {
           .summary-value { margin-top: 4px; color: #172033; font-size: 18px; font-weight: 700; }
           .summary-card.present-card { border-left: 3px solid #16a34a; }
           .summary-card.absent-card { border-left: 3px solid #dc2626; }
-          .summary-card.unmarked-card { border-left: 3px solid #d97706; }
+          .summary-card.late-card { border-left: 3px solid #d97706; }
+          .summary-card.unmarked-card { border-left: 3px solid #64748b; }
           table { width: 100%; border-collapse: collapse; }
           thead { display: table-header-group; }
           th {
@@ -808,7 +831,8 @@ function Attendance() {
           }
           .status.present { color: #166534; background: #dcfce7; }
           .status.absent { color: #991b1b; background: #fee2e2; }
-          .status.unmarked { color: #92400e; background: #fef3c7; }
+          .status.late { color: #92400e; background: #fef3c7; }
+          .status.unmarked { color: #475569; background: #e2e8f0; }
           .footer {
             display: flex;
             justify-content: space-between;
@@ -868,6 +892,10 @@ function Attendance() {
                 <div class="summary-label">Absent</div>
                 <div class="summary-value">${reportAbsentCount}</div>
               </div>
+              <div class="summary-card late-card">
+                <div class="summary-label">Late</div>
+                <div class="summary-value">${reportLateCount}</div>
+              </div>
               <div class="summary-card unmarked-card">
                 <div class="summary-label">Not Marked</div>
                 <div class="summary-value">${reportUnmarkedCount}</div>
@@ -882,6 +910,7 @@ function Attendance() {
                   <th>Roll No.</th>
                   <th>Batch Time</th>
                   <th>Attendance Status</th>
+                  <th>Remarks</th>
                 </tr>
               </thead>
               <tbody>${rows}</tbody>
@@ -1151,7 +1180,7 @@ function Attendance() {
       {students.length > 0 && (
         <div className="row mb-4">
           {/* TOTAL */}
-          <div className="col-md-4 mb-3">
+          <div className="col-md-3 mb-3">
             <div className="card p-3 text-center">
               <h6>
                 Total Students
@@ -1164,7 +1193,7 @@ function Attendance() {
             </div>
           </div>
           {/* PRESENT */}
-          <div className="col-md-4 mb-3">
+          <div className="col-md-3 mb-3">
             <div className="card p-3 text-center">
               <h6>
                 Present
@@ -1177,7 +1206,7 @@ function Attendance() {
             </div>
           </div>
           {/* ABSENT */}
-          <div className="col-md-4 mb-3">
+          <div className="col-md-3 mb-3">
             <div className="card p-3 text-center">
               <h6>
                 Absent
@@ -1187,6 +1216,13 @@ function Attendance() {
                   absentCount
                 }
               </h3>
+            </div>
+          </div>
+          {/* LATE */}
+          <div className="col-md-3 mb-3">
+            <div className="card p-3 text-center border-warning">
+              <h6>Late</h6>
+              <h3 className="text-warning">{lateCount}</h3>
             </div>
           </div>
         </div>
@@ -1363,21 +1399,43 @@ function Attendance() {
                         <button
                           type="button"
                           className={
-                            attendance[
-                              student._id
-                            ] === 'Absent'
-                              ? 'btn btn-danger btn-sm'
-                              : 'btn btn-outline-danger btn-sm'
+                            attendance[student._id] === 'Absent'
+                              ? 'btn btn-danger btn-sm me-2'
+                              : 'btn btn-outline-danger btn-sm me-2'
                           }
-                          onClick={() =>
-                            markAttendance(
-                              student._id,
-                              'Absent'
-                            )
-                          }
+                          onClick={() => markAttendance(student._id, 'Absent')}
                         >
                           Absent
                         </button>
+                        <button
+                          type="button"
+                          className={
+                            attendance[student._id] === 'Late'
+                              ? 'btn btn-warning btn-sm'
+                              : 'btn btn-outline-warning btn-sm'
+                          }
+                          style={attendance[student._id] === 'Late' ? {
+                            backgroundColor: '#facc15',
+                            borderColor: '#eab308',
+                            color: '#422006',
+                          } : undefined}
+                          onClick={() => markAttendance(student._id, 'Late')}
+                        >
+                          Late
+                        </button>
+                        {attendance[student._id] === 'Late' && (
+                          <input
+                            type="text"
+                            className="form-control form-control-sm mt-2"
+                            value={attendanceRemarks[student._id] || ''}
+                            onChange={(event) =>
+                              handleAttendanceRemarksChange(student._id, event.target.value)
+                            }
+                            maxLength={500}
+                            placeholder="Late remarks (required)"
+                            aria-label={`Late remarks for ${student.name}`}
+                          />
+                        )}
                       </td>
                       {/* VIEW */}
                       <td>
@@ -1404,12 +1462,8 @@ function Attendance() {
           \================================== */}
           <div className="mt-3">
             {unmarkedCount > 0 && (
-              <p className="text-warning mb-2">
-                {
-                  unmarkedCount
-                }
-                {' '}
-                student(s) not marked yet.
+              <p className="text-muted mb-2">
+                {unmarkedCount} student(s) left unmarked. Only marked students will be saved.
               </p>
             )}
             <button
@@ -1420,7 +1474,7 @@ function Attendance() {
               }
               disabled={
                 saving ||
-                unmarkedCount > 0
+                presentCount + absentCount + lateCount === 0
               }
             >
               {saving
